@@ -1,0 +1,9 @@
+2022-10-11 15:35:56,500:INFO: Model: STGAT_factual_irm_5.0_data_eth_hom_ds_1-2-4-8-1_bk_1_ep_150-100-150_seed_1.pth.tar
+2022-10-11 15:35:56,500:INFO: Dataset: eth
+2022-10-11 15:35:56,500:INFO: Eval shift: 32
+2022-10-11 15:35:56,500:INFO: Dataset type: test
+2022-10-11 15:37:20,707:INFO: Model: STGAT_factual_irm_5.0_data_eth_hom_ds_1-2-4-8-1_bk_1_ep_150-100-150_seed_1.pth.tar
+2022-10-11 15:37:20,707:INFO: Dataset: eth
+2022-10-11 15:37:20,707:INFO: Eval shift: 32
+2022-10-11 15:37:20,707:INFO: Dataset type: test
+2022-10-11 15:37:27,438:INFO: ADE: 1.0508	FDE: 1.8576

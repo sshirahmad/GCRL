@@ -1,0 +1,5 @@
+2022-10-11 15:37:56,163:INFO: Model: STGAT_factual_irm_1.0_data_eth_hom_ds_1-2-4-8-1_bk_1_ep_150-100-150_seed_1.pth.tar
+2022-10-11 15:37:56,164:INFO: Dataset: eth
+2022-10-11 15:37:56,164:INFO: Eval shift: 32
+2022-10-11 15:37:56,164:INFO: Dataset type: test
+2022-10-11 15:38:02,781:INFO: ADE: 1.5232	FDE: 2.5530
