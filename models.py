@@ -209,6 +209,8 @@ class STGAT_encoder(nn.Module):
 
         return encoded_future_pred, graph_lstm_hidden_states, traj_lstm_hidden_states
 
+    def sample(self):
+
 
 class future_STGAT_decoder(nn.Module):
     def __init__(
@@ -344,6 +346,8 @@ class VE(nn.Module):
 
         return [theta1, theta2, mu1, log_var1, mu2, log_var2]
 
+    def sample(self):
+
 
 class simple_mapping(nn.Module):
     def __init__(self,
@@ -375,6 +379,8 @@ class simple_mapping(nn.Module):
         C = self.final_layer(self.mapping(theta2))
 
         return C
+
+    def sample(self):
 
 
 class CRMF(nn.Module):

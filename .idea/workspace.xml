@@ -1,34 +1,9 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project version="4">
   <component name="ChangeListManager">
-    <list default="true" id="e76be7d3-4dd7-4693-b1d6-58f0675c9dbc" name="Changes" comment="">
-      <change beforePath="$PROJECT_DIR$/.idea/.gitignore" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/inspectionProfiles/Project_Default.xml" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/misc.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/misc.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/README.md" beforeDir="false" afterPath="$PROJECT_DIR$/README.md" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/datasets/eth/crowds_zara01_train.txt" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/datasets/eth/crowds_zara01_val.txt" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/datasets/eth/crowds_zara02_train.txt" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/datasets/eth/crowds_zara02_val.txt" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/datasets/eth/crowds_zara03_train.txt" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/datasets/eth/crowds_zara03_val.txt" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/datasets/eth/students001_train.txt" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/datasets/eth/students001_val.txt" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/datasets/eth/students003_train.txt" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/datasets/eth/students003_val.txt" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/datasets/eth/uni_examples_train.txt" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/datasets/eth/uni_examples_val.txt" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/loader.py" beforeDir="false" afterPath="$PROJECT_DIR$/loader.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/log/train.log" beforeDir="false" afterPath="$PROJECT_DIR$/log/train.log" afterDir="false" />
+    <list default="true" id="e76be7d3-4dd7-4693-b1d6-58f0675c9dbc" name="Changes" comment="Working on CRMF">
+      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/models.py" beforeDir="false" afterPath="$PROJECT_DIR$/models.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/parser_file.py" beforeDir="false" afterPath="$PROJECT_DIR$/parser_file.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/requirements.txt" beforeDir="false" afterPath="$PROJECT_DIR$/requirements.txt" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/runs/Oct10_20-18-56_Predator-Shayan/events.out.tfevents.1665447539.Predator-Shayan.18948.0" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/runs/Oct11_15-13-05_Predator-Shayan/events.out.tfevents.1665515591.Predator-Shayan.2384.0" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/train.py" beforeDir="false" afterPath="$PROJECT_DIR$/train.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/trajectories.py" beforeDir="false" afterPath="$PROJECT_DIR$/trajectories.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/utils.py" beforeDir="false" afterPath="$PROJECT_DIR$/utils.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/visualize.py" beforeDir="false" afterPath="$PROJECT_DIR$/visualize.py" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -102,8 +77,23 @@
       <option name="presentableId" value="Default" />
       <updated>1665705194925</updated>
       <workItem from="1665705200112" duration="7200000" />
-      <workItem from="1665954562277" duration="29129000" />
+      <workItem from="1665954562277" duration="30525000" />
     </task>
+    <task id="LOCAL-00001" summary="Working on CRMF">
+      <created>1666058381006</created>
+      <option name="number" value="00001" />
+      <option name="presentableId" value="LOCAL-00001" />
+      <option name="project" value="LOCAL" />
+      <updated>1666058381006</updated>
+    </task>
+    <task id="LOCAL-00002" summary="Working on CRMF">
+      <created>1666058399003</created>
+      <option name="number" value="00002" />
+      <option name="presentableId" value="LOCAL-00002" />
+      <option name="project" value="LOCAL" />
+      <updated>1666058399003</updated>
+    </task>
+    <option name="localTasksCounter" value="3" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
@@ -119,6 +109,10 @@
         </entry>
       </map>
     </option>
+  </component>
+  <component name="VcsManagerConfiguration">
+    <MESSAGE value="Working on CRMF" />
+    <option name="LAST_COMMIT_MESSAGE" value="Working on CRMF" />
   </component>
   <component name="XDebuggerManager">
     <breakpoint-manager>
