@@ -4,6 +4,9 @@ import numpy as np
 
 import torch
 from torch.utils.data import Dataset
+from tqdm import tqdm
+
+from utils import NUMBER_COUPLES, NUMBER_PERSONS
 
 logger = logging.getLogger(__name__)
 
@@ -57,6 +60,7 @@ class TrajectoryDataset(Dataset):
         seq_list_rel = []
 
         data = read_file(self.data_dir, delim)  # 2d array: _ X (frame, ped, coord)
+
         # allocate dimension for syntethic variable
         if self.add_confidence:
             data = np.pad(data, ((0, 0), (0, 1)), mode='constant', constant_values=0)
@@ -148,54 +152,12 @@ class TrajectoryDataset(Dataset):
         return out
 
 
-class SynTrajectoryDataset(Dataset):
-    """
-    Dataloader for the Synthetic Trajectory datasets
-    """
-
-    def __init__(self,
-                 data_dir='datasets/synthetic/train/orca_circle_crossing_4_ped_10000_scenes_0.2_radius_2.0_horizon.npz',
-                 obs_len=8,
-                 ):
-        """
-        Args:
-        - data_dir: Directory containing dataset file in the format
-        <seq_id> <ped_id> <x> <y>
-        - obs_len: : Number of time-steps in input trajectories
-        """
-        super(SynTrajectoryDataset, self).__init__()
-        self.obs_len = obs_len
-
-        # load synthetic data (seq, ped, coord, frame)
-        data = torch.from_numpy(np.load(data_dir)['raw']).type(torch.float).permute(0, 1, 3, 2)
-
-        # Split observed trajectory (features) and future trajectory (target)
-        self.obs_traj = data[:, :, :, :self.obs_len]
-        self.fut_traj = data[:, :, :, self.obs_len:]
-
-        self.obs_traj_rel = torch.zeros_like(self.obs_traj)
-        self.obs_traj_rel[:, :, :, 1:] = self.obs_traj[:, :, :, 1:] - self.obs_traj[:, :, :, :-1]
-        self.fut_traj_rel = torch.zeros_like(self.fut_traj)
-        self.fut_traj_rel[:, :, :, 1:] = self.fut_traj[:, :, :, 1:] - self.fut_traj[:, :, :, :-1]
-
-    def __len__(self):
-        return self.obs_traj.shape[0]
-
-    def __getitem__(self, index):  # index of the sequence
-        out = [
-            self.obs_traj[index],  # 3d tensor: ped X coord X frame
-            self.fut_traj[index],  # 3d tensor: ped X coord X frame
-            self.obs_traj_rel[index],  # 3d tensor: ped X rel_coord X frame
-            self.fut_traj_rel[index],  # 3d tensor: ped X rel_coord X frame
-        ]
-        return out
-
 
 def seq_collate(data):
     '''
-    Input: 
+    Input:
         Data format: batch of groups of pedestrians X coord X frame
-    Output: 
+    Output:
         LSTM input format: frame X batch of groups of pedestrians X coord
     '''
     (
@@ -205,7 +167,7 @@ def seq_collate(data):
         fut_seq_rel_list,
     ) = zip(*data)
 
-    _len = [len(seq) for seq in obs_seq_list]  # lists of n_ped
+    _len = [len(seq) for seq in obs_seq_list] # lists of n_ped
     cum_start_idx = [0] + np.cumsum(_len).tolist()
     seq_start_end = [
         [start, end] for start, end in zip(cum_start_idx, cum_start_idx[1:])

@@ -1,34 +1,36 @@
-from torch.utils.data import DataLoader
+from torch.utils.data import DataLoader, ConcatDataset
 
-from trajectories import TrajectoryDataset, SynTrajectoryDataset, seq_collate
-from utils import domain_shift
+from trajectories import TrajectoryDataset, seq_collate
+from utils import set_domain_shift, set_batch_size
 
 
-def data_loader(args, path):
+def data_loader(args, paths, name, pt=False):
+    alpha_e = set_domain_shift(args.domain_shifts, name)
+
     # ETH-UCY Dataset
     if args.dataset_name in ('eth', 'hotel', 'univ', 'zara1', 'zara2'):
-        alpha_e = domain_shift(args.domain_shifts, path)
-        dset = TrajectoryDataset(
-            path,
-            alpha_e=alpha_e,
-            obs_len=args.obs_len,
-            fut_len=args.fut_len,
-            skip=args.skip,
-            delim=args.delim,
-            n_coordinates=args.n_coordinates,
-            add_confidence=args.add_confidence,
-        )
-    # Synthetic Dataset
-    elif args.dataset_name == 'synthetic':
-        dset = SynTrajectoryDataset(
-            path,
-            obs_len=args.obs_len,
-        )
+        dsets = []
+        for path in paths:
+            dsets.append(TrajectoryDataset(
+                path,
+                alpha_e=alpha_e,
+                obs_len=args.obs_len,
+                fut_len=args.fut_len,
+                skip=args.skip,
+                delim=args.delim,
+                n_coordinates=args.n_coordinates,
+                add_confidence=args.add_confidence,
+            ))
+        dset = ConcatDataset(dsets)
 
+    else:
+        raise ValueError('Unrecognized dataset name "%s"' % args.dataset_name)
+
+    batch_size = set_batch_size(args.batch_method, args.batch_size, name)
     loader = DataLoader(
         dset,
-        batch_size=args.batch_size // 4 if args.batch_hetero else args.batch_size,
-        shuffle=True if args.batch_hetero else False,
+        batch_size=batch_size,
+        shuffle=args.shuffle,
         num_workers=args.loader_num_workers,
         collate_fn=seq_collate,
         pin_memory=False

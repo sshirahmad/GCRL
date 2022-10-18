@@ -9,7 +9,7 @@ grpcio
 idna
 kiwisolver
 matplotlib
-numpy
+numpy==1.22.0
 oauthlib
 Pillow
 protobuf
@@ -26,3 +26,5 @@ tensorboard-plugin-wit
 typing-extensions
 urllib3
 Werkzeug
+tqdm
+tensorflow
