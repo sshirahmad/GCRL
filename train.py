@@ -167,11 +167,12 @@ def main(args):
             freeze(True, (model.invariant_encoder,))
             freeze(False, (model.variant_encoder, model.variational_mapping, model.theta_to_c, model.past_decoder, model.future_decoder))
 
-        train_all(args, model, optimizers, train_dataset, pretrain_dataset, epoch, training_step, writer, stage='training')
+        train_all(args, model, optimizers, train_dataset, pretrain_dataset, epoch, training_step, train_envs_name,
+                  writer, stage='training')
 
         with torch.no_grad():
             if training_step == 'P2':
-                metric = validate_ade(model, valid_dataset, epoch, training_step, writer, stage='validation', args=args)
+                metric = validate_ade(model, valid_dataset, epoch, training_step,  writer, stage='validation', args=args)
 
             #### EVALUATE ALSO THE TRAINING ADE and the validation loss
             # validate_ade(model, valid_dataset_o, epoch, training_step, writer, stage='validation_o')
@@ -195,7 +196,7 @@ def main(args):
     writer.close()
 
 
-def train_all(args, model, optimizers, train_dataset, pretrain_dataset, epoch, training_step, writer, stage,
+def train_all(args, model, optimizers, train_dataset, pretrain_dataset, epoch, training_step, train_envs_name, writer, stage,
               update=True):
     """
     Train the entire model for an epoch
@@ -216,21 +217,14 @@ def train_all(args, model, optimizers, train_dataset, pretrain_dataset, epoch, t
 
     if args.batch_hetero:
         train_iter = [iter(train_loader) for train_loader in train_dataset['loaders']]
-        losses = AverageMeter("Loss", ":.4f")
-        progress = ProgressMeter(train_dataset['num_batches'], [losses], prefix="")
+        loss_meter = AverageMeter("Loss", ":.4f")
+        progress = ProgressMeter(train_dataset['num_batches'], [loss_meter], prefix="")
 
         for _ in range(train_dataset['num_batches']):
 
-            # reset gradients
-            for opt in optimizers.values():
-                opt.zero_grad()
-
             # compute loss (which depends on the training step)
             batch_loss = []
-            env_embeddings, label_embeddings = [], []  # to store the low dim feat space for contrastive style loss, and their labels
-            pred_embeddings = []  # store all the predictions for each env, to use for consistency loss
             ped_tot = torch.zeros(1).cuda()
-
             # COMPUTE LOSS ON EACH OF THE ENVIRONMENTS
             for env_iter, env_name in zip(train_iter, train_dataset['names']):
                 try:
@@ -241,6 +235,11 @@ def train_all(args, model, optimizers, train_dataset, pretrain_dataset, epoch, t
                 # transfer batch
                 batch = [tensor.cuda() for tensor in batch]
                 (obs_traj, _, obs_traj_rel, fut_traj_rel, seq_start_end) = batch
+
+                # reset gradients
+                for opt in optimizers.values():
+                    opt.zero_grad()
+
                 ped_tot += fut_traj_rel.shape[1]
                 scale = torch.tensor(1.).cuda().requires_grad_()
 
@@ -290,8 +289,68 @@ def train_all(args, model, optimizers, train_dataset, pretrain_dataset, epoch, t
                     if training_step in ['P2']: optimizers['style'].step()
 
             loss_meter.update(loss.item(), ped_tot.item())
-            tbar.set_description(f"Loss: {loss_meter.avg}")
+        progress.display(train_dataset['num_batches'])
         writer.add_scalar(f"{'erm' if training_step != 'P4' else 'style'}_loss/{stage}", loss_meter.avg, epoch)
+
+    else:
+        for train_idx, train_loader in enumerate(train_dataset['loaders']):
+            loss_meter = AverageMeter("Loss", ":.4f")
+            progress = ProgressMeter(len(train_loader), [loss_meter], prefix="Dataset: {:<25}".format(train_envs_name[train_idx]))
+            for batch_idx, batch in enumerate(train_loader):
+                batch = [tensor.cuda() for tensor in batch]
+                (
+                    obs_traj,
+                    fut_traj,
+                    obs_traj_rel,
+                    fut_traj_rel,
+                    seq_start_end,
+                ) = batch
+
+                # reset gradients
+                for opt in optimizers.values():
+                    opt.zero_grad()
+
+                scale = torch.tensor(1.).cuda().requires_grad_()
+
+                if training_step == "P1":
+                    fut_pred_rel = []
+                    for _ in range(args.best_k):
+                        fut_pred_rel += [model(batch, training_step)]
+
+                    # compute variety loss between output and future
+                    l2_loss_rel = torch.stack(
+                        [l2_loss(fut_pred_rel[i] * scale, fut_traj_rel, mode="raw") for i in range(args.best_k)], dim=1)
+
+                    # empirical risk (ERM classic loss)
+                    loss_sum_even, loss_sum_odd = erm_loss(l2_loss_rel, seq_start_end, fut_traj_rel.shape[0])
+                    loss = loss_sum_even + loss_sum_odd
+
+                    # invariance constraint (IRM)
+                    if args.irm and stage == 'training':
+                        loss += irm_loss(loss_sum_even, loss_sum_odd, scale, args)
+
+                # backpropagate if needed
+                if stage == 'training' and update:
+                    loss.backward()
+
+                # choose which optimizer to use depending on the training step
+                if args.finetune and args.finetune != 'all':
+                    if training_step in ['P1', 'P2', 'P3', ] and args.finetune == 'stgat_enc': optimizers['inv'].step()
+                    if training_step in ['P3', 'P6'] and args.finetune == 'decoder': optimizers['decoder'].step()
+                    if training_step in ['P4', 'P6'] and args.finetune in ['style', 'integ+']: optimizers[
+                        'style'].step()
+                    if training_step in ['P5', 'P6'] and args.finetune in ['integ', 'integ+']: optimizers[
+                        'integ'].step()
+                else:
+                    if training_step in ['P1']: optimizers['inv'].step()
+                    if training_step in ['P1', 'P2']: optimizers['future_decoder'].step()
+                    if training_step in ['P2']: optimizers['past_decoder'].step()
+                    if training_step in ['P2']: optimizers['style'].step()
+
+                loss_meter.update(loss.item(), obs_traj.shape[1])
+
+            progress.display(batch_idx+1)
+            writer.add_scalar(f"{'erm' if training_step != 'P4' else 'style'}_loss/{stage}", loss_meter.avg, epoch)
 
 
 def validate_ade(model, valid_dataset, epoch, training_step, writer, stage, write=True, args=None):

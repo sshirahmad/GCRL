@@ -1,49 +1,5 @@
-2022-10-24 23:35:33,931:INFO: Initializing Training Set
-2022-10-24 23:35:38,044:INFO: Initializing Validation Set
-2022-10-24 23:35:54,603:INFO: 
+2022-10-25 00:25:03,851:INFO: Initializing Training Set
+2022-10-25 00:25:07,919:INFO: Initializing Validation Set
+2022-10-25 00:25:42,291:INFO: 
 ===> EPOCH: 1 (P1)
-2022-10-24 23:36:08,656:INFO: - Computing loss (training)
-2022-10-24 23:37:54,341:INFO:  --> Model Saved in ./models/eth/pretrain/P1/5.0/SSE_data_eth_irm[5.0]_epoch_1.pth.tar
-2022-10-24 23:37:54,341:INFO: 
-===> EPOCH: 2 (P1)
-2022-10-24 23:38:08,963:INFO: - Computing loss (training)
-2022-10-24 23:39:40,741:INFO:  --> Model Saved in ./models/eth/pretrain/P1/5.0/SSE_data_eth_irm[5.0]_epoch_2.pth.tar
-2022-10-24 23:39:40,741:INFO: 
-===> EPOCH: 3 (P1)
-2022-10-24 23:39:55,126:INFO: - Computing loss (training)
-2022-10-24 23:41:25,898:INFO:  --> Model Saved in ./models/eth/pretrain/P1/5.0/SSE_data_eth_irm[5.0]_epoch_3.pth.tar
-2022-10-24 23:41:25,898:INFO: 
-===> EPOCH: 4 (P1)
-2022-10-24 23:41:40,841:INFO: - Computing loss (training)
-2022-10-24 23:43:11,815:INFO:  --> Model Saved in ./models/eth/pretrain/P1/5.0/SSE_data_eth_irm[5.0]_epoch_4.pth.tar
-2022-10-24 23:43:11,815:INFO: 
-===> EPOCH: 5 (P1)
-2022-10-24 23:43:27,158:INFO: - Computing loss (training)
-2022-10-24 23:44:56,928:INFO:  --> Model Saved in ./models/eth/pretrain/P1/5.0/SSE_data_eth_irm[5.0]_epoch_5.pth.tar
-2022-10-24 23:44:56,929:INFO: 
-===> EPOCH: 6 (P1)
-2022-10-24 23:45:12,164:INFO: - Computing loss (training)
-2022-10-24 23:46:47,081:INFO:  --> Model Saved in ./models/eth/pretrain/P1/5.0/SSE_data_eth_irm[5.0]_epoch_6.pth.tar
-2022-10-24 23:46:47,081:INFO: 
-===> EPOCH: 7 (P1)
-2022-10-24 23:47:02,795:INFO: - Computing loss (training)
-2022-10-24 23:48:33,227:INFO:  --> Model Saved in ./models/eth/pretrain/P1/5.0/SSE_data_eth_irm[5.0]_epoch_7.pth.tar
-2022-10-24 23:48:33,227:INFO: 
-===> EPOCH: 8 (P1)
-2022-10-24 23:48:49,487:INFO: - Computing loss (training)
-2022-10-24 23:50:21,620:INFO:  --> Model Saved in ./models/eth/pretrain/P1/5.0/SSE_data_eth_irm[5.0]_epoch_8.pth.tar
-2022-10-24 23:50:21,621:INFO: 
-===> EPOCH: 9 (P1)
-2022-10-24 23:50:39,072:INFO: - Computing loss (training)
-2022-10-24 23:52:16,649:INFO:  --> Model Saved in ./models/eth/pretrain/P1/5.0/SSE_data_eth_irm[5.0]_epoch_9.pth.tar
-2022-10-24 23:52:16,649:INFO: 
-===> EPOCH: 10 (P1)
-2022-10-24 23:52:31,750:INFO: - Computing loss (training)
-2022-10-24 23:54:02,124:INFO:  --> Model Saved in ./models/eth/pretrain/P1/5.0/SSE_data_eth_irm[5.0]_epoch_10.pth.tar
-2022-10-24 23:54:02,124:INFO: 
-===> EPOCH: 11 (P1)
-2022-10-24 23:54:18,391:INFO: - Computing loss (training)
-2022-10-24 23:55:50,185:INFO:  --> Model Saved in ./models/eth/pretrain/P1/5.0/SSE_data_eth_irm[5.0]_epoch_11.pth.tar
-2022-10-24 23:55:50,185:INFO: 
-===> EPOCH: 12 (P1)
-2022-10-24 23:56:08,106:INFO: - Computing loss (training)
+2022-10-25 00:25:42,293:INFO: - Computing loss (training)

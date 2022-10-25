@@ -56,11 +56,11 @@ def get_training_parser():
             want to change the styleinteg. Set the --styleinteg param to the value of the checkpoint \
             (to avoid state_dict problems) one you want to load, and then set the new styleinteg value in this parameter ')
     # computation
-    parser.add_argument("--loader_num_workers", default=2, type=int)
+    parser.add_argument("--loader_num_workers", default=1, type=int)
     parser.add_argument("--gpu_num", default="1", type=str)
     # training
     parser.add_argument("--best_k", default=5, type=int)
-    parser.add_argument("--batch_size", default='', type=str)
+    parser.add_argument("--batch_size", default='1', type=str)
     parser.add_argument("--batch_method", default='hom', type=str,
                         help='Use Homogeneous (hom), Heterogeneous (het) or alternated homogeneous (alt) batches during training')
     parser.add_argument("--shuffle", default=True, type=bool)
@@ -111,7 +111,7 @@ def get_training_parser():
     parser.add_argument("--vrex", default=0.0, type=float, help='v-REx parameter (beta)')
 
     parser.add_argument("--complexdecoder", default=True, type=bool, help='')
-    parser.add_argument("--unbiased", default=True, type=bool, help='')
+    parser.add_argument("--unbiased", default=False, type=bool, help='')
 
 
     return parser
