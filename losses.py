@@ -119,29 +119,22 @@ class CustomLoss(nn.Module):
             ped_tot += fut_traj_rel.shape[1]
             scale = torch.tensor(1.).cuda().requires_grad_()
 
-            # compute model output
-            if training_step == 'P6':
-                fut_pred_rel, low_dim = model(batch, training_step)
-                env_embeddings.append(low_dim)
-                label_embeddings.append(torch.tensor(train_dataset['labels'][env_name]))
-                if args.styleconsistency:
-                    pred_embeddings.append(fut_pred_rel)
+            if training_step == "P1":
+                fut_pred_rel = []
+                for _ in range(args.best_k):
+                    fut_pred_rel += [model(batch, training_step)]
 
-            else:
-                fut_pred_rel = model(batch, training_step)
+                # compute variety loss between output and future
+                l2_loss_rel = torch.stack(
+                    [l2_loss(fut_pred_rel[i] * scale, fut_traj_rel, mode="raw") for i in range(args.best_k)], dim=1)
 
-            # compute loss between output and future
-            l2_loss_rel = torch.stack([
-                l2_loss(fut_pred_rel * scale, fut_traj_rel, mode="raw")
-            ], dim=1)
+                # empirical risk (ERM classic loss)
+                loss_sum_even, loss_sum_odd = self.erm_loss(l2_loss_rel, seq_start_end, fut_traj_rel.shape[0])
+                single_env_loss = loss_sum_even + loss_sum_odd
 
-            # empirical risk (ERM classic loss)
-            loss_sum_even, loss_sum_odd = self.erm_loss(l2_loss_rel, seq_start_end, fut_traj_rel.shape[0])
-            single_env_loss = loss_sum_even + loss_sum_odd
-
-            # invariance constraint (IRM)
-            if training_step in ['P1', 'P2', 'P3'] and args.irm and stage == 'training':
-                single_env_loss += self.irm_loss(loss_sum_even, loss_sum_odd, scale, args)
+                # invariance constraint (IRM)
+                if args.irm and stage == 'training':
+                    single_env_loss += self.irm_loss(loss_sum_even, loss_sum_odd, scale, args)
 
             batch_loss.append(single_env_loss)
 
@@ -149,43 +142,9 @@ class CustomLoss(nn.Module):
         loss = torch.zeros(()).cuda()
 
         # content loss
-        if training_step in ['P3', 'P5', 'P6']:
+        if training_step in ['P1', 'P2']:
             batch_loss = torch.stack(batch_loss)
             loss += batch_loss.sum()
-
-        # variance risk extrapolation for content
-        if training_step == 'P3' and args.vrex:
-            loss += batch_loss.var() * args.vrex
-
-        # style contrastive loss
-        if stage == 'training' and (training_step == 'P4' or (training_step == 'P6' and args.contrastive)):
-
-            # if finetuning, need to add the low dim latent spaces of pretraining environments
-            if args.finetune != '' and pretrain_iter and pretrain_dataset and training_step == 'P6' and args.styleconsistency == 0:
-                self.add_feat_spaces_pretraining(model, env_embeddings, label_embeddings, pretrain_iter,
-                                                 pretrain_dataset)
-
-            assert len(label_embeddings) > 1, 'Cannot train contrastive learning with only one label'
-
-            # set to contrastive value if both loss (step 6), to 1 if this is the only loss (step 4)
-            factor = args.contrastive if training_step == 'P6' else 1
-            loss += self.contrastive_loss(torch.stack(env_embeddings), torch.stack(label_embeddings)) * factor
-
-        # style consistency loss: prediction needs to have the style of the env
-        if training_step in ['P6'] and args.styleconsistency:
-
-            cons_embeddings = [t.detach() for t in env_embeddings]
-            cons_labels = [t.detach() for t in label_embeddings] * 2
-
-            for pred_fut_rel in pred_embeddings:
-                pred_fut = relative_to_abs(pred_fut_rel, obs_traj[-1, :, :2])
-                pred_full_path = torch.cat((obs_traj, pred_fut))
-                social_encoded_pred = from_abs_to_social(pred_full_path)
-                low_dim = model.style_encoder(social_encoded_pred, 'low')
-                cons_embeddings.append(low_dim)
-
-            loss += self.contrastive_loss(torch.stack(cons_embeddings),
-                                          torch.stack(cons_labels)) * args.styleconsistency
 
         return loss, ped_tot
 
@@ -230,6 +189,34 @@ class CustomLoss(nn.Module):
 
 criterion = CustomLoss().cuda()
 
+
+def erm_loss(l2_loss_rel, seq_start_end, length_fut):
+    loss_sum_even, loss_sum_odd = torch.zeros(1).cuda(), torch.zeros(1).cuda()
+    even = True
+    for start, end in seq_start_end.data:
+        _l2_loss_rel = torch.narrow(l2_loss_rel, 0, start, end - start)
+        _l2_loss_rel = torch.sum(_l2_loss_rel, dim=0)  # [best_k elements]
+        _l2_loss_rel = torch.min(_l2_loss_rel) / ((length_fut) * (end - start))
+        if even == True:
+            loss_sum_even += _l2_loss_rel
+            even = False
+        else:
+            loss_sum_odd += _l2_loss_rel
+            even = True
+    return loss_sum_even, loss_sum_odd
+
+
+def irm_loss(loss_sum_even, loss_sum_odd, scale, args):
+    if args.unbiased:
+        g1 = torch.autograd.grad(loss_sum_even, [scale], create_graph=True)[0]
+        g2 = torch.autograd.grad(loss_sum_odd, [scale], create_graph=True)[0]
+        inv_constr = g1 * g2
+        additional_loss = inv_constr * args.irm
+    else:
+        grad = torch.autograd.grad(loss_sum_even + loss_sum_odd, [scale], create_graph=True)[0]
+        inv_constr = torch.sum(grad ** 2)
+        additional_loss = inv_constr * args.irm
+    return additional_loss
 
 def standard_style_loss(output_classifier, label):
     # compute the good loss according to classification

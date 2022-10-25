@@ -29,6 +29,7 @@ def get_training_parser():
     parser.add_argument('--testonly', default=0, type=int, help='Only test model. 0 -> training, 1 -> testing, 3 -> testing with refinement') # 0 is normal train, 1 is test, 2 is test with k, 3 is ttr
     # randomness
     parser.add_argument("--seed", type=int, default=72, help="Random seed")
+    parser.add_argument("--num_samples", type=int, default=20, help="Number of samples to calculate MC expectations")
     parser.add_argument("--noise_dim", default=(16,), type=int_tuple)
     parser.add_argument("--noise_type", default="gaussian")
     parser.add_argument("--original_seed", type=int, default=1, help="Seed of original training")
@@ -42,9 +43,10 @@ def get_training_parser():
     parser.add_argument("--alpha", type=float, default=0.2, help="Alpha for the leaky_relu")
     parser.add_argument('--teachingratio', default=0, type=float,
                         help="The probability of using ground truth future trajectories instead of model predictions during training")
-    # architecture (Style)
-    parser.add_argument('--stylefs', type=str, default='all', choices=['all', 'traj', 'graph'])
-    parser.add_argument("--relsocial", action='store_false') # default value true
+    # architecture (VE)
+    parser.add_argument('--latent_dim', type=int, default=16, help="Dimension of latent selection variables")
+    parser.add_argument("--z_dim", type=int, default=16, help="Dimension of z latent variable")
+    parser.add_argument("--c_dim", type=int, default=16, help="Dimension of c latent variable")
     parser.add_argument('--contrastive', default=0, type=float)
     parser.add_argument("--aggrstyle", default='minpol-mean', type=str)
     parser.add_argument("--classification", default=3, type=int)
@@ -57,9 +59,9 @@ def get_training_parser():
     parser.add_argument("--loader_num_workers", default=2, type=int)
     parser.add_argument("--gpu_num", default="1", type=str)
     # training
-    parser.add_argument("--best_k", default=1, type=int)
+    parser.add_argument("--best_k", default=5, type=int)
     parser.add_argument("--batch_size", default='', type=str)
-    parser.add_argument("--batch_method", default='het', type=str,
+    parser.add_argument("--batch_method", default='hom', type=str,
                         help='Use Homogeneous (hom), Heterogeneous (het) or alternated homogeneous (alt) batches during training')
     parser.add_argument("--shuffle", default=True, type=bool)
     # spurious feature
@@ -74,7 +76,7 @@ def get_training_parser():
 
     # general training
     parser.add_argument("--finetune", default="", type=str)
-    parser.add_argument("--num_epochs", default='50-20-50-5-5-10', type=lambda x: int_tuple(x, '-'))  # '150-100-150',
+    parser.add_argument("--num_epochs", default='50-100', type=lambda x: int_tuple(x, '-'))  # '150-100-150',
     parser.add_argument("--resume", default="", type=str, metavar="PATH", help="path to latest checkpoint (default: none)")
     parser.add_argument("--batch_hetero", default=True, type=bool, help='Use Homogeneous/Heterogeneous batches during training')
     parser.add_argument("--tfdir", default='runs', type=str)
@@ -85,10 +87,14 @@ def get_training_parser():
     parser.add_argument('--backclassencoder', default=False, type=bool)
 
     # learning rates
-    parser.add_argument("--lrclass", default=1e-2, type=float, help="initial learning rate for style classifier optimizer")
-    parser.add_argument("--lrstgat", default=1e-3, type=float, help="initial learning rate for stgat optimizer")
-    parser.add_argument("--lrstyle", default=5e-4, type=float, help="initial learning rate for style encoder optimizer")
-    parser.add_argument('--lrinteg', default=0.01, type=float,  help="initial learning rate for the integrator optimizer")
+    parser.add_argument("--lrvar", default=1e-2, type=float, help="initial learning rate for variational encoder optimizer")
+    parser.add_argument("--lrvm", default=1e-3, type=float, help="initial learning rate for variational mapping optimizer")
+    parser.add_argument("--lrcmap", default=5e-4, type=float, help="initial learning rate for theta to c mapping optimizer")
+    parser.add_argument('--lrinv', default=0.01, type=float,  help="initial learning rate for the invariant encoder optimizer")
+    parser.add_argument('--lrfut', default=0.01, type=float,  help="initial learning rate for the future decoder optimizer")
+    parser.add_argument('--lrpast', default=0.01, type=float,  help="initial learning rate for the past decoder optimizer")
+
+
    
     # other parameters to test after
     parser.add_argument('--addloss', default=0, type=float)
@@ -101,7 +107,7 @@ def get_training_parser():
     parser.add_argument('--styleconsistency', default=0, type=float,  help="Adding a loss of style prediction to the training")
     
     # method
-    parser.add_argument("--irm", default=0.0, type=float, help='IRM parameter (lambda)')
+    parser.add_argument("--irm", default=5.0, type=float, help='IRM parameter (lambda)')
     parser.add_argument("--vrex", default=0.0, type=float, help='v-REx parameter (beta)')
 
     parser.add_argument("--complexdecoder", default=True, type=bool, help='')

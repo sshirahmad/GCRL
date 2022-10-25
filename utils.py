@@ -10,6 +10,7 @@ NUMBER_COUPLES = 2
 
 from datetime import datetime
 
+
 class AverageMeter(object):
     """
     Computes and stores the average and current value of a specific metric
@@ -63,7 +64,7 @@ def set_logger(log_path):
 
     if not logger.handlers:
         # Logging to a file
-        fold=log_path.rsplit('/', 1)[0]
+        fold = log_path.rsplit('/', 1)[0]
         if not os.path.exists(fold):
             os.makedirs(fold)
         open(log_path, "w+")
@@ -141,12 +142,12 @@ def get_envs_path(dataset_name, dset_type, filter_envs):
     # Synthetic Dataset
     elif dataset_name in ['synthetic', 'v2', 'v2full', 'v4'] or 'synthetic' in dataset_name:
         envs_name = os.listdir(dset_path)
-        if filter_envs!='':
+        if filter_envs != '':
             filter_envs = [i for i in filter_envs.split('-')]
             envs_name_ = []
             for env_name in envs_name:
                 for filter_env in filter_envs:
-                    if filter_env+'_radius' in env_name:
+                    if filter_env + '_radius' in env_name:
                         envs_name_.append(env_name)
             envs_name = envs_name_
         envs_path = [os.path.join(dset_path, env_name) for env_name in envs_name]
@@ -276,7 +277,7 @@ def set_batch_size(batch_method, batch_sizes, env_name):
     Set the batch size
     '''
     # heterogenous batches
-    if batch_method=='het' or batch_method=='alt':
+    if batch_method == 'het' or batch_method == 'alt':
         if batch_sizes == '':
             # ETH-UCY Dataset
             if env_name == 'hotel':
@@ -310,7 +311,7 @@ def set_batch_size(batch_method, batch_sizes, env_name):
             elif len(batch_sizes) == 1:
                 return batch_sizes[0]
             else:
-                raise ValueError('Express a domain_shift for each of the 5 enviroment or 1 for all.')
+                raise ValueError('Express a batch_size for each of the 5 enviroment or 1 for all.')
 
     # homogeneous batches
     elif batch_method == 'hom':
@@ -358,7 +359,9 @@ def cal_ade_fde(fut_traj, pred_fut_traj, mode='sum'):
     fde = final_displacement_error(pred_fut_traj[-1], fut_traj[-1], mode=mode)
     return ade, fde
 
+
 best_ade = 100
+
 
 def save_checkpoint(state, ade, filename, is_best):
     """
@@ -403,31 +406,46 @@ def get_model_name(args, name='SSE', epoch=None, t_step=None, time=False, olde=N
 
 
 def set_name_method(method):
-    if 's_3' in method: model = 'Baseline'
-    elif 's_6' in method: model = 'Modular'
-    
-    if 'i_0.0' in method: risk = 'ERM'
-    else: risk = f'IRM (λ={method[6:]})'
+    if 's_3' in method:
+        model = 'Baseline'
+    elif 's_6' in method:
+        model = 'Modular'
+
+    if 'i_0.0' in method:
+        risk = 'ERM'
+    else:
+        risk = f'IRM (λ={method[6:]})'
     return f'{model} {risk}'
 
+
 def set_name_env(env):
-    if env in [0.1, 0.3, 0.5]: return 'IID'
-    elif env==0.4: return 'OoD-Inter'
-    elif env==0.6: return 'OoD-Extra'
+    if env in [0.1, 0.3, 0.5]:
+        return 'IID'
+    elif env == 0.4:
+        return 'OoD-Inter'
+    elif env == 0.6:
+        return 'OoD-Extra'
+
 
 def set_name_finetune(finetune):
-    if 'integ' in finetune: return 'Update f only'
-    elif 'all' in finetune: return 'Update Ψ,f,g'
-    elif 'refinement' in finetune: return 'Update f + Refinement'
+    if 'integ' in finetune:
+        return 'Update f only'
+    elif 'all' in finetune:
+        return 'Update Ψ,f,g'
+    elif 'refinement' in finetune:
+        return 'Update f + Refinement'
 
 
 def save_all_model(args, model, optimizers, metric, epoch, training_step):
     checkpoint = {
         'epoch': epoch + 1,
         'state_dicts': {
-            'inv': model.inv_encoder.state_dict(),
-            'style': model.style_encoder.state_dict(),
-            'decoder': model.decoder.state_dict(),
+            'variant_encoder': model.variant_encoder.state_dict(),
+            'variational_mapping': model.variational_mapping.state_dict(),
+            'theta_to_c': model.theta_to_c.state_dict(),
+            'invariant_encoder': model.invariant_encoder.state_dict(),
+            'future_decoder': model.future_decoder.state_dict(),
+            'past_decoder': model.past_decoder.state_dict(),
             # 'decoder_solo': [
             #     model.decoder.pred_lstm_model.state_dict(), model.decoder.pred_hidden2pos.state_dict()
             # ],
@@ -436,22 +454,23 @@ def save_all_model(args, model, optimizers, metric, epoch, training_step):
             key: val.state_dict() for key, val in optimizers.items()
         },
         'metric': metric,
-        'styleinteg': args.styleinteg,
-        'complex': args.complexdecoder
     }
 
-    if args.model_dir: filefolder = f'{args.model_dir}/{training_step}'
-    else: 
-        if args.finetune: phase='finetune'
-        else: phase= 'pretrain'
-        #filefolder = f'./models/{args.dataset_name}/{phase}/{training_step}/{args.irm}/{real_style_integ}'
+    if args.model_dir:
+        filefolder = f'{args.model_dir}/{training_step}'
+    else:
+        if args.finetune:
+            phase = 'finetune'
+        else:
+            phase = 'pretrain'
+        # filefolder = f'./models/{args.dataset_name}/{phase}/{training_step}/{args.irm}/{real_style_integ}'
         filefolder = f'./models/{args.dataset_name}/{phase}/{training_step}/{args.irm}'
 
         if args.finetune: filefolder += f'/{args.finetune}/{args.original_seed}'
 
     # Check whether the specified path exists or not
-    if not os.path.exists(filefolder): os.makedirs(filefolder)  
-   
+    if not os.path.exists(filefolder): os.makedirs(filefolder)
+
     filename = f'{filefolder}/{get_model_name(args, epoch=epoch, t_step=training_step)}.pth.tar'
     torch.save(checkpoint, filename)
     logging.info(f" --> Model Saved in {filename}")
@@ -463,47 +482,47 @@ def load_all_model(args, model, optimizers):
     if os.path.isfile(model_path):
         checkpoint = torch.load(model_path, map_location='cuda')
         args.start_epoch = checkpoint['epoch']
-        
+
         models_checkpoint = checkpoint['state_dicts']
 
         # invariant encoder
         model.inv_encoder.load_state_dict(models_checkpoint['inv'])
-        if optimizers != None: 
+        if optimizers != None:
             optimizers['inv'].load_state_dict(checkpoint['optimizers']['inv'])
             if args.start_epoch >= args.num_epochs[0] + args.num_epochs[1]: update_lr(optimizers['inv'], 5e-3)
 
         # decoder
-        assert(not 'complexdecoder' in checkpoint or args.complexdecoder == checkpoint['complexdecoder'])
+        assert (not 'complexdecoder' in checkpoint or args.complexdecoder == checkpoint['complexdecoder'])
         model.decoder.load_state_dict(models_checkpoint['decoder'])
-        if optimizers != None: 
+        if optimizers != None:
             optimizers['decoder'].load_state_dict(checkpoint['optimizers']['decoder'])
             update_lr(optimizers['decoder'], args.lrstgat)
-            
 
         # style encoder
-        assert(not 'styleinteg' in checkpoint or args.styleinteg == checkpoint['styleinteg'])
+        assert (not 'styleinteg' in checkpoint or args.styleinteg == checkpoint['styleinteg'])
         try:
             model.style_encoder.load_state_dict(models_checkpoint['style'])
-            if optimizers != None: 
+            if optimizers != None:
                 optimizers['style'].load_state_dict(checkpoint['optimizers']['style'])
                 update_lr(optimizers['style'], args.lrstyle)
         except Exception:
             print('Styleinteg was wrongly chosen')
 
-
         # integrator
-        if args.newstyleinteg == '': # keep the curent style integrator
-            if optimizers != None: 
+        if args.newstyleinteg == '':  # keep the curent style integrator
+            if optimizers != None:
                 optimizers['integ'].load_state_dict(checkpoint['optimizers']['integ'])
                 update_lr(optimizers['integ'], args.lrinteg)
 
-        else: # change the style integrator
+        else:  # change the style integrator
             model.decoder.set_integrator(args.newstyleinteg)
-            if optimizers != None: 
-                optimizers['integ'] = torch.optim.Adam([ {"params": model.decoder.style_blocks.parameters(), 'lr': args.lrinteg}]    
-                        ) if args.newstyleinteg != 'none' else get_fake_optim()
+            if optimizers != None:
+                optimizers['integ'] = torch.optim.Adam(
+                    [{"params": model.decoder.style_blocks.parameters(), 'lr': args.lrinteg}]
+                    ) if args.newstyleinteg != 'none' else get_fake_optim()
 
-            logging.info(f'=> loading a model with "{args.styleinteg}" but changed the integrator to "{args.newstyleinteg}"')
+            logging.info(
+                f'=> loading a model with "{args.styleinteg}" but changed the integrator to "{args.newstyleinteg}"')
             args.styleinteg = args.newstyleinteg
 
         logging.info("=> loaded checkpoint '{}' (epoch {})".format(model_path, checkpoint["epoch"]))
@@ -537,6 +556,7 @@ def freeze(freez, models):
             for p in model.parameters():
                 p.requires_grad = not freez
 
+
 def update_lr(opt, lr):
     for param_group in opt.param_groups:
         param_group["lr"] = lr
@@ -546,19 +566,17 @@ def from_abs_to_social(abs_coord):
     res = []
     for f in range(abs_coord.shape[0]):
         sub = []
-        for k in range(abs_coord.shape[1]//NUMBER_PERSONS):
+        for k in range(abs_coord.shape[1] // NUMBER_PERSONS):
             # for i in range(NUMBER_PERSONS):
             #     for j in range(i+1, NUMBER_PERSONS):
 
             #         sub.append(abs_coord[f, k*NUMBER_PERSONS+i]-abs_coord[f, k*NUMBER_PERSONS+j])
 
-
             for i in range(NUMBER_PERSONS):
                 for j in range(NUMBER_PERSONS):  # each possible couple i,j
-                    if i==j: continue
-                    
-                    sub.append(abs_coord[f, k*NUMBER_PERSONS+i]-abs_coord[f, k*NUMBER_PERSONS+j])
+                    if i == j: continue
 
+                    sub.append(abs_coord[f, k * NUMBER_PERSONS + i] - abs_coord[f, k * NUMBER_PERSONS + j])
 
                     #     augm_data[idx, count, x, k] = data[idx, i, x, k] - data[idx, j, x, k]
                     # count += 1

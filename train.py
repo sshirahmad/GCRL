@@ -4,8 +4,8 @@ from tqdm import tqdm
 from loader import data_loader
 from parser_file import get_training_parser
 from utils import *
-from models import CausalMotionModel
-from losses import criterion
+from models import CRMF
+from losses import erm_loss, irm_loss
 from visualize import draw_image, draw_solo, draw_solo_all
 
 
@@ -62,30 +62,37 @@ def main(args):
     for dataset, ds_name in zip((train_dataset, valid_dataset, pretrain_dataset), ('Train', 'Validation', 'Pretrain')):
         print(ds_name + ' dataset: ', dataset)
 
+    args.n_units = (
+        [args.traj_lstm_hidden_size]
+        + [int(x) for x in args.hidden_units.strip().split(",")]
+        + [args.graph_lstm_hidden_size]
+    )
+    args.n_heads = [int(x) for x in args.heads.strip().split(",")]
+
     # create the model
-    model = CausalMotionModel(args).cuda()
+    model = CRMF(args).cuda()
 
     # style related optimizer
     optimizers = {
         'style': torch.optim.Adam(
             [
-                {"params": model.style_encoder.encoder.parameters(), "lr": args.lrstyle},
-                {"params": model.style_encoder.hat_classifier.parameters(), 'lr': args.lrclass},
+                {"params": model.variant_encoder.parameters(), "lr": args.lrvar},
+                {"params": model.variational_mapping.parameters(), 'lr': args.lrvm},
+                {"params": model.theta_to_c.parameters(), 'lr': args.lrcmap}
             ]
         ),
         'inv': torch.optim.Adam(
-            model.inv_encoder.parameters(),
-            lr=args.lrstgat,
+            model.invariant_encoder.parameters(),
+            lr=args.lrinv,
         ),
-        'decoder': torch.optim.Adam(
-            model.decoder.parameters(),
-            lr=args.lrstgat,
+        'future_decoder': torch.optim.Adam(
+            model.future_decoder.parameters(),
+            lr=args.lrfut,
         ),
-        'integ': (torch.optim.Adam(
-            [
-                {"params": model.decoder.style_blocks.parameters(), 'lr': args.lrinteg},
-            ]
-        ) if model.decoder.style_blocks != None else torch.optim.Adam(model.decoder.parameters()))
+        'past_decoder': torch.optim.Adam(
+            model.past_decoder.parameters(),
+            lr=args.lrpast,
+        )
     }
 
     if args.resume:
@@ -93,14 +100,14 @@ def main(args):
         model.cuda()
 
     # TRAINING HAPPENS IN 6 STEPS:
-    assert (len(args.num_epochs) == 6)
+    assert (len(args.num_epochs) == 2)
     # 1. (deprecated, was used for first step of stgat training)
     # 2. (deprecated, was used for second step of stgat training)
     # 3. initial training of the entire model, without any style input
     # 4. train style encoder using classifier, separate from pipeline
     # 5. train the integrator (that joins the style and the invariant features)
     # 6. fine-tune the integrator, decoder, style encoder with everything working
-    training_steps = {f'P{i}': [sum(args.num_epochs[:i - 1]), sum(args.num_epochs[:i])] for i in range(1, 7)}
+    training_steps = {f'P{i}': [sum(args.num_epochs[:i - 1]), sum(args.num_epochs[:i])] for i in range(1, 3)}
     print(training_steps)
 
     def get_training_step(epoch):
@@ -153,24 +160,18 @@ def main(args):
         training_step = get_training_step(epoch)
         logging.info(f"\n===> EPOCH: {epoch} ({training_step})")
 
-        if training_step == 'P5':
-            freeze(True, (model.inv_encoder, model.style_encoder, model.decoder.mlp1, model.decoder.mlp2))
-            freeze(False, (model.decoder.style_blocks,))
-        elif training_step == 'P6':
-            freeze(True, (model.inv_encoder,))
-            freeze(False, (model.decoder, model.style_encoder))
+        if training_step == 'P1':
+            freeze(True, (model.variant_encoder, model.variational_mapping, model.theta_to_c, model.past_decoder))
+            freeze(False, (model.invariant_encoder, model.future_decoder))
+        elif training_step == 'P2':
+            freeze(True, (model.invariant_encoder,))
+            freeze(False, (model.variant_encoder, model.variational_mapping, model.theta_to_c, model.past_decoder, model.future_decoder))
 
         train_all(args, model, optimizers, train_dataset, pretrain_dataset, epoch, training_step, writer, stage='training')
 
-        if args.contrastive and training_step == 'P4':
-            model.style_encoder.train_er_classifier(train_dataset)
-
         with torch.no_grad():
-            if training_step == 'P4':
-                metric = validate_er(model, valid_dataset, epoch, writer, stage='validation')
-            elif training_step in ['P3', 'P5', 'P6']:
-                metric = validate_ade(model, valid_dataset, epoch, training_step, writer, stage='validation',
-                                      rp=ref_pictures, args=args)
+            if training_step == 'P2':
+                metric = validate_ade(model, valid_dataset, epoch, training_step, writer, stage='validation', args=args)
 
             #### EVALUATE ALSO THE TRAINING ADE and the validation loss
             # validate_ade(model, valid_dataset_o, epoch, training_step, writer, stage='validation_o')
@@ -206,47 +207,94 @@ def train_all(args, model, optimizers, train_dataset, pretrain_dataset, epoch, t
         - stage (str): either 'validation' or 'training': says on which dataset we calculate the loss (and only backprop on 'training')
     """
     model.train()
+    logging.info(f"- Computing loss ({stage})")
 
     assert (stage in ['training', 'validation'])
     train_iter = [iter(loader) for loader in train_dataset['loaders']]
     pretrain_iter = [iter(loader) for loader in pretrain_dataset['loaders']] if pretrain_dataset else None
     loss_meter = AverageMeter("Loss", ":.4f")
 
-    logging.info(f"- Computing loss ({stage})")
-    tbar = tqdm(range(train_dataset['num_batches']))
-    for _ in tbar:
+    if args.batch_hetero:
+        train_iter = [iter(train_loader) for train_loader in train_dataset['loaders']]
+        losses = AverageMeter("Loss", ":.4f")
+        progress = ProgressMeter(train_dataset['num_batches'], [losses], prefix="")
 
-        # reset gradients
-        for opt in optimizers.values():
-            opt.zero_grad()
+        for _ in range(train_dataset['num_batches']):
 
-        # compute loss (which depends on the training step)
-        loss, ped_tot = criterion(model, train_iter, pretrain_iter, train_dataset, pretrain_dataset, training_step,
-                                  args, stage)
+            # reset gradients
+            for opt in optimizers.values():
+                opt.zero_grad()
 
-        # backpropagate if needed
-        if stage == 'training' and update:
-            loss.backward()
+            # compute loss (which depends on the training step)
+            batch_loss = []
+            env_embeddings, label_embeddings = [], []  # to store the low dim feat space for contrastive style loss, and their labels
+            pred_embeddings = []  # store all the predictions for each env, to use for consistency loss
+            ped_tot = torch.zeros(1).cuda()
 
-            # choose which optimizer to use depending on the training step
-            if args.finetune and args.finetune != 'all':
-                if training_step in ['P1', 'P2', 'P3', ] and args.finetune == 'stgat_enc': optimizers['inv'].step()
-                if training_step in ['P3', 'P6'] and args.finetune == 'decoder': optimizers['decoder'].step()
-                if training_step in ['P4', 'P6'] and args.finetune in ['style', 'integ+']: optimizers['style'].step()
-                if training_step in ['P5', 'P6'] and args.finetune in ['integ', 'integ+']: optimizers['integ'].step()
-            else:
-                if training_step in ['P1', 'P2', 'P3', ]: optimizers['inv'].step()
-                if training_step in ['P3', 'P6']: optimizers['decoder'].step()
-                if training_step in ['P4', 'P6']: optimizers['style'].step()
-                if training_step in ['P5', 'P6']: optimizers['integ'].step()
+            # COMPUTE LOSS ON EACH OF THE ENVIRONMENTS
+            for env_iter, env_name in zip(train_iter, train_dataset['names']):
+                try:
+                    batch = next(env_iter)
+                except StopIteration:
+                    raise RuntimeError()
 
-        loss_meter.update(loss.item(), ped_tot.item())
-        tbar.set_description(f"Loss: {loss_meter.avg}")
-    writer.add_scalar(f"{'erm' if training_step != 'P4' else 'style'}_loss/{stage}", loss_meter.avg, epoch)
+                # transfer batch
+                batch = [tensor.cuda() for tensor in batch]
+                (obs_traj, _, obs_traj_rel, fut_traj_rel, seq_start_end) = batch
+                ped_tot += fut_traj_rel.shape[1]
+                scale = torch.tensor(1.).cuda().requires_grad_()
+
+                if training_step == "P1":
+                    fut_pred_rel = []
+                    for _ in range(args.best_k):
+                        fut_pred_rel += [model(batch, training_step)]
+
+                    # compute variety loss between output and future
+                    l2_loss_rel = torch.stack(
+                        [l2_loss(fut_pred_rel[i] * scale, fut_traj_rel, mode="raw") for i in range(args.best_k)], dim=1)
+
+                    # empirical risk (ERM classic loss)
+                    loss_sum_even, loss_sum_odd = erm_loss(l2_loss_rel, seq_start_end, fut_traj_rel.shape[0])
+                    single_env_loss = loss_sum_even + loss_sum_odd
+
+                    # invariance constraint (IRM)
+                    if args.irm and stage == 'training':
+                        single_env_loss += irm_loss(loss_sum_even, loss_sum_odd, scale, args)
+
+                batch_loss.append(single_env_loss)
+
+            # COMPUTE THE TOTAL LOSS ON ALL ENVIRONMENTS
+            loss = torch.zeros(()).cuda()
+
+            # content loss
+            if training_step in ['P1', 'P2']:
+                batch_loss = torch.stack(batch_loss)
+                loss += batch_loss.sum()
+
+            # backpropagate if needed
+            if stage == 'training' and update:
+                loss.backward()
+
+                # choose which optimizer to use depending on the training step
+                if args.finetune and args.finetune != 'all':
+                    if training_step in ['P1', 'P2', 'P3', ] and args.finetune == 'stgat_enc': optimizers['inv'].step()
+                    if training_step in ['P3', 'P6'] and args.finetune == 'decoder': optimizers['decoder'].step()
+                    if training_step in ['P4', 'P6'] and args.finetune in ['style', 'integ+']: optimizers[
+                        'style'].step()
+                    if training_step in ['P5', 'P6'] and args.finetune in ['integ', 'integ+']: optimizers[
+                        'integ'].step()
+                else:
+                    if training_step in ['P1']: optimizers['inv'].step()
+                    if training_step in ['P1', 'P2']: optimizers['future_decoder'].step()
+                    if training_step in ['P2']: optimizers['past_decoder'].step()
+                    if training_step in ['P2']: optimizers['style'].step()
+
+            loss_meter.update(loss.item(), ped_tot.item())
+            tbar.set_description(f"Loss: {loss_meter.avg}")
+        writer.add_scalar(f"{'erm' if training_step != 'P4' else 'style'}_loss/{stage}", loss_meter.avg, epoch)
 
 
-def validate_ade(model, valid_dataset, epoch, training_step, writer, stage, rp=None, force=False, write=True,
-                 args=None):
+def validate_ade(model, valid_dataset, epoch, training_step, writer, stage, write=True, args=None):
     """
     Evaluate the performances on the validation set
 
@@ -303,39 +351,7 @@ def validate_ade(model, valid_dataset, epoch, training_step, writer, stage, rp=N
     return ade_tot_meter.avg
 
 
-def validate_er(model, valid_dataset, epoch, writer, stage):
-    """
-    Evaluate the performances on the validation set
-
-    Args:
-        - stage (str): either 'validation' or 'training': says on which dataset the metrics are computed
-    """
-    model.eval()
-
-    assert (stage in ['training', 'validation'])
-    er_tot_meter = AverageMeter('error_rate_tot', ":.4f")
-
-    logging.info(f"- Computing style error_rate ({stage})")
-    with torch.no_grad():
-        for loader, loader_name in zip(valid_dataset['loaders'], valid_dataset['names']):
-            er_meter = AverageMeter('error_rate', ":.4f")
-            label = valid_dataset['labels'][loader_name]
-
-            for batch in loader:
-                batch = [tensor.cuda() for tensor in batch]
-                output = model(batch, 'P4')
-                label_preds = output.argmax(dim=-1)
-
-                metric = ((label_preds != label) * 1).to(float).mean()
-                er_meter.update(metric.item()), er_tot_meter.update(metric.item())
-
-            logging.info(f'\t\t error_rate on {loader_name:<25} dataset:\t {er_meter.avg}')
-        logging.info(f"average {stage} error_rate:\t  {er_tot_meter.avg:.4f}")
-        writer.add_scalar(f"error_rate/{stage}", er_tot_meter.avg, epoch)
-    return er_tot_meter.avg
-
-
-def train_latent_space(args, model, train_dataset, pretrain_dataset, writer):
+def train_latent_space(args, model, train_dataset, pretrain_dataset, writer): #TODO train theta_to_c
     freeze(True, (model,))  # freeze all models, it's test time
     model.eval()
     ade_tot_meters = [AverageMeter('error_rate_tot', ":.4f") for _ in range(args.ttr + 1)]
