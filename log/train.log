@@ -1,5 +1,2 @@
-2022-10-25 00:25:03,851:INFO: Initializing Training Set
-2022-10-25 00:25:07,919:INFO: Initializing Validation Set
-2022-10-25 00:25:42,291:INFO: 
-===> EPOCH: 1 (P1)
-2022-10-25 00:25:42,293:INFO: - Computing loss (training)
+2022-10-25 22:45:53,454:INFO: Initializing Training Set
+2022-10-25 22:45:57,537:INFO: Initializing Validation Set

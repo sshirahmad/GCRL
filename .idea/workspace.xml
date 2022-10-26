@@ -3,9 +3,70 @@
   <component name="ChangeListManager">
     <list default="true" id="e76be7d3-4dd7-4693-b1d6-58f0675c9dbc" name="Changes" comment="Working on CRMF">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/images/ade.png" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/images/fde.png" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/images/finetune.png" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/images/qualitative.png" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/images/refinement.png" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/images/visualization/scene_44_00_sample_00_ds_0_factual_irm_5.0.png" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/images/visualization/scene_44_00_sample_00_ds_32_factual_irm_5.0.png" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/images/visualization/scene_44_00_sample_01_ds_0_factual_irm_5.0.png" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/images/visualization/scene_44_00_sample_01_ds_32_factual_irm_5.0.png" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/images/visualization/scene_44_00_sample_02_ds_0_factual_irm_5.0.png" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/images/visualization/scene_44_00_sample_02_ds_32_factual_irm_5.0.png" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/images/visualization/scene_44_00_sample_03_ds_0_factual_irm_5.0.png" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/images/visualization/scene_44_00_sample_03_ds_32_factual_irm_5.0.png" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/images/visualization/scene_44_00_sample_04_ds_0_factual_irm_5.0.png" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/images/visualization/scene_44_00_sample_04_ds_32_factual_irm_5.0.png" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/images/visualization/scene_44_00_sample_05_ds_0_factual_irm_5.0.png" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/images/visualization/scene_44_00_sample_05_ds_32_factual_irm_5.0.png" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/images/visualization/scene_44_00_sample_06_ds_0_factual_irm_5.0.png" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/images/visualization/scene_44_00_sample_06_ds_32_factual_irm_5.0.png" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/images/visualization/scene_44_00_sample_07_ds_0_factual_irm_5.0.png" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/images/visualization/scene_44_00_sample_07_ds_32_factual_irm_5.0.png" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/images/visualization/scene_44_00_sample_08_ds_0_factual_irm_5.0.png" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/images/visualization/scene_44_00_sample_08_ds_32_factual_irm_5.0.png" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/images/visualization/scene_44_00_sample_09_ds_0_factual_irm_5.0.png" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/images/visualization/scene_44_00_sample_09_ds_32_factual_irm_5.0.png" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/images/visualization/scene_44_00_sample_10_ds_0_factual_irm_5.0.png" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/images/visualization/scene_44_00_sample_10_ds_32_factual_irm_5.0.png" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/images/visualization/scene_44_00_sample_11_ds_0_factual_irm_5.0.png" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/images/visualization/scene_44_00_sample_11_ds_32_factual_irm_5.0.png" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/images/visualization/scene_44_00_sample_12_ds_0_factual_irm_5.0.png" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/images/visualization/scene_44_00_sample_12_ds_32_factual_irm_5.0.png" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/images/visualization/scene_44_00_sample_13_ds_0_factual_irm_5.0.png" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/images/visualization/scene_44_00_sample_13_ds_32_factual_irm_5.0.png" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/images/visualization/scene_44_00_sample_14_ds_0_factual_irm_5.0.png" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/images/visualization/scene_44_00_sample_14_ds_32_factual_irm_5.0.png" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/images/visualization/scene_44_00_sample_15_ds_0_factual_irm_5.0.png" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/images/visualization/scene_44_00_sample_15_ds_32_factual_irm_5.0.png" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/images/visualization/scene_44_00_sample_16_ds_0_factual_irm_5.0.png" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/images/visualization/scene_44_00_sample_16_ds_32_factual_irm_5.0.png" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/images/visualization/scene_44_00_sample_17_ds_0_factual_irm_5.0.png" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/images/visualization/scene_44_00_sample_17_ds_32_factual_irm_5.0.png" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/images/visualization/scene_44_00_sample_18_ds_0_factual_irm_5.0.png" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/images/visualization/scene_44_00_sample_18_ds_32_factual_irm_5.0.png" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/images/visualization/scene_44_00_sample_19_ds_0_factual_irm_5.0.png" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/images/visualization/scene_44_00_sample_19_ds_32_factual_irm_5.0.png" beforeDir="false" />
       <change beforePath="$PROJECT_DIR$/log/train.log" beforeDir="false" afterPath="$PROJECT_DIR$/log/train.log" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/models.py" beforeDir="false" afterPath="$PROJECT_DIR$/models.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/parser_file.py" beforeDir="false" afterPath="$PROJECT_DIR$/parser_file.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/runs/SSE_data_eth_irm[0.0]/events.out.tfevents.1666036531.Predator-Shayan.8288.0" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/runs/SSE_data_eth_irm[0.0]/events.out.tfevents.1666036586.Predator-Shayan.17248.0" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/runs/SSE_data_eth_irm[0.0]/events.out.tfevents.1666036931.Predator-Shayan.18960.0" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/runs/SSE_data_eth_irm[0.0]/events.out.tfevents.1666037998.Predator-Shayan.21020.0" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/runs/SSE_data_eth_irm[0.0]/events.out.tfevents.1666038035.Predator-Shayan.9724.0" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/runs/SSE_data_eth_irm[0.0]/events.out.tfevents.1666038212.Predator-Shayan.8276.0" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/runs/SSE_data_eth_irm[0.0]/events.out.tfevents.1666038348.Predator-Shayan.15060.0" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/runs/SSE_data_eth_irm[0.0]/events.out.tfevents.1666038831.Predator-Shayan.13280.0" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/runs/SSE_data_eth_irm[0.0]/events.out.tfevents.1666039494.Predator-Shayan.23140.0" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/runs/SSE_data_eth_irm[0.0]/events.out.tfevents.1666039953.Predator-Shayan.6620.0" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/runs/SSE_data_eth_irm[0.0]/events.out.tfevents.1666040211.Predator-Shayan.18360.0" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/runs/SSE_data_eth_irm[0.0]/events.out.tfevents.1666040347.Predator-Shayan.2356.0" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/runs/SSE_data_eth_irm[0.0]/events.out.tfevents.1666040670.Predator-Shayan.11700.0" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/runs/SSE_data_eth_irm[0.0]/events.out.tfevents.1666041075.Predator-Shayan.28096.0" beforeDir="false" />
       <change beforePath="$PROJECT_DIR$/train.py" beforeDir="false" afterPath="$PROJECT_DIR$/train.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/utils.py" beforeDir="false" afterPath="$PROJECT_DIR$/utils.py" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -16,6 +77,7 @@
     <option name="RECENT_TEMPLATES">
       <list>
         <option value="Python Script" />
+        <option value="Jupyter Notebook" />
       </list>
     </option>
   </component>
@@ -36,7 +98,7 @@
     "RunOnceActivity.OpenProjectViewOnStart": "true",
     "RunOnceActivity.ShowReadmeOnStart": "true",
     "WebServerToolWindowFactoryState": "false",
-    "last_opened_file_path": "C:/UWaterloo/PhD thesis/motion forecasting/codes/causalmotion-main/spurious/train.py",
+    "last_opened_file_path": "C:/MSc_thesis/Pytorch_Codes/det3d/models/bbox_heads/yolov3_head.py",
     "nodejs_package_manager_path": "npm",
     "settings.editor.selected.configurable": "com.jetbrains.python.configuration.PyActiveSdkModuleConfigurable"
   }
@@ -82,7 +144,8 @@
       <workItem from="1665954562277" duration="30568000" />
       <workItem from="1666112580629" duration="806000" />
       <workItem from="1666120348898" duration="9053000" />
-      <workItem from="1666641798002" duration="27458000" />
+      <workItem from="1666641798002" duration="27576000" />
+      <workItem from="1666722038790" duration="28392000" />
     </task>
     <task id="LOCAL-00001" summary="Working on CRMF">
       <created>1666058381006</created>
@@ -112,7 +175,14 @@
       <option name="project" value="LOCAL" />
       <updated>1666670220428</updated>
     </task>
-    <option name="localTasksCounter" value="5" />
+    <task id="LOCAL-00005" summary="Working on CRMF">
+      <created>1666672044327</created>
+      <option name="number" value="00005" />
+      <option name="presentableId" value="LOCAL-00005" />
+      <option name="project" value="LOCAL" />
+      <updated>1666672044327</updated>
+    </task>
+    <option name="localTasksCounter" value="6" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
@@ -143,7 +213,7 @@
         </line-breakpoint>
         <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
           <url>file://$PROJECT_DIR$/utils.py</url>
-          <line>432</line>
+          <line>433</line>
           <option name="timeStamp" value="31" />
         </line-breakpoint>
         <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
@@ -151,7 +221,19 @@
           <line>211</line>
           <option name="timeStamp" value="34" />
         </line-breakpoint>
+        <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
+          <url>file://$PROJECT_DIR$/models.py</url>
+          <line>312</line>
+          <option name="timeStamp" value="88" />
+        </line-breakpoint>
       </breakpoints>
+      <default-breakpoints>
+        <breakpoint type="python-exception">
+          <properties notifyOnTerminate="true" exception="BaseException">
+            <option name="notifyOnTerminate" value="true" />
+          </properties>
+        </breakpoint>
+      </default-breakpoints>
     </breakpoint-manager>
     <watches-manager>
       <configuration name="PythonConfigurationType">
@@ -160,6 +242,6 @@
     </watches-manager>
   </component>
   <component name="com.intellij.coverage.CoverageDataManagerImpl">
-    <SUITE FILE_PATH="coverage/CRMF$train.coverage" NAME="train Coverage Results" MODIFIED="1666671898873" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
+    <SUITE FILE_PATH="coverage/CRMF$train.coverage" NAME="train Coverage Results" MODIFIED="1666752348191" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
   </component>
 </project>

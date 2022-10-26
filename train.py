@@ -1,3 +1,4 @@
+import torch
 from torch.utils.tensorboard import SummaryWriter
 from tqdm import tqdm
 
@@ -63,14 +64,16 @@ def main(args):
         print(ds_name + ' dataset: ', dataset)
 
     args.n_units = (
-        [args.traj_lstm_hidden_size]
-        + [int(x) for x in args.hidden_units.strip().split(",")]
-        + [args.graph_lstm_hidden_size]
+            [args.traj_lstm_hidden_size]
+            + [int(x) for x in args.hidden_units.strip().split(",")]
+            + [args.graph_lstm_hidden_size]
     )
     args.n_heads = [int(x) for x in args.heads.strip().split(",")]
 
     # create the model
-    model = CRMF(args).cuda()
+    model = CRMF(args)
+    sigma_recon = torch.nn.Parameter(torch.tensor([10.0]))
+    sigma_pred = torch.nn.Parameter(torch.tensor([0.001]))
 
     # style related optimizer
     optimizers = {
@@ -78,7 +81,8 @@ def main(args):
             [
                 {"params": model.variant_encoder.parameters(), "lr": args.lrvar},
                 {"params": model.variational_mapping.parameters(), 'lr': args.lrvm},
-                {"params": model.theta_to_c.parameters(), 'lr': args.lrcmap}
+                {"params": model.theta_to_c.parameters(), 'lr': args.lrcmap},
+                {"params": [sigma_recon, sigma_pred], 'lr': args.lrcmap}
             ]
         ),
         'inv': torch.optim.Adam(
@@ -95,6 +99,9 @@ def main(args):
         )
     }
 
+    model.cuda()
+    sigma_pred = sigma_pred.cuda()
+    sigma_recon = sigma_recon.cuda()
     if args.resume:
         load_all_model(args, model, optimizers)
         model.cuda()
@@ -158,6 +165,8 @@ def main(args):
     for epoch in range(args.start_epoch, sum(args.num_epochs) + 1):
 
         training_step = get_training_step(epoch)
+        if training_step == "P1":
+            continue
         logging.info(f"\n===> EPOCH: {epoch} ({training_step})")
 
         if training_step == 'P1':
@@ -165,14 +174,15 @@ def main(args):
             freeze(False, (model.invariant_encoder, model.future_decoder))
         elif training_step == 'P2':
             freeze(True, (model.invariant_encoder,))
-            freeze(False, (model.variant_encoder, model.variational_mapping, model.theta_to_c, model.past_decoder, model.future_decoder))
+            freeze(False, (model.variant_encoder, model.variational_mapping, model.theta_to_c, model.past_decoder,
+                           model.future_decoder))
 
         train_all(args, model, optimizers, train_dataset, pretrain_dataset, epoch, training_step, train_envs_name,
-                  writer, stage='training')
+                  writer, sigma_pred, sigma_recon, stage='training')
 
-        with torch.no_grad():
-            if training_step == 'P2':
-                metric = validate_ade(model, valid_dataset, epoch, training_step,  writer, stage='validation', args=args)
+        # with torch.no_grad():
+        #     if training_step == 'P2':
+        #         metric = validate_ade(model, valid_dataset, epoch, training_step, writer, stage='validation', args=args)
 
             #### EVALUATE ALSO THE TRAINING ADE and the validation loss
             # validate_ade(model, valid_dataset_o, epoch, training_step, writer, stage='validation_o')
@@ -196,7 +206,8 @@ def main(args):
     writer.close()
 
 
-def train_all(args, model, optimizers, train_dataset, pretrain_dataset, epoch, training_step, train_envs_name, writer, stage,
+def train_all(args, model, optimizers, train_dataset, pretrain_dataset, epoch, training_step, train_envs_name, writer, sigma_pred, sigma_recon,
+              stage,
               update=True):
     """
     Train the entire model for an epoch
@@ -211,11 +222,8 @@ def train_all(args, model, optimizers, train_dataset, pretrain_dataset, epoch, t
     logging.info(f"- Computing loss ({stage})")
 
     assert (stage in ['training', 'validation'])
-    train_iter = [iter(loader) for loader in train_dataset['loaders']]
-    pretrain_iter = [iter(loader) for loader in pretrain_dataset['loaders']] if pretrain_dataset else None
-    loss_meter = AverageMeter("Loss", ":.4f")
 
-    if args.batch_hetero:
+    if args.batch_method == "het" or args.batch_method == "alt":
         train_iter = [iter(train_loader) for train_loader in train_dataset['loaders']]
         loss_meter = AverageMeter("Loss", ":.4f")
         progress = ProgressMeter(train_dataset['num_batches'], [loss_meter], prefix="")
@@ -293,9 +301,11 @@ def train_all(args, model, optimizers, train_dataset, pretrain_dataset, epoch, t
         writer.add_scalar(f"{'erm' if training_step != 'P4' else 'style'}_loss/{stage}", loss_meter.avg, epoch)
 
     else:
+        total_loss = AverageMeter("Loss", ":.4f")
         for train_idx, train_loader in enumerate(train_dataset['loaders']):
             loss_meter = AverageMeter("Loss", ":.4f")
-            progress = ProgressMeter(len(train_loader), [loss_meter], prefix="Dataset: {:<25}".format(train_envs_name[train_idx]))
+            progress = ProgressMeter(len(train_loader), [loss_meter],
+                                     prefix="Dataset: {:<20}".format(train_envs_name[train_idx]))
             for batch_idx, batch in enumerate(train_loader):
                 batch = [tensor.cuda() for tensor in batch]
                 (
@@ -329,6 +339,18 @@ def train_all(args, model, optimizers, train_dataset, pretrain_dataset, epoch, t
                     if args.irm and stage == 'training':
                         loss += irm_loss(loss_sum_even, loss_sum_odd, scale, args)
 
+                else:
+
+                    q_ygx, A1, A2, pred_past_rel = model(batch, training_step)
+                    l2_loss_reconst = l2_loss(pred_past_rel, obs_traj_rel, mode="raw")
+
+                    loss_sum_even, loss_sum_odd = erm_loss(torch.log(q_ygx), seq_start_end, fut_traj_rel.shape[0])
+                    predict_loss = loss_sum_even + loss_sum_odd
+                    loss_sum_even, loss_sum_odd = erm_loss(torch.multiply(A1, l2_loss_reconst) + A2, seq_start_end, obs_traj_rel.shape[0])
+                    reconst_loss = loss_sum_even + loss_sum_odd
+
+                    loss = sigma_pred * predict_loss + sigma_recon * reconst_loss
+
                 # backpropagate if needed
                 if stage == 'training' and update:
                     loss.backward()
@@ -347,10 +369,11 @@ def train_all(args, model, optimizers, train_dataset, pretrain_dataset, epoch, t
                     if training_step in ['P2']: optimizers['past_decoder'].step()
                     if training_step in ['P2']: optimizers['style'].step()
 
+                total_loss.update(loss.item(), obs_traj.shape[1])
                 loss_meter.update(loss.item(), obs_traj.shape[1])
 
-            progress.display(batch_idx+1)
-            writer.add_scalar(f"{'erm' if training_step != 'P4' else 'style'}_loss/{stage}", loss_meter.avg, epoch)
+                progress.display(batch_idx + 1)
+        writer.add_scalar(f"{'irm' if training_step == 'P1' else 'variational'}_loss/{stage}", total_loss.avg, epoch)
 
 
 def validate_ade(model, valid_dataset, epoch, training_step, writer, stage, write=True, args=None):
@@ -408,111 +431,6 @@ def validate_ade(model, valid_dataset, epoch, training_step, writer, stage, writ
     #     writer.add_image("Some paths", array, epoch)
 
     return ade_tot_meter.avg
-
-
-def train_latent_space(args, model, train_dataset, pretrain_dataset, writer): #TODO train theta_to_c
-    freeze(True, (model,))  # freeze all models, it's test time
-    model.eval()
-    ade_tot_meters = [AverageMeter('error_rate_tot', ":.4f") for _ in range(args.ttr + 1)]
-    loss_tot_meters = [AverageMeter('loss_meter', ":.4f") for _ in range(args.ttr + 1)]
-
-    logging.info(f"- Optimizing latent spaces ")
-
-    for loader, loader_name in zip(train_dataset['loaders'], train_dataset['names']):
-        label = train_dataset['labels'][loader_name]
-
-        for idx, batch in enumerate(loader):
-
-            # get this batch
-            batch = [tensor.cuda() for tensor in batch]
-            (obs_traj, fut_traj, _, _, _, style_input, _) = batch
-
-            # fig, array = draw_image([[obs_traj, fut_traj, fut_traj]])
-            # writer.add_image("RefImages", array, 0)
-            # return
-
-            # encode the latent spaces that we'll optimize, create optimizer
-            inv_latent_space = model.inv_encoder(obs_traj)
-            inv_latent_space = inv_latent_space.detach()
-            inv_latent_space.requires_grad = True
-            opt = torch.optim.Adam((inv_latent_space,), lr=args.ttrlr)
-
-            # encode the ground truth style that we'll used as goal
-            ref_low_dim, style_encoding = model.style_encoder(style_input, 'both')
-            ref_low_dim = ref_low_dim.detach()
-
-            if args.wrongstyle:
-                print(pretrain_dataset['names'])
-                other_style_input = next(iter(pretrain_dataset['loaders'][2]))[5].cuda()
-                other_ref_low_dim, _ = model.style_encoder(other_style_input, 'both')
-                other_ref_low_dim = other_ref_low_dim.detach()
-                lab_tensor = torch.stack((torch.tensor(label).cuda(), torch.tensor(label + 1).cuda()), dim=0)
-            else:
-                lab_tensor = torch.tensor(label).cuda().unsqueeze(0)
-
-            wot_num = 64
-            evolutions = [[] for _ in range(wot_num)]  # store the predictions at each step for visualization
-
-            for wto in tqdm(range(wot_num)):  # we optimize seq per seq. ID of the seq we'll optimize
-
-                for k in range(args.ttr):  # number of steps of optimization
-
-                    opt.zero_grad()
-
-                    # do the prediction, compute the low dim style space of the prediction
-                    traj_pred_rel_k = model.decoder(inv_latent_space, style_encoding)
-                    traj_pred_k = relative_to_abs(traj_pred_rel_k, obs_traj[-1, :, :2])
-                    pred_full_path = torch.cat((obs_traj, traj_pred_k))
-                    pred_style = model.style_encoder(from_abs_to_social(pred_full_path), 'low')
-
-                    if args.wrongstyle:
-                        # set label to wrong label to harm the prediction
-                        other_style = torch.clone(other_ref_low_dim)
-                        other_style[wto] = pred_style[wto]
-                        style_tensor = torch.stack((torch.clone(ref_low_dim), other_style),
-                                                   dim=0)  # get the batch of social encoding of sequences of ONE ENV
-
-                    else:
-                        # replace the first seq style GT by first seq style prediction
-                        style_tensor = torch.clone(ref_low_dim).unsqueeze(
-                            0)  # get the batch of social encoding of sequences of ONE ENV
-                        style_tensor[0][wto] = pred_style[
-                            wto]  # replace seq number WTO in the batch of seq social encodings
-
-                    # compute loss           
-                    loss = criterion.contrastive_loss(style_tensor, lab_tensor)
-
-                    # update metrics & visualization
-                    loss_tot_meters[k].update(loss.item())
-                    # ade_list.append(compute_ade_single(traj_pred_rel_k, obs_traj, fut_traj, wto))
-                    ade_tot_meters[k].update(compute_ade_single(traj_pred_rel_k, obs_traj, fut_traj,
-                                                                wto))  # compute_ade_single() compute ADE just on seq number WTO
-                    if k in [0, 1, 5, 9] + [i * 20 - 1 for i in range(20)]:
-                        fig, array = draw_image([[obs_traj, fut_traj, traj_pred_k.detach()]])
-                        writer.add_image("Some paths", array, k)
-                    evolutions[wto].append(traj_pred_k.detach())  # save for visualization
-
-                    # backward and optimize
-                    loss.backward()
-                    opt.step()
-
-                traj_pred_rel_k = model.decoder(inv_latent_space, style_encoding)
-                ade_tot_meters[k + 1].update(compute_ade_single(traj_pred_rel_k, obs_traj, fut_traj, wto))
-                evolutions[wto].append(traj_pred_k.detach())
-
-    all_res = []
-    for evo in evolutions:
-        res = [[obs_traj, fut_traj, pred] for i, pred in enumerate(evo) if i in [0, 1, 3, 5, 10]]
-        all_res.append(res)
-
-    fig, array = draw_solo_all(all_res)
-    writer.add_image("evol/refinement", array, 0)
-
-    for k in range(args.ttr + 1):
-        logging.info(
-            f"average ade during refinement [{k}]:\t  {ade_tot_meters[k].avg:.6f}   \t  loss refinement [{k}]:\t  {loss_tot_meters[k].avg:.8f} ")
-        writer.add_scalar(f"ade_refine/plot", ade_tot_meters[k].avg, k)
-        if k < args.ttr: writer.add_scalar(f"loss_refine/plot", loss_tot_meters[k].avg, k)
 
 
 def compute_ade_(pred_fut_traj_rel, obs_traj, fut_traj):
