@@ -57,11 +57,11 @@ def get_training_parser():
             want to change the styleinteg. Set the --styleinteg param to the value of the checkpoint \
             (to avoid state_dict problems) one you want to load, and then set the new styleinteg value in this parameter ')
     # computation
-    parser.add_argument("--loader_num_workers", default=6, type=int)
+    parser.add_argument("--loader_num_workers", default=11, type=int)
     parser.add_argument("--gpu_num", default="1", type=str)
     # training
     parser.add_argument("--best_k", default=5, type=int)
-    parser.add_argument("--batch_size", default='32', type=str)
+    parser.add_argument("--batch_size", default='64', type=str)
     parser.add_argument("--batch_method", default='hom', type=str,
                         help='Use Homogeneous (hom), Heterogeneous (het) or alternated homogeneous (alt) batches during training')
     parser.add_argument("--shuffle", default=True, type=bool)
