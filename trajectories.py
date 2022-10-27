@@ -101,7 +101,7 @@ class TrajectoryDataset(Dataset):
                         axis=0
                     )  # 2d array: (x,y, curv) X frame
                     rel_curr_ped_seq[self.n_coordinates, :self.obs_len] = self.alpha_e * (
-                                rel_curr_ped_seq[self.n_coordinates, :self.obs_len] + 1)  # linear
+                            rel_curr_ped_seq[self.n_coordinates, :self.obs_len] + 1)  # linear
                     # 2d array: (x,y, conf) X frame
                 rel_curr_ped_seq = np.around(rel_curr_ped_seq, decimals=4)
                 curr_ped_seq = np.around(curr_ped_seq, decimals=4)
@@ -152,7 +152,6 @@ class TrajectoryDataset(Dataset):
         return out
 
 
-
 def seq_collate(data):
     '''
     Input:
@@ -167,7 +166,7 @@ def seq_collate(data):
         fut_seq_rel_list,
     ) = zip(*data)
 
-    _len = [len(seq) for seq in obs_seq_list] # lists of n_ped
+    _len = [len(seq) for seq in obs_seq_list]  # lists of n_ped
     cum_start_idx = [0] + np.cumsum(_len).tolist()
     seq_start_end = [
         [start, end] for start, end in zip(cum_start_idx, cum_start_idx[1:])

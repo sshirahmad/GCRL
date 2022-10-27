@@ -437,7 +437,7 @@ def set_name_finetune(finetune):
         return 'Update f + Refinement'
 
 
-def save_all_model(args, model, sigma_recon, sigma_pred, optimizers, metric, epoch, training_step):
+def save_all_model(args, model, sigma_elbo, sigma_pred, optimizers, metric, epoch, training_step):
     checkpoint = {
         'epoch': epoch + 1,
         'state_dicts': {
@@ -449,7 +449,7 @@ def save_all_model(args, model, sigma_recon, sigma_pred, optimizers, metric, epo
             'future_decoder': model.future_decoder.state_dict(),
             'past_decoder': model.past_decoder.state_dict(),
         },
-        'loss_weights': {"sigma_recon": sigma_recon, "sigma_pred": sigma_pred},
+        'loss_weights': {"sigma_elbo": sigma_elbo, "sigma_pred": sigma_pred},
         'optimizers': {
             key: val.state_dict() for key, val in optimizers.items()
         },
@@ -486,7 +486,7 @@ def load_all_model(args, model, optimizers):
         models_checkpoint = checkpoint['state_dicts']
 
         sigma_pred = checkpoint["loss_weights"]["sigma_pred"]
-        sigma_recon = checkpoint["loss_weights"]["sigma_recon"]
+        sigma_elbo = checkpoint["loss_weights"]["sigma_elbo"]
 
         # invariant encoder
         model.invariant_encoder.load_state_dict(models_checkpoint['invariant_encoder'])
@@ -517,10 +517,10 @@ def load_all_model(args, model, optimizers):
             update_lr(optimizers['variant'], args.lrvar)
 
         logging.info("=> loaded checkpoint '{}' (epoch {})".format(model_path, checkpoint["epoch"]))
+
+        return sigma_pred, sigma_elbo
     else:
         logging.info('model {} not found'.format(model_path))
-
-    return sigma_pred, sigma_recon
 
 
 def load_model(args, model):
