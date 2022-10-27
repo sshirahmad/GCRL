@@ -1,0 +1,6 @@
+Traceback (most recent call last):
+  File "/project/6001557/sshirahm/CRMF/train.py", line 10, in <module>
+    from visualize import draw_image, draw_solo, draw_solo_all
+  File "/project/6001557/sshirahm/CRMF/visualize.py", line 5, in <module>
+    import seaborn as sns
+ModuleNotFoundError: No module named 'seaborn'
