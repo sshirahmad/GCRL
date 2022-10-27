@@ -437,20 +437,19 @@ def set_name_finetune(finetune):
         return 'Update f + Refinement'
 
 
-def save_all_model(args, model, optimizers, metric, epoch, training_step):
+def save_all_model(args, model, sigma_recon, sigma_pred, optimizers, metric, epoch, training_step):
     checkpoint = {
         'epoch': epoch + 1,
         'state_dicts': {
             'variant_encoder': model.variant_encoder.state_dict(),
             'variational_mapping': model.variational_mapping.state_dict(),
             'theta_to_c': model.theta_to_c.state_dict(),
+            'theta_to_u': model.theta_to_u.state_dict(),
             'invariant_encoder': model.invariant_encoder.state_dict(),
             'future_decoder': model.future_decoder.state_dict(),
             'past_decoder': model.past_decoder.state_dict(),
-            # 'decoder_solo': [
-            #     model.decoder.pred_lstm_model.state_dict(), model.decoder.pred_hidden2pos.state_dict()
-            # ],
         },
+        'loss_weights': {"sigma_recon": sigma_recon, "sigma_pred": sigma_pred},
         'optimizers': {
             key: val.state_dict() for key, val in optimizers.items()
         },
@@ -486,49 +485,42 @@ def load_all_model(args, model, optimizers):
 
         models_checkpoint = checkpoint['state_dicts']
 
+        sigma_pred = checkpoint["loss_weights"]["sigma_pred"]
+        sigma_recon = checkpoint["loss_weights"]["sigma_recon"]
+
         # invariant encoder
-        model.inv_encoder.load_state_dict(models_checkpoint['inv'])
+        model.invariant_encoder.load_state_dict(models_checkpoint['invariant_encoder'])
         if optimizers != None:
             optimizers['inv'].load_state_dict(checkpoint['optimizers']['inv'])
-            if args.start_epoch >= args.num_epochs[0] + args.num_epochs[1]: update_lr(optimizers['inv'], 5e-3)
+            update_lr(optimizers['inv'], args.lrinv)
+           # if args.start_epoch >= args.num_epochs[0] + args.num_epochs[1]: update_lr(optimizers['inv'], 5e-3)
 
-        # decoder
-        assert (not 'complexdecoder' in checkpoint or args.complexdecoder == checkpoint['complexdecoder'])
-        model.decoder.load_state_dict(models_checkpoint['decoder'])
+        # future decoder
+        model.future_decoder.load_state_dict(models_checkpoint['future_decoder'])
         if optimizers != None:
-            optimizers['decoder'].load_state_dict(checkpoint['optimizers']['decoder'])
-            update_lr(optimizers['decoder'], args.lrstgat)
+            optimizers['future_decoder'].load_state_dict(checkpoint['optimizers']['future_decoder'])
+            update_lr(optimizers['future_decoder'], args.lrfut)
+
+        # past decoder
+        model.past_decoder.load_state_dict(models_checkpoint['past_decoder'])
+        if optimizers != None:
+            optimizers['past_decoder'].load_state_dict(checkpoint['optimizers']['past_decoder'])
+            update_lr(optimizers['past_decoder'], args.lrpast)
 
         # style encoder
-        assert (not 'styleinteg' in checkpoint or args.styleinteg == checkpoint['styleinteg'])
-        try:
-            model.style_encoder.load_state_dict(models_checkpoint['style'])
-            if optimizers != None:
-                optimizers['style'].load_state_dict(checkpoint['optimizers']['style'])
-                update_lr(optimizers['style'], args.lrstyle)
-        except Exception:
-            print('Styleinteg was wrongly chosen')
-
-        # integrator
-        if args.newstyleinteg == '':  # keep the curent style integrator
-            if optimizers != None:
-                optimizers['integ'].load_state_dict(checkpoint['optimizers']['integ'])
-                update_lr(optimizers['integ'], args.lrinteg)
-
-        else:  # change the style integrator
-            model.decoder.set_integrator(args.newstyleinteg)
-            if optimizers != None:
-                optimizers['integ'] = torch.optim.Adam(
-                    [{"params": model.decoder.style_blocks.parameters(), 'lr': args.lrinteg}]
-                    ) if args.newstyleinteg != 'none' else get_fake_optim()
-
-            logging.info(
-                f'=> loading a model with "{args.styleinteg}" but changed the integrator to "{args.newstyleinteg}"')
-            args.styleinteg = args.newstyleinteg
+        model.variant_encoder.load_state_dict(models_checkpoint['variant_encoder'])
+        model.variational_mapping.load_state_dict(models_checkpoint['variational_mapping'])
+        model.theta_to_c.load_state_dict(models_checkpoint['theta_to_c'])
+        model.theta_to_u.load_state_dict(models_checkpoint['theta_to_u'])
+        if optimizers != None:
+            optimizers['variant'].load_state_dict(checkpoint['optimizers']['variant'])
+            update_lr(optimizers['variant'], args.lrvar)
 
         logging.info("=> loaded checkpoint '{}' (epoch {})".format(model_path, checkpoint["epoch"]))
     else:
         logging.info('model {} not found'.format(model_path))
+
+    return sigma_pred, sigma_recon
 
 
 def load_model(args, model):

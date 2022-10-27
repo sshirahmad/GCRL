@@ -29,7 +29,7 @@ def get_training_parser():
     parser.add_argument('--testonly', default=0, type=int, help='Only test model. 0 -> training, 1 -> testing, 3 -> testing with refinement') # 0 is normal train, 1 is test, 2 is test with k, 3 is ttr
     # randomness
     parser.add_argument("--seed", type=int, default=72, help="Random seed")
-    parser.add_argument("--num_samples", type=int, default=5, help="Number of samples to calculate MC expectations")
+    parser.add_argument("--num_samples", type=int, default=3, help="Number of samples to calculate MC expectations")
     parser.add_argument("--noise_dim", default=(16,), type=int_tuple)
     parser.add_argument("--noise_type", default="gaussian")
     parser.add_argument("--original_seed", type=int, default=1, help="Seed of original training")
@@ -84,12 +84,10 @@ def get_training_parser():
     parser.add_argument('--backclassencoder', default=False, type=bool)
 
     # learning rates
-    parser.add_argument("--lrvar", default=1e-4, type=float, help="initial learning rate for variational encoder optimizer")
-    parser.add_argument("--lrvm", default=1e-4, type=float, help="initial learning rate for variational mapping optimizer")
-    parser.add_argument("--lrcmap", default=1e-4, type=float, help="initial learning rate for theta to c mapping optimizer")
-    parser.add_argument('--lrinv', default=0.01, type=float,  help="initial learning rate for the invariant encoder optimizer")
-    parser.add_argument('--lrfut', default=1e-4, type=float,  help="initial learning rate for the future decoder optimizer")
-    parser.add_argument('--lrpast', default=1e-4, type=float,  help="initial learning rate for the past decoder optimizer")
+    parser.add_argument("--lrvar", default=1e-3, type=float, help="initial learning rate for theta to c mapping optimizer")
+    parser.add_argument('--lrinv', default=1e-2, type=float,  help="initial learning rate for the invariant encoder optimizer")
+    parser.add_argument('--lrfut', default=1e-2, type=float,  help="initial learning rate for the future decoder optimizer")
+    parser.add_argument('--lrpast', default=1e-2, type=float,  help="initial learning rate for the past decoder optimizer")
 
 
    

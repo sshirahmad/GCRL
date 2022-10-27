@@ -155,6 +155,19 @@ class STGAT_encoder(nn.Module):
         self.traj_hidden2pos = nn.Linear(traj_lstm_hidden_size, n_coordinates)
         self.traj_gat_hidden2pos = nn.Linear(traj_lstm_hidden_size + graph_lstm_hidden_size, n_coordinates)
 
+        self._initialize_weights()
+
+    def _initialize_weights(self):
+        for m in self.modules():
+            if isinstance(m, nn.LSTMCell):
+                m.weight_hh.data.normal_(0, 0.1)
+                m.weight_ih.data.normal_(0, 0.1)
+                m.bias_hh.data.zero_()
+                m.bias_ih.data.zero_()
+            elif isinstance(m, nn.Linear):
+                m.weight.data.normal_(0, 0.1)
+                m.bias.data.zero_()
+
     def init_hidden_traj_lstm(self, batch):
         return (
             torch.randn(batch, self.traj_lstm_hidden_size).cuda(),
@@ -227,6 +240,20 @@ class future_STGAT_decoder(nn.Module):
         self.pred_lstm_model = nn.ModuleList([nn.LSTMCell(n_coordinates, self.pred_lstm_hidden_size1),
                                               nn.LSTMCell(n_coordinates, self.pred_lstm_hidden_size2)])
 
+        self._initialize_weights()
+
+
+    def _initialize_weights(self):
+        for m in self.modules():
+            if isinstance(m, nn.LSTMCell):
+                m.weight_hh.data.normal_(0, 0.1)
+                m.weight_ih.data.normal_(0, 0.1)
+                m.bias_hh.data.zero_()
+                m.bias_ih.data.zero_()
+            elif isinstance(m, nn.Linear):
+                m.weight.data.normal_(0, 0.1)
+                m.bias.data.zero_()
+
     def add_noise(self, _input, seq_start_end):
         noise_shape = (seq_start_end.size(0),) + self.noise_dim
 
@@ -267,7 +294,6 @@ class future_STGAT_decoder(nn.Module):
                     else:
                         input_t = output
 
-                p += [MultivariateNormal(input_t, torch.diag_embed(self.var_p * torch.ones(fut_traj_rel.size(1), 2).cuda()))]
                 if variant_feats:
                     pred_lstm_hidden, pred_lstm_c_t = self.pred_lstm_model[0](input_t,
                                                                               (pred_lstm_hidden, pred_lstm_c_t))
@@ -277,6 +303,7 @@ class future_STGAT_decoder(nn.Module):
                                                                               (pred_lstm_hidden, pred_lstm_c_t))
                     output = self.pred_hidden2pos[1](pred_lstm_hidden)
                 pred_traj_rel += [output]
+                p += [MultivariateNormal(output, torch.diag_embed(self.var_p * torch.ones(fut_traj_rel.size(1), 2).cuda()))]
 
         # during test
         else:
@@ -311,12 +338,12 @@ class past_decoder(nn.Module):
     def _initialize_weights(self):
         for m in self.modules():
             if isinstance(m, nn.LSTMCell):
-                m.weight_hh.data.normal_(0, 0.01)
-                m.weight_ih.data.normal_(0, 0.01)
+                m.weight_hh.data.normal_(0, 0.1)
+                m.weight_ih.data.normal_(0, 0.1)
                 m.bias_hh.data.zero_()
                 m.bias_ih.data.zero_()
             elif isinstance(m, nn.Linear):
-                m.weight.data.normal_(0, 0.01)
+                m.weight.data.normal_(0, 0.1)
                 m.bias.data.zero_()
 
     def forward(
@@ -356,6 +383,19 @@ class VE(nn.Module):
         self.fc_mu_theta2 = nn.Linear(in_channels, latent_dim)
         self.fc_var_theta2 = nn.Linear(in_channels, latent_dim)
 
+        self._initialize_weights()
+
+    def _initialize_weights(self):
+        for m in self.modules():
+            if isinstance(m, nn.LSTMCell):
+                m.weight_hh.data.normal_(0, 0.1)
+                m.weight_ih.data.normal_(0, 0.1)
+                m.bias_hh.data.zero_()
+                m.bias_ih.data.zero_()
+            elif isinstance(m, nn.Linear):
+                m.weight.data.normal_(0, 0.1)
+                m.bias.data.zero_()
+
     def encode(self, lstm_hiddens):
         """
         Encodes the input by passing through the encoder network
@@ -392,7 +432,7 @@ class simple_mapping(nn.Module):
 
         modules = []
         if hidden_dims is None:
-            hidden_dims = [32, 64]
+            hidden_dims = [16, 32]
 
         # Build Encoder
         for h_dim in hidden_dims:
@@ -406,6 +446,19 @@ class simple_mapping(nn.Module):
         self.mapping = nn.Sequential(*modules)
         self.fc_mu = nn.Linear(hidden_dims[-1], c_dim)
         self.fc_logvar = nn.Linear(hidden_dims[-1], c_dim)
+
+        self._initialize_weights()
+
+    def _initialize_weights(self):
+        for m in self.modules():
+            if isinstance(m, nn.LSTMCell):
+                m.weight_hh.data.normal_(0, 0.1)
+                m.weight_ih.data.normal_(0, 0.1)
+                m.bias_hh.data.zero_()
+                m.bias_ih.data.zero_()
+            elif isinstance(m, nn.Linear):
+                m.weight.data.normal_(0, 0.1)
+                m.bias.data.zero_()
 
     def forward(self, theta2):
 

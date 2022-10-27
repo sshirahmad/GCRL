@@ -32,35 +32,15 @@ def main(args):
     val_loaders = [data_loader(args, val_env_path, val_env_name) for val_env_path, val_env_name in
                    zip(val_envs_path, val_envs_name)]
 
-    ref_pictures = [[b.cuda() for b in next(iter(loader))] for loader in val_loaders]
-
-    # If finetuning, we need to load the pretrain datasets for style contrastive loss
-    pretrain_loaders = None
-    if args.filter_envs_pretrain:
-        # do we also reduce the pretrain loaders?? If yes,
-        logging.info("Initializing Training Set for contrastive loss")
-        pretrain_envs_path, pretrain_envs_name = get_envs_path(args.dataset_name, "train", args.filter_envs_pretrain)
-        pretrain_loaders = [data_loader(args, train_env_path, train_env_name, pt=True) for
-                            train_env_path, train_env_name in
-                            zip(pretrain_envs_path, pretrain_envs_name)]
-        print(pretrain_envs_name)
-
     # training routine length
     num_batches_train = min([len(train_loader) for train_loader in train_loaders])
-    if args.filter_envs_pretrain:
-        num_batches_pretrain = min([len(train_loader) for train_loader in pretrain_loaders])
     num_batches_val = min([len(val_loader) for val_loader in val_loaders])
 
     # bring different dataset all together for simplicity of the next functions
     train_dataset = {'loaders': train_loaders, 'names': train_envs_name, 'num_batches': num_batches_train}
     valid_dataset = {'loaders': val_loaders, 'names': val_envs_name, 'num_batches': num_batches_val}
-    if args.filter_envs_pretrain:
-        pretrain_dataset = {'loaders': pretrain_loaders, 'names': pretrain_envs_name,
-                            'num_batches': num_batches_pretrain}
-    else:
-        pretrain_dataset = None
 
-    for dataset, ds_name in zip((train_dataset, valid_dataset, pretrain_dataset), ('Train', 'Validation', 'Pretrain')):
+    for dataset, ds_name in zip((train_dataset, valid_dataset), ('Train', 'Validation')):
         print(ds_name + ' dataset: ', dataset)
 
     args.n_units = (
@@ -71,18 +51,19 @@ def main(args):
     args.n_heads = [int(x) for x in args.heads.strip().split(",")]
 
     # create the model
-    model = CRMF(args)
-    sigma_recon = torch.nn.Parameter(torch.tensor([10.0]))
-    sigma_pred = torch.nn.Parameter(torch.tensor([0.001]))
+    model = CRMF(args).cuda()
+    sigma_recon = torch.nn.Parameter(torch.tensor([70.0], device="cuda"))
+    sigma_pred = torch.nn.Parameter(torch.tensor([0.0], device="cuda"))
 
     # style related optimizer
     optimizers = {
-        'style': torch.optim.Adam(
+        'variant': torch.optim.Adam(
             [
                 {"params": model.variant_encoder.parameters(), "lr": args.lrvar},
-                {"params": model.variational_mapping.parameters(), 'lr': args.lrvm},
-                {"params": model.theta_to_c.parameters(), 'lr': args.lrcmap},
-                {"params": [sigma_recon, sigma_pred], 'lr': args.lrcmap}
+                {"params": model.variational_mapping.parameters(), 'lr': args.lrvar},
+                {"params": model.theta_to_c.parameters(), 'lr': args.lrvar},
+                {"params": model.theta_to_u.parameters(), 'lr': args.lrvar},
+                {"params": [sigma_recon, sigma_pred], 'lr': args.lrvar}
             ]
         ),
         'inv': torch.optim.Adam(
@@ -99,21 +80,14 @@ def main(args):
         )
     }
 
-    model.cuda()
-    sigma_pred = sigma_pred.cuda()
-    sigma_recon = sigma_recon.cuda()
     if args.resume:
-        load_all_model(args, model, optimizers)
+        sigma_pred, sigma_recon = load_all_model(args, model, optimizers)
         model.cuda()
 
     # TRAINING HAPPENS IN 6 STEPS:
     assert (len(args.num_epochs) == 2)
-    # 1. (deprecated, was used for first step of stgat training)
-    # 2. (deprecated, was used for second step of stgat training)
-    # 3. initial training of the entire model, without any style input
-    # 4. train style encoder using classifier, separate from pipeline
-    # 5. train the integrator (that joins the style and the invariant features)
-    # 6. fine-tune the integrator, decoder, style encoder with everything working
+    # 1. Train the invariant encoder along with the future decoder to learn z
+    # 2. Train everything except invariant encoder to learn the other variant latent variables
     training_steps = {f'P{i}': [sum(args.num_epochs[:i - 1]), sum(args.num_epochs[:i])] for i in range(1, 3)}
     print(training_steps)
 
@@ -123,25 +97,7 @@ def main(args):
         for step, r in training_steps.items():
             if r[0] < epoch <= r[1]:
                 return step
-        return 'P6'
-
-    training_step = get_training_step(args.start_epoch)
-    if args.finetune:
-        with torch.no_grad():
-            validate_ade(model, train_dataset, args.start_epoch - 1, 'P6', writer, stage='training', args=args)
-            metric = validate_ade(model, valid_dataset, args.start_epoch - 1, 'P6', writer, stage='validation',
-                                  args=args)
-            min_metric = metric
-            if args.reduce == 64:
-                save_all_model(args, model, optimizers, metric, -1, 'P6')
-                return
-            print(f'\n{"_" * 150}\n')
-            train_all(args, model, optimizers, train_dataset, pretrain_dataset, args.start_epoch - 1, 'P6', writer,
-                      stage='training', update=False)
-            train_all(args, model, optimizers, valid_dataset, pretrain_dataset, args.start_epoch - 1, 'P6', writer,
-                      stage='validation')
-    else:
-        min_metric = 1e10
+        return 'P3'
 
     # SOME TEST
     if args.testonly == 1:
@@ -153,8 +109,6 @@ def main(args):
     elif args.testonly == 3:
         print('TEST TIME MODIF:')
         validate_ade(model, valid_dataset, 500, 'P6', writer, 'training', write=False)
-        if args.ttr > 0:
-            train_latent_space(args, model, valid_dataset, pretrain_dataset, writer)
 
     if args.testonly != 0:
         writer.close()
@@ -170,14 +124,14 @@ def main(args):
         logging.info(f"\n===> EPOCH: {epoch} ({training_step})")
 
         if training_step == 'P1':
-            freeze(True, (model.variant_encoder, model.variational_mapping, model.theta_to_c, model.past_decoder))
+            freeze(True, (model.variant_encoder, model.variational_mapping, model.theta_to_c, model.theta_to_u, model.past_decoder))
             freeze(False, (model.invariant_encoder, model.future_decoder))
         elif training_step == 'P2':
             freeze(True, (model.invariant_encoder,))
-            freeze(False, (model.variant_encoder, model.variational_mapping, model.theta_to_c, model.past_decoder,
+            freeze(False, (model.variant_encoder, model.variational_mapping, model.theta_to_c, model.theta_to_u, model.past_decoder,
                            model.future_decoder))
 
-        train_all(args, model, optimizers, train_dataset, pretrain_dataset, epoch, training_step, train_envs_name,
+        train_all(args, model, optimizers, train_dataset, epoch, training_step, train_envs_name,
                   writer, sigma_pred, sigma_recon, stage='training')
 
         # with torch.no_grad():
@@ -198,15 +152,15 @@ def main(args):
         if args.finetune:
             if metric < min_metric:
                 min_metric = metric
-                save_all_model(args, model, optimizers, metric, epoch, training_step)
+                save_all_model(args, model, sigma_recon, sigma_pred, optimizers, metric, epoch, training_step)
                 print(f'\n{"_" * 150}\n')
         else:
-            save_all_model(args, model, optimizers, metric, epoch, training_step)
+            save_all_model(args, model, sigma_recon, sigma_pred, optimizers, metric, epoch, training_step)
 
     writer.close()
 
 
-def train_all(args, model, optimizers, train_dataset, pretrain_dataset, epoch, training_step, train_envs_name, writer, sigma_pred, sigma_recon,
+def train_all(args, model, optimizers, train_dataset, epoch, training_step, train_envs_name, writer, sigma_pred, sigma_recon,
               stage,
               update=True):
     """
@@ -300,8 +254,10 @@ def train_all(args, model, optimizers, train_dataset, pretrain_dataset, epoch, t
         progress.display(train_dataset['num_batches'])
         writer.add_scalar(f"{'erm' if training_step != 'P4' else 'style'}_loss/{stage}", loss_meter.avg, epoch)
 
+    # Homogenous batches
     else:
-        total_loss = AverageMeter("Loss", ":.4f")
+        total_loss_meter = AverageMeter("Total Loss", ":.4f")
+        r_loss_meter = AverageMeter("Reconstruction Loss", ":.4f")
         for train_idx, train_loader in enumerate(train_dataset['loaders']):
             loss_meter = AverageMeter("Loss", ":.4f")
             progress = ProgressMeter(len(train_loader), [loss_meter],
@@ -340,40 +296,41 @@ def train_all(args, model, optimizers, train_dataset, pretrain_dataset, epoch, t
                         loss += irm_loss(loss_sum_even, loss_sum_odd, scale, args)
 
                 else:
-
                     q_ygx, A1, A2, pred_past_rel = model(batch, training_step)
                     l2_loss_reconst = l2_loss(pred_past_rel, obs_traj_rel, mode="raw")
+                    loss_sum_even, loss_sum_odd = erm_loss(l2_loss_reconst, seq_start_end, obs_traj_rel.shape[0])
+                    r_loss = loss_sum_even + loss_sum_odd
 
-                    loss_sum_even, loss_sum_odd = erm_loss(torch.log(q_ygx), seq_start_end, fut_traj_rel.shape[0])
+                    loss_sum_even, loss_sum_odd = erm_loss(torch.log(q_ygx + 1e-6), seq_start_end, fut_traj_rel.shape[0])
                     predict_loss = loss_sum_even + loss_sum_odd
-                    loss_sum_even, loss_sum_odd = erm_loss(torch.multiply(A1, l2_loss_reconst) + A2, seq_start_end, obs_traj_rel.shape[0])
+                    loss_sum_even, loss_sum_odd = erm_loss(torch.multiply(A1, -l2_loss_reconst) + A2, seq_start_end, obs_traj_rel.shape[0])
                     reconst_loss = loss_sum_even + loss_sum_odd
 
-                    loss = sigma_pred * predict_loss + sigma_recon * reconst_loss
+                    loss = torch.exp(sigma_pred) * (- predict_loss) + torch.exp(sigma_recon) * (- reconst_loss)
+
+                    r_loss_meter.update(r_loss.item(), obs_traj.shape[1])
 
                 # backpropagate if needed
                 if stage == 'training' and update:
                     loss.backward()
 
                 # choose which optimizer to use depending on the training step
-                if args.finetune and args.finetune != 'all':
-                    if training_step in ['P1', 'P2', 'P3', ] and args.finetune == 'stgat_enc': optimizers['inv'].step()
-                    if training_step in ['P3', 'P6'] and args.finetune == 'decoder': optimizers['decoder'].step()
-                    if training_step in ['P4', 'P6'] and args.finetune in ['style', 'integ+']: optimizers[
-                        'style'].step()
-                    if training_step in ['P5', 'P6'] and args.finetune in ['integ', 'integ+']: optimizers[
-                        'integ'].step()
-                else:
-                    if training_step in ['P1']: optimizers['inv'].step()
-                    if training_step in ['P1', 'P2']: optimizers['future_decoder'].step()
-                    if training_step in ['P2']: optimizers['past_decoder'].step()
-                    if training_step in ['P2']: optimizers['style'].step()
+                if training_step in ['P1']: optimizers['inv'].step()
+                if training_step in ['P1', 'P2']: optimizers['future_decoder'].step()
+                if training_step in ['P2']: optimizers['past_decoder'].step()
+                if training_step in ['P2']: optimizers['variant'].step()
 
-                total_loss.update(loss.item(), obs_traj.shape[1])
+                total_loss_meter.update(loss.item(), obs_traj.shape[1])
                 loss_meter.update(loss.item(), obs_traj.shape[1])
-
                 progress.display(batch_idx + 1)
-        writer.add_scalar(f"{'irm' if training_step == 'P1' else 'variational'}_loss/{stage}", total_loss.avg, epoch)
+
+        if training_step == "P1":
+            writer.add_scalar(f"irm_loss/{stage}", total_loss_meter.avg, epoch)
+        elif training_step == "P2":
+            writer.add_scalar(f"Variational_loss/{stage}", total_loss_meter.avg, epoch)
+            writer.add_scalar(f"Reconstruction_loss/{stage}", r_loss_meter.avg, epoch)
+            writer.add_scalar(f"sigma_pred_weight/{stage}", sigma_pred, epoch)
+            writer.add_scalar(f"sigma_recon_weight/{stage}", sigma_recon, epoch)
 
 
 def validate_ade(model, valid_dataset, epoch, training_step, writer, stage, write=True, args=None):
