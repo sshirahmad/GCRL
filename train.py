@@ -110,11 +110,8 @@ def main(args):
     # SOME TEST
     if args.testonly == 1:
         print('SIMPLY VALIDATE MODEL:')
-        validate_ade(model, valid_dataset, 300, 'P3', writer, 'validation', write=False)
-        validate_ade(model, valid_dataset, 300, 'P6', writer, 'validation', write=False)
+        validate_ade(model, valid_dataset, 300, 'P2', writer, 'validation', write=False)
     elif args.testonly == 2:
-        print('DEPRECATED')
-    elif args.testonly == 3:
         print('TEST TIME MODIF:')
         validate_ade(model, valid_dataset, 500, 'P6', writer, 'training', write=False)
 
@@ -136,6 +133,9 @@ def main(args):
             freeze(True, (model.invariant_encoder,))
             freeze(False, (model.variant_encoder, model.variational_mapping, model.theta_to_c, model.theta_to_u, model.past_decoder,
                            model.future_decoder))
+
+        elif training_step == "P3":
+
 
         train_all(args, model, optimizers, train_dataset, epoch, training_step, train_envs_name,
                   writer, stage='training')

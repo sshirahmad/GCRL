@@ -73,8 +73,8 @@ def get_training_parser():
                         help='Use Homogeneous (hom), Heterogeneous (het) or alternated homogeneous (alt) batches during training')
     parser.add_argument("--shuffle", default=True, type=bool)
     # spurious feature
-    parser.add_argument("--add_confidence", default=False, type=bool)
-    parser.add_argument("--domain_shifts", default='0', type=str,
+    parser.add_argument("--add_confidence", default=True, type=bool)
+    parser.add_argument("--domain_shifts", default='1, 2, 4, 8, 64', type=str,
                         help='domain_shifts per environment: hotel,univ,zara1,zara2,eth')
 
     parser.add_argument("--start-epoch", default=1, type=int, metavar="N",
