@@ -3,22 +3,10 @@
   <component name="ChangeListManager">
     <list default="true" id="e76be7d3-4dd7-4693-b1d6-58f0675c9dbc" name="Changes" comment="Working on CRMF">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/crmf_66799026.log" beforeDir="false" />
       <change beforePath="$PROJECT_DIR$/log/train.log" beforeDir="false" afterPath="$PROJECT_DIR$/log/train.log" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/models/eth/pretrain/P1/5.0/SSE_data_eth_irm[5.0]_epoch_1.pth.tar" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/models/eth/pretrain/P1/5.0/SSE_data_eth_irm[5.0]_epoch_10.pth.tar" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/models/eth/pretrain/P1/5.0/SSE_data_eth_irm[5.0]_epoch_11.pth.tar" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/models/eth/pretrain/P1/5.0/SSE_data_eth_irm[5.0]_epoch_2.pth.tar" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/models/eth/pretrain/P1/5.0/SSE_data_eth_irm[5.0]_epoch_3.pth.tar" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/models/eth/pretrain/P1/5.0/SSE_data_eth_irm[5.0]_epoch_4.pth.tar" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/models/eth/pretrain/P1/5.0/SSE_data_eth_irm[5.0]_epoch_5.pth.tar" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/models/eth/pretrain/P1/5.0/SSE_data_eth_irm[5.0]_epoch_6.pth.tar" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/models/eth/pretrain/P1/5.0/SSE_data_eth_irm[5.0]_epoch_7.pth.tar" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/models/eth/pretrain/P1/5.0/SSE_data_eth_irm[5.0]_epoch_8.pth.tar" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/models/eth/pretrain/P1/5.0/SSE_data_eth_irm[5.0]_epoch_9.pth.tar" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/models.py" beforeDir="false" afterPath="$PROJECT_DIR$/models.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/parser_file.py" beforeDir="false" afterPath="$PROJECT_DIR$/parser_file.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/runs/SSE_data_eth_irm[5.0]/events.out.tfevents.1666897251.Predator-Shayan.21644.0" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/runs/SSE_data_eth_irm[5.0]/events.out.tfevents.1666909593.Predator-Shayan.17836.0" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/runs/SSE_data_eth_irm[5.0]/events.out.tfevents.1666909641.Predator-Shayan.9348.0" beforeDir="false" />
       <change beforePath="$PROJECT_DIR$/train.py" beforeDir="false" afterPath="$PROJECT_DIR$/train.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/utils.py" beforeDir="false" afterPath="$PROJECT_DIR$/utils.py" afterDir="false" />
     </list>
@@ -47,16 +35,16 @@
     <option name="hideEmptyMiddlePackages" value="true" />
     <option name="showLibraryContents" value="true" />
   </component>
-  <component name="PropertiesComponent"><![CDATA[{
-  "keyToString": {
-    "RunOnceActivity.OpenProjectViewOnStart": "true",
-    "RunOnceActivity.ShowReadmeOnStart": "true",
-    "WebServerToolWindowFactoryState": "false",
-    "last_opened_file_path": "C:/UWaterloo/PhD thesis/motion forecasting/codes/causalmotion-main/style/train.py",
-    "nodejs_package_manager_path": "npm",
-    "settings.editor.selected.configurable": "com.jetbrains.python.configuration.PyActiveSdkModuleConfigurable"
+  <component name="PropertiesComponent">{
+  &quot;keyToString&quot;: {
+    &quot;RunOnceActivity.OpenProjectViewOnStart&quot;: &quot;true&quot;,
+    &quot;RunOnceActivity.ShowReadmeOnStart&quot;: &quot;true&quot;,
+    &quot;WebServerToolWindowFactoryState&quot;: &quot;false&quot;,
+    &quot;last_opened_file_path&quot;: &quot;C:/UWaterloo/PhD thesis/motion forecasting/codes/causalmotion-main/style/train.py&quot;,
+    &quot;nodejs_package_manager_path&quot;: &quot;npm&quot;,
+    &quot;settings.editor.selected.configurable&quot;: &quot;com.jetbrains.python.configuration.PyActiveSdkModuleConfigurable&quot;
   }
-}]]></component>
+}</component>
   <component name="RunManager">
     <configuration name="train" type="PythonConfigurationType" factoryName="Python" temporary="true" nameIsGenerated="true">
       <module name="CRMF" />
@@ -102,7 +90,8 @@
       <workItem from="1666722038790" duration="28552000" />
       <workItem from="1666822237174" duration="1442000" />
       <workItem from="1666823755889" duration="12980000" />
-      <workItem from="1666889224068" duration="20738000" />
+      <workItem from="1666889224068" duration="25930000" />
+      <workItem from="1666980282631" duration="809000" />
     </task>
     <task id="LOCAL-00001" summary="Working on CRMF">
       <created>1666058381006</created>
@@ -167,7 +156,14 @@
       <option name="project" value="LOCAL" />
       <updated>1666911615119</updated>
     </task>
-    <option name="localTasksCounter" value="10" />
+    <task id="LOCAL-00010" summary="Working on CRMF">
+      <created>1666926068582</created>
+      <option name="number" value="00010" />
+      <option name="presentableId" value="LOCAL-00010" />
+      <option name="project" value="LOCAL" />
+      <updated>1666926068582</updated>
+    </task>
+    <option name="localTasksCounter" value="11" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
@@ -201,11 +197,6 @@
           <line>211</line>
           <option name="timeStamp" value="34" />
         </line-breakpoint>
-        <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
-          <url>file://$PROJECT_DIR$/models.py</url>
-          <line>607</line>
-          <option name="timeStamp" value="45" />
-        </line-breakpoint>
       </breakpoints>
       <default-breakpoints>
         <breakpoint type="python-exception">
@@ -224,6 +215,6 @@
     </watches-manager>
   </component>
   <component name="com.intellij.coverage.CoverageDataManagerImpl">
-    <SUITE FILE_PATH="coverage/CRMF$train.coverage" NAME="train Coverage Results" MODIFIED="1666925620658" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
+    <SUITE FILE_PATH="coverage/CRMF$train.coverage" NAME="train Coverage Results" MODIFIED="1666981067385" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
   </component>
 </project>

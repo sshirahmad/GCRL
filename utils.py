@@ -479,13 +479,10 @@ def load_all_model(args, model, optimizers):
     model_path = args.resume
 
     if os.path.isfile(model_path):
-        checkpoint = torch.load(model_path, map_location='cuda')
+        checkpoint = torch.load(model_path, map_location='cpu')
         args.start_epoch = checkpoint['epoch']
 
         models_checkpoint = checkpoint['state_dicts']
-
-        sigma_pred = checkpoint["loss_weights"]["sigma_pred"]
-        sigma_elbo = checkpoint["loss_weights"]["sigma_elbo"]
 
         # invariant encoder
         model.invariant_encoder.load_state_dict(models_checkpoint['invariant_encoder'])
@@ -517,21 +514,6 @@ def load_all_model(args, model, optimizers):
 
         logging.info("=> loaded checkpoint '{}' (epoch {})".format(model_path, checkpoint["epoch"]))
 
-        return sigma_pred, sigma_elbo
-    else:
-        logging.info('model {} not found'.format(model_path))
-
-
-def load_model(args, model):
-    model_path = args.resume
-
-    if os.path.isfile(model_path):
-        checkpoint = torch.load(model_path, map_location='cuda')
-        models_checkpoint = checkpoint['state_dicts']
-
-        model.inv_encoder.load_state_dict(models_checkpoint['inv'])
-        model.decoder.load_state_dict(models_checkpoint['decoder'])
-        model.style_encoder.load_state_dict(models_checkpoint['style'])
     else:
         logging.info('model {} not found'.format(model_path))
 

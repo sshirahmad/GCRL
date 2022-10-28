@@ -581,7 +581,7 @@ class CRMF(nn.Module):
                     # p(u|theta1, x)
                     p_ugthetax = self.theta_to_u(
                         torch.cat((graph_lstm_hidden_states[-1], traj_lstm_hidden_states[-1], theta1), dim=1))
-                    u_vec = p_ugthetax.sample()
+                    u_vec = p_ugthetax.rsample()
                     prob_u = torch.exp(p_ugthetax.log_prob(u_vec))
 
                     log_probs = prob_theta2 + prob_theta1 - qprob_theta1 - qprob_theta2

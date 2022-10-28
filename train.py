@@ -89,7 +89,7 @@ def main(args):
     }
 
     if args.resume:
-        sigma_pred, sigma_elbo = load_all_model(args, model, optimizers)
+        load_all_model(args, model, optimizers)
         model.cuda()
 
     # TRAINING HAPPENS IN 6 STEPS:
