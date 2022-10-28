@@ -1,6 +1,6 @@
 #!/bin/bash
 
-#SBATCH --time=04:00:00
+#SBATCH --time=00:10:00
 #SBATCH --mem=10G
 #SBATCH --account=rrg-mcrowley
 #SBATCH --gres=gpu:t4:1
