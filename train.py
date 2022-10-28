@@ -138,7 +138,7 @@ def main(args):
                            model.future_decoder))
 
         train_all(args, model, optimizers, train_dataset, epoch, training_step, train_envs_name,
-                  writer, sigma_pred, sigma_elbo, stage='training')
+                  writer, stage='training')
 
         with torch.no_grad():
             metric = validate_ade(model, valido_dataset, epoch, training_step, writer, stage='validation o')
@@ -153,15 +153,15 @@ def main(args):
         if args.finetune:
             if metric < min_metric:
                 min_metric = metric
-                save_all_model(args, model, sigma_elbo, sigma_pred, optimizers, metric, epoch, training_step)
+                save_all_model(args, model, optimizers, metric, epoch, training_step)
                 print(f'\n{"_" * 150}\n')
         else:
-            save_all_model(args, model, sigma_elbo, sigma_pred, optimizers, metric, epoch, training_step)
+            save_all_model(args, model, optimizers, metric, epoch, training_step)
 
     writer.close()
 
 
-def train_all(args, model, optimizers, train_dataset, epoch, training_step, train_envs_name, writer, sigma_pred, sigma_elbo,
+def train_all(args, model, optimizers, train_dataset, epoch, training_step, train_envs_name, writer,
               stage,
               update=True):
     """
@@ -309,7 +309,7 @@ def train_all(args, model, optimizers, train_dataset, epoch, training_step, trai
                     loss_sum_even, loss_sum_odd = erm_loss(torch.multiply(A1, -l2_loss_reconst) + A2, seq_start_end, obs_traj_rel.shape[0])
                     elbo_loss = loss_sum_even + loss_sum_odd
 
-                    loss = torch.exp(sigma_pred) * (- predict_loss) + torch.exp(sigma_elbo) * (- elbo_loss)
+                    loss = (- predict_loss) + 1e25 * (- elbo_loss)
 
                     r_loss_meter.update(r_loss.item(), obs_traj.shape[1])
                     e_loss_meter.update(elbo_loss.item(), obs_traj.shape[1])
@@ -336,8 +336,6 @@ def train_all(args, model, optimizers, train_dataset, epoch, training_step, trai
             writer.add_scalar(f"Reconstruction_loss/{stage}", r_loss_meter.avg, epoch)
             writer.add_scalar(f"ELBO_loss/{stage}", e_loss_meter.avg, epoch)
             writer.add_scalar(f"Predict_loss/{stage}", p_loss_meter.avg, epoch)
-            writer.add_scalar(f"sigma_pred_weight/{stage}", sigma_pred, epoch)
-            writer.add_scalar(f"sigma_elbo_weight/{stage}", sigma_elbo, epoch)
 
 
 def validate_ade(model, valid_dataset, epoch, training_step, writer, stage, write=True):

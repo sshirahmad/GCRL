@@ -437,7 +437,7 @@ def set_name_finetune(finetune):
         return 'Update f + Refinement'
 
 
-def save_all_model(args, model, sigma_elbo, sigma_pred, optimizers, metric, epoch, training_step):
+def save_all_model(args, model, optimizers, metric, epoch, training_step):
     checkpoint = {
         'epoch': epoch + 1,
         'state_dicts': {
@@ -449,7 +449,6 @@ def save_all_model(args, model, sigma_elbo, sigma_pred, optimizers, metric, epoc
             'future_decoder': model.future_decoder.state_dict(),
             'past_decoder': model.past_decoder.state_dict(),
         },
-        'loss_weights': {"sigma_elbo": sigma_elbo, "sigma_pred": sigma_pred},
         'optimizers': {
             key: val.state_dict() for key, val in optimizers.items()
         },
