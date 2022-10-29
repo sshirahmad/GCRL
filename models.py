@@ -131,10 +131,8 @@ class STGAT_encoder(nn.Module):
             dropout,
             alpha,
             graph_lstm_hidden_size,
-            noise_dim=(8,),
-            noise_type="gaussian",
+            z_dim,
             add_confidence=True,
-            counter=True,
     ):
         super(STGAT_encoder, self).__init__()
 
@@ -150,9 +148,8 @@ class STGAT_encoder(nn.Module):
         self.n_coordinates = n_coordinates
         self.add_confidence = add_confidence
 
-        self.pred_lstm_hidden_size = (
-                traj_lstm_hidden_size + graph_lstm_hidden_size + noise_dim[0]
-        )
+        self.fc_mu = nn.Linear(traj_lstm_hidden_size + graph_lstm_hidden_size, z_dim)
+        self.fc_var = nn.Linear(traj_lstm_hidden_size + graph_lstm_hidden_size, z_dim)
 
         self.traj_lstm_model = nn.LSTMCell(
             n_coordinates + add_confidence,
@@ -170,165 +167,6 @@ class STGAT_encoder(nn.Module):
             traj_lstm_hidden_size + graph_lstm_hidden_size,
             n_coordinates
         )
-        self.pred_hidden2pos = nn.Linear(
-            self.pred_lstm_hidden_size,
-            n_coordinates
-        )
-
-        self.noise_dim = noise_dim
-        self.noise_type = noise_type
-
-        self.pred_lstm_model = nn.LSTMCell(
-            n_coordinates,
-            self.pred_lstm_hidden_size
-        )
-
-    def init_hidden_traj_lstm(self, batch):
-        return (
-            torch.randn(batch, self.traj_lstm_hidden_size).cuda(),
-            torch.randn(batch, self.traj_lstm_hidden_size).cuda(),
-        )
-
-    def init_hidden_graph_lstm(self, batch):
-        return (
-            torch.randn(batch, self.graph_lstm_hidden_size).cuda(),
-            torch.randn(batch, self.graph_lstm_hidden_size).cuda(),
-        )
-
-    def forward(
-            self,
-            obs_traj_rel,
-            seq_start_end,
-            training_step=3,
-    ):
-        batch = obs_traj_rel.shape[1]
-        traj_lstm_h_t, traj_lstm_c_t = self.init_hidden_traj_lstm(batch)
-        graph_lstm_h_t, graph_lstm_c_t = self.init_hidden_graph_lstm(batch)
-        pred_traj_rel = []
-        traj_lstm_hidden_states = []
-        graph_lstm_hidden_states = []
-
-        # traj_lstm (used in step 1,2,3)
-        for i in range(self.obs_len):
-            traj_lstm_h_t, traj_lstm_c_t = self.traj_lstm_model(
-                obs_traj_rel[i], (traj_lstm_h_t, traj_lstm_c_t)
-            )
-            if training_step == 1:
-                traj_lstm_hidden_states += [traj_lstm_h_t]
-
-        if training_step == "P1":
-            return traj_lstm_hidden_states
-
-        # graph_lstm (used in step 2,3)
-        if training_step >= 2:
-            graph_lstm_input = self.gatencoder(
-                torch.stack(traj_lstm_hidden_states), seq_start_end
-            )
-            for i in range(self.obs_len):
-                graph_lstm_h_t, graph_lstm_c_t = self.graph_lstm_model(
-                    graph_lstm_input[i], (graph_lstm_h_t, graph_lstm_c_t)
-                )
-                if training_step == 2:
-                    encoded_before_noise_hidden = torch.cat(
-                        (traj_lstm_hidden_states[i], graph_lstm_h_t), dim=1
-                    )
-                    output = self.traj_gat_hidden2pos(encoded_before_noise_hidden)
-                    pred_traj_rel += [output]
-                else:
-                    graph_lstm_hidden_states += [graph_lstm_h_t]
-
-        # pred_lstm (used in step 3)
-        if training_step == 3:
-            traj_lstm_hidden_states_c = torch.zeros_like(traj_lstm_hidden_states[-1])
-            encoded_before_noise_hidden = torch.cat(
-                (traj_lstm_hidden_states[-1], graph_lstm_hidden_states[-1]), dim=1
-            )
-            encoded_before_noise_hidden_c = torch.cat(
-                (traj_lstm_hidden_states_c, graph_lstm_hidden_states[-1]), dim=1
-            )
-            pred_lstm_hidden, pred_lstm_hidden_c = self.add_noise(
-                encoded_before_noise_hidden, encoded_before_noise_hidden_c, seq_start_end
-            )
-            pred_lstm_c_t = torch.zeros_like(pred_lstm_hidden).cuda()
-            pred_lstm_c_t_c = torch.zeros_like(pred_lstm_hidden_c).cuda()
-            output = obs_traj_rel[self.obs_len - 1, :, :self.n_coordinates]
-            # during training
-            if self.training:
-                for i in range(self.fut_len):
-                    teacher_force = random.random() < teacher_forcing_ratio
-                    if teacher_force:
-                        input_t = obs_traj_rel[self.obs_len - 2 + i, :, :self.n_coordinates]  # with teacher help
-                    else:
-                        input_t = output
-                    pred_lstm_hidden, pred_lstm_c_t = self.pred_lstm_model(
-                        input_t, (pred_lstm_hidden, pred_lstm_c_t)
-                    )
-                    # counterfactual analysis
-                    if self.counter:
-                        pred_lstm_hidden_c, pred_lstm_c_t_c = self.pred_lstm_model(
-                            input_t, (pred_lstm_hidden_c, pred_lstm_c_t_c)
-                        )
-                        pred_lstm_hidden_out = pred_lstm_hidden - pred_lstm_hidden_c
-                        output = self.pred_hidden2pos(pred_lstm_hidden_out)
-                    else:
-                        output = self.pred_hidden2pos(pred_lstm_hidden)
-                    pred_traj_rel += [output]
-            # during test
-            else:
-                for i in range(self.fut_len):
-                    pred_lstm_hidden, pred_lstm_c_t = self.pred_lstm_model(
-                        output, (pred_lstm_hidden, pred_lstm_c_t)
-                    )
-                    # counterfactual analysis
-                    if self.counter:
-                        pred_lstm_hidden_c, pred_lstm_c_t_c = self.pred_lstm_model(
-                            output, (pred_lstm_hidden_c, pred_lstm_c_t_c)
-                        )
-                        pred_lstm_hidden_out = pred_lstm_hidden - pred_lstm_hidden_c
-                        output = self.pred_hidden2pos(pred_lstm_hidden_out)
-                    else:
-                        output = self.pred_hidden2pos(pred_lstm_hidden)
-                    pred_traj_rel += [output]
-
-        return torch.stack(pred_traj_rel)
-
-
-class STGAT_encoder(nn.Module):
-    def __init__(
-            self,
-            obs_len,
-            fut_len,
-            n_coordinates,
-            traj_lstm_hidden_size,
-            n_units,
-            n_heads,
-            graph_network_out_dims,
-            dropout,
-            alpha,
-            graph_lstm_hidden_size,
-            z_dim,
-            add_confidence=True,
-    ):
-        super(STGAT_encoder, self).__init__()
-
-        self.obs_len = obs_len
-        self.fut_len = fut_len
-
-        self.gatencoder = GATEncoder(n_units=n_units, n_heads=n_heads, dropout=dropout, alpha=alpha)
-
-        self.graph_lstm_hidden_size = graph_lstm_hidden_size
-        self.traj_lstm_hidden_size = traj_lstm_hidden_size
-        self.n_coordinates = n_coordinates
-        self.add_confidence = add_confidence
-        self.fc_mu = nn.Linear(traj_lstm_hidden_size + graph_lstm_hidden_size, z_dim)
-        self.fc_var = nn.Linear(traj_lstm_hidden_size + graph_lstm_hidden_size, z_dim)
-
-        self.traj_lstm_model = nn.LSTMCell(n_coordinates + add_confidence, traj_lstm_hidden_size)
-        self.graph_lstm_model = nn.LSTMCell(graph_network_out_dims, graph_lstm_hidden_size)
-
-        # for P1 and P2 and P3
-        self.traj_hidden2pos = nn.Linear(traj_lstm_hidden_size, n_coordinates)
-        self.traj_gat_hidden2pos = nn.Linear(traj_lstm_hidden_size + graph_lstm_hidden_size, n_coordinates)
 
         self._initialize_weights()
 
@@ -355,26 +193,47 @@ class STGAT_encoder(nn.Module):
             torch.randn(batch, self.graph_lstm_hidden_size).cuda(),
         )
 
-    def forward(self, batch, training_step):
+    def forward(
+            self,
+            batch,
+            training_step=3,
+    ):
         (_, _, obs_traj_rel, _, seq_start_end) = batch
         num_peds = obs_traj_rel.shape[1]
         traj_lstm_h_t, traj_lstm_c_t = self.init_hidden_traj_lstm(num_peds)
         graph_lstm_h_t, graph_lstm_c_t = self.init_hidden_graph_lstm(num_peds)
+        pred_traj_rel = []
         traj_lstm_hidden_states = []
         graph_lstm_hidden_states = []
 
         # traj_lstm (used in step 1,2,3)
         for i in range(self.obs_len):
-            traj_lstm_h_t, traj_lstm_c_t = self.traj_lstm_model(obs_traj_rel[i], (traj_lstm_h_t, traj_lstm_c_t))
+            traj_lstm_h_t, traj_lstm_c_t = self.traj_lstm_model(
+                obs_traj_rel[i], (traj_lstm_h_t, traj_lstm_c_t)
+            )
+            if training_step == "P1":
+                output = self.traj_hidden2pos(traj_lstm_h_t)
+                pred_traj_rel += [output]
+            else:
+                traj_lstm_hidden_states += [traj_lstm_h_t]
 
-            traj_lstm_hidden_states += [traj_lstm_h_t]
-
-        graph_lstm_input = self.gatencoder(torch.stack(traj_lstm_hidden_states), seq_start_end)
-        for i in range(self.obs_len):
-            graph_lstm_h_t, graph_lstm_c_t = self.graph_lstm_model(graph_lstm_input[i],
-                                                                   (graph_lstm_h_t, graph_lstm_c_t))
-
-            graph_lstm_hidden_states += [graph_lstm_h_t]
+        # graph_lstm (used in step 2,3)
+        if training_step != "P1":
+            graph_lstm_input = self.gatencoder(
+                torch.stack(traj_lstm_hidden_states), seq_start_end
+            )
+            for i in range(self.obs_len):
+                graph_lstm_h_t, graph_lstm_c_t = self.graph_lstm_model(
+                    graph_lstm_input[i], (graph_lstm_h_t, graph_lstm_c_t)
+                )
+                if training_step == "P2":
+                    encoded_before_noise_hidden = torch.cat(
+                        (traj_lstm_hidden_states[i], graph_lstm_h_t), dim=1
+                    )
+                    output = self.traj_gat_hidden2pos(encoded_before_noise_hidden)
+                    pred_traj_rel += [output]
+                else:
+                    graph_lstm_hidden_states += [graph_lstm_h_t]
 
         encoded_before_noise_hidden = torch.cat((traj_lstm_hidden_states[-1], graph_lstm_hidden_states[-1]), dim=1)
         mu = self.fc_mu(encoded_before_noise_hidden)
@@ -382,7 +241,7 @@ class STGAT_encoder(nn.Module):
 
         z = MultivariateNormal(mu, torch.diag_embed(torch.exp(logvar) + eps))
 
-        return z, graph_lstm_hidden_states, traj_lstm_hidden_states
+        return z, pred_traj_rel, graph_lstm_hidden_states, traj_lstm_hidden_states
 
 
 class future_STGAT_decoder(nn.Module):
@@ -686,20 +545,28 @@ class CRMF(nn.Module):
                                                    args.z_dim, args.teachingratio,
                                                    args.noise_dim, args.noise_type)
 
+        # TODO Separate implementation for variant and invariant encoders.
+
     def forward(self, batch, training_step):
 
         obs_traj, fut_traj, obs_traj_rel, fut_traj_rel, seq_start_end, = batch
 
         if self.training:
-            if training_step == 'P1':
-                p_zgx, _, _ = self.invariant_encoder(batch)
+            if training_step in ["P1", "P2"]:
+                p_zgx, pred_traj_rel_inv, _, _ = self.invariant_encoder(batch, training_step)
+                _, pred_traj_rel_var, _, _ = self.variant_encoder(batch, training_step)
+
+                return pred_traj_rel_inv, pred_traj_rel_var
+
+            elif training_step == 'P3':
+                p_zgx, _, _, _ = self.invariant_encoder(batch)
                 z_vec = p_zgx.rsample()
                 pred_traj_rel = self.future_decoder(batch, z_vec, training_step, False)
 
                 return pred_traj_rel
 
             else:
-                _, graph_lstm_hidden_states, traj_lstm_hidden_states = self.variant_encoder(batch)
+                _, _, graph_lstm_hidden_states, traj_lstm_hidden_states = self.variant_encoder(batch)
 
                 # calculate q(y|x)
                 third_E = []

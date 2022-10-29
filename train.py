@@ -134,9 +134,6 @@ def main(args):
             freeze(False, (model.variant_encoder, model.variational_mapping, model.theta_to_c, model.theta_to_u, model.past_decoder,
                            model.future_decoder))
 
-        elif training_step == "P3":
-
-
         train_all(args, model, optimizers, train_dataset, epoch, training_step, train_envs_name,
                   writer, stage='training')
 
