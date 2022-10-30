@@ -332,7 +332,7 @@ def train_all(args, model, optimizers, train_dataset, epoch, training_step, trai
                     loss_sum_even, loss_sum_odd = erm_loss(torch.multiply(A1, -l2_loss_reconst) + A2, seq_start_end, obs_traj_rel.shape[0])
                     elbo_loss = loss_sum_even + loss_sum_odd
 
-                    loss = (- predict_loss) + 1e21 * (- elbo_loss)
+                    loss = (- predict_loss) + 1e24 * (- elbo_loss)
 
                     r_loss_meter.update(r_loss.item(), obs_traj.shape[1])
                     e_loss_meter.update(elbo_loss.item(), obs_traj.shape[1])
