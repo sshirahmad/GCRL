@@ -139,6 +139,11 @@ def main(args):
             freeze(False, (model.variant_encoder, model.variational_mapping, model.theta_to_c, model.theta_to_u, model.past_decoder,
                            model.future_decoder))
 
+        if args.finetune:
+            freeze(True, (model.invariant_encoder,))
+            freeze(False, (model.variant_encoder, model.variational_mapping, model.theta_to_c, model.theta_to_u, model.past_decoder,
+                           model.future_decoder))
+
         train_all(args, model, optimizers, train_dataset, epoch, training_step, train_envs_name,
                   writer, stage='training')
 

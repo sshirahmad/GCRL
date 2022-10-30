@@ -174,7 +174,7 @@ def l2_loss(pred_fut_traj, fut_traj, mode="average"):
     - loss: l2 loss depending on mode
     """
 
-    loss = (fut_traj.permute(1, 0, 2) - pred_fut_traj.permute(1, 0, 2)) ** 2
+    loss = (fut_traj[:, :, :2].permute(1, 0, 2) - pred_fut_traj.permute(1, 0, 2)) ** 2
     if mode == "sum":
         return torch.sum(loss)
     elif mode == "average":
@@ -494,7 +494,7 @@ def load_all_model(args, model, optimizers):
             update_lr(optimizers['future_decoder'], args.lrfut)
 
         # past decoder
-#        model.past_decoder.load_state_dict(models_checkpoint['past_decoder'])
+        model.past_decoder.load_state_dict(models_checkpoint['past_decoder'])
         if optimizers != None:
             optimizers['past_decoder'].load_state_dict(checkpoint['optimizers']['past_decoder'])
             update_lr(optimizers['past_decoder'], args.lrpast)
