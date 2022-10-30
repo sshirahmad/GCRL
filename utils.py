@@ -258,10 +258,6 @@ def set_domain_shift(domain_shifts, env_name):
 
 
 def set_name_experiment(args, name):
-    if args.counter:
-        name_method = 'counter'
-    else:
-        name_method = 'factual'
 
     if args.irm > 0:
         name_risk = 'irm_' + str(args.irm)
@@ -270,7 +266,7 @@ def set_name_experiment(args, name):
     else:
         name_risk = 'erm_0.0'
 
-    return f'{name}_{name_method}_risk_{name_risk}_batch_{args.batch_method}_data_{args.dataset_name}_ds_{args.domain_shifts}_bk_{args.best_k}_ep_{args.num_epochs}_shuffle_{str(args.shuffle).lower()}_seed_{args.seed}'
+    return f'{name}_risk_{name_risk}_batch_{args.batch_method}_data_{args.dataset_name}_ds_{args.domain_shifts}_bk_{args.best_k}_ep_{args.num_epochs}_shuffle_{str(args.shuffle).lower()}_seed_{args.seed}'
 
 
 def set_batch_size(batch_method, batch_sizes, env_name):
@@ -437,7 +433,7 @@ def set_name_finetune(finetune):
         return 'Update f + Refinement'
 
 
-def save_all_model(args, model, optimizers, metric, epoch, training_step):
+def save_all_model(args, model, model_name, optimizers, metric, epoch, training_step):
     checkpoint = {
         'epoch': epoch + 1,
         'state_dicts': {
@@ -463,9 +459,10 @@ def save_all_model(args, model, optimizers, metric, epoch, training_step):
         else:
             phase = 'pretrain'
         # filefolder = f'./models/{args.dataset_name}/{phase}/{training_step}/{args.irm}/{real_style_integ}'
-        filefolder = f'./models/{args.dataset_name}/{phase}/{training_step}/{args.irm}'
+        filefolder = f'./models/{model_name}/{phase}/{training_step}'
 
-        if args.finetune: filefolder += f'/{args.finetune}/{args.original_seed}'
+        if args.finetune:
+            filefolder += f'/{args.finetune}/{args.original_seed}'
 
     # Check whether the specified path exists or not
     if not os.path.exists(filefolder): os.makedirs(filefolder)

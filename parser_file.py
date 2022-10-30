@@ -84,7 +84,7 @@ def get_training_parser():
     # general training
     parser.add_argument("--finetune", default="", type=str)
     parser.add_argument("--num_epochs", default='150-100-150-200', type=lambda x: int_tuple(x, '-'))  # '150-100-150',
-    parser.add_argument("--resume", default="./models/eth/pretrain/P3/5.0/SSE_data_eth_irm[5.0]_epoch_400.pth.tar",
+    parser.add_argument("--resume", default="",
                         type=str, metavar="PATH", help="path to latest checkpoint (default: none)")
     parser.add_argument("--tfdir", default='runs', type=str)
 

@@ -16,7 +16,7 @@ from models import CRMF
 from utils import *
 
 
-def get_generator(checkpoint):
+def get_generator(args):
     """
     Upload model
     """
@@ -175,8 +175,7 @@ def compute_col(predicted_traj, predicted_trajs_all, thres=0.2, num_interp=4):
 def main(args):
     print('Using GPU: ' + str(torch.cuda.is_available()))
     os.environ["CUDA_VISIBLE_DEVICES"] = args.gpu_num
-    checkpoint = torch.load(args.resume, map_location='cpu')
-    generator = get_generator(checkpoint)
+    generator = get_generator(args)
     valo_envs_path, valo_envs_name = get_envs_path(args.dataset_name, "test", args.filter_envs)  # +'-'+args.filter_envs_pretrain)
     loaders = [data_loader(args, valo_env_path, valo_env_name) for valo_env_path, valo_env_name in
                    zip(valo_envs_path, valo_envs_name)]

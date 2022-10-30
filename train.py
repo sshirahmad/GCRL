@@ -156,10 +156,10 @@ def main(args):
         if args.finetune:
             if metric < min_metric:
                 min_metric = metric
-                save_all_model(args, model, optimizers, metric, epoch, training_step)
+                save_all_model(args, model, model_name, optimizers, metric, epoch, training_step)
                 print(f'\n{"_" * 150}\n')
         else:
-            save_all_model(args, model, optimizers, metric, epoch, training_step)
+            save_all_model(args, model, model_name, optimizers, metric, epoch, training_step)
 
     writer.close()
 
@@ -323,7 +323,7 @@ def train_all(args, model, optimizers, train_dataset, epoch, training_step, trai
 
                 else:
                     q_ygx, A1, A2, pred_past_rel = model(batch, training_step)
-                    l2_loss_reconst = l2_loss(pred_past_rel, obs_traj_rel[:, :, :args.n_coordinates], mode="raw")
+                    l2_loss_reconst = l2_loss(pred_past_rel, obs_traj_rel, mode="raw")
                     loss_sum_even, loss_sum_odd = erm_loss(l2_loss_reconst, seq_start_end, obs_traj_rel.shape[0])
                     r_loss = loss_sum_even + loss_sum_odd
 
