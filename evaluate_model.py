@@ -43,7 +43,7 @@ def cal_ade_fde(fut_traj, pred_fut_traj):
     return ade, fde
 
 
-def evaluate(args, loader, generator):
+def evaluate(args, loader, generator, training_step):
     """
     Evaluate the performances
     """
@@ -66,7 +66,7 @@ def evaluate(args, loader, generator):
             total_traj += fut_traj.size(1)
 
             for _ in range(args.best_k):
-                pred_fut_traj_rel = generator(batch, "P3")
+                pred_fut_traj_rel = generator(batch, training_step)
                 pred_fut_traj = relative_to_abs(pred_fut_traj_rel, obs_traj[-1, :, :2])
                 ade_, fde_ = cal_ade_fde(fut_traj, pred_fut_traj)
                 ade.append(ade_)
@@ -191,7 +191,7 @@ def main(args):
         fde = 0
         total_traj = 0
         for loader in loaders:
-            ade_sum_i, fde_sum_i, total_traj_i = evaluate(args, loader, generator)
+            ade_sum_i, fde_sum_i, total_traj_i = evaluate(args, loader, generator, training_step="P3")
             ade += ade_sum_i
             fde += fde_sum_i
             total_traj += total_traj_i

@@ -643,6 +643,7 @@ class CRMF(nn.Module):
         self.obs_len = args.obs_len
         self.fut_len = args.fut_len
         self.num_samples = args.num_samples
+        self.n_coordinates = args.n_coordinates
 
         self.ptheta1 = MultivariateNormal(torch.zeros(args.latent_dim).cuda(), torch.eye(args.latent_dim).cuda())
         self.ptheta2 = MultivariateNormal(torch.zeros(args.latent_dim).cuda(), torch.eye(args.latent_dim).cuda())
@@ -710,7 +711,7 @@ class CRMF(nn.Module):
                             p_zgx = self.invariant_encoder(batch, training_step)
                             z_vec = p_zgx.rsample()
                             p_ygzc = self.future_decoder(batch, torch.cat((z_vec, c_vec), dim=1), training_step, True)
-                            prob_y_mat = torch.stack([torch.exp(p_ygzc[i].log_prob(fut_traj_rel[i])) for i in range(fut_traj_rel.size(0))])
+                            prob_y_mat = torch.stack([torch.exp(p_ygzc[i].log_prob(fut_traj_rel[i, :, :self.n_coordinates])) for i in range(fut_traj_rel.size(0))])
                             prob_y = torch.prod(prob_y_mat, dim=0)
                             first_E.append(prob_y)
 
@@ -751,7 +752,7 @@ class CRMF(nn.Module):
                     E2.append(torch.multiply(torch.multiply(prob_c, prob_u), log_probs))
 
                 # P(z|x)
-                p_zgx, _, _ = self.invariant_encoder(batch)
+                p_zgx = self.invariant_encoder(batch, training_step)
                 z_vec = p_zgx.rsample()
                 prob_z = torch.exp(p_zgx.log_prob(z_vec))
 
@@ -761,7 +762,7 @@ class CRMF(nn.Module):
                 # p(y|z,c)
                 p_ygzc = self.future_decoder(batch, torch.cat((z_vec, c_vec), dim=1), training_step, True)
                 prob_y_mat = torch.stack(
-                    [torch.exp(p_ygzc[i].log_prob(fut_traj_rel[i])) for i in range(fut_traj_rel.size(0))])
+                    [torch.exp(p_ygzc[i].log_prob(fut_traj_rel[i, :, :self.n_coordinates])) for i in range(fut_traj_rel.size(0))])
                 prob_y = torch.prod(prob_y_mat, dim=0)
 
                 A1_1 = torch.multiply(prob_y, prob_z)
@@ -787,7 +788,7 @@ class CRMF(nn.Module):
                 c_vec = pC.sample()
 
                 # P(z|x)
-                p_zgx, _, _ = self.invariant_encoder(batch, training_step)
+                p_zgx = self.invariant_encoder(batch, training_step)
                 z_vec = p_zgx.sample()
 
                 # p(y|z,c)
