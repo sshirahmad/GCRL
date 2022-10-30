@@ -666,7 +666,7 @@ class CRMF(nn.Module):
         self.theta_to_u = simple_mapping(args.latent_dim + args.traj_lstm_hidden_size + args.graph_lstm_hidden_size,
                                          None, args.u_dim)
 
-        self.past_decoder = past_decoder(args.obs_len, args.n_coordinates, args.c_dim)
+        self.past_decoder = past_decoder(args.obs_len, args.n_coordinates+1, args.c_dim)
 
         self.future_decoder = future_STGAT_decoder(args.obs_len, args.fut_len, args.n_coordinates, args.c_dim,
                                                    args.z_dim, args.teachingratio,

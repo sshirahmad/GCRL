@@ -14,7 +14,7 @@ def main(args):
     # Set environment variables
     set_seed_globally(args.seed)
     os.environ["CUDA_VISIBLE_DEVICES"] = args.gpu_num
-    model_name = set_name_experiment(args, name='CRMF')
+    model_name = set_name_experiment(args)
     print('model name: ', model_name)
     if not os.path.exists(args.tfdir + '/' + model_name):
         os.makedirs(args.tfdir + '/' + model_name)

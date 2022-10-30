@@ -174,7 +174,7 @@ def l2_loss(pred_fut_traj, fut_traj, mode="average"):
     - loss: l2 loss depending on mode
     """
 
-    loss = (fut_traj[:, :, :2].permute(1, 0, 2) - pred_fut_traj.permute(1, 0, 2)) ** 2
+    loss = (fut_traj.permute(1, 0, 2) - pred_fut_traj.permute(1, 0, 2)) ** 2
     if mode == "sum":
         return torch.sum(loss)
     elif mode == "average":
@@ -257,7 +257,7 @@ def set_domain_shift(domain_shifts, env_name):
     return alpha_e
 
 
-def set_name_experiment(args, name):
+def set_name_experiment(args, name='CRMF'):
 
     if args.irm > 0:
         name_risk = 'irm_' + str(args.irm)
@@ -391,10 +391,9 @@ def get_method_name(args):
     return name_risk
 
 
-def get_model_name(args, name='SSE', epoch=None, t_step=None, time=False, olde=None):
-    if time: name = datetime.now().strftime("%m-%d_%H:%M_") + name
-    name += f'_data_{args.dataset_name}'
-    name += f'_irm[{args.irm}]'
+def get_model_name(name='CRMF', epoch=None, time=False):
+    if time:
+        name = datetime.now().strftime("%m-%d_%H:%M_") + name
 
     if epoch:
         name += f'_epoch_{epoch}'
@@ -459,7 +458,7 @@ def save_all_model(args, model, model_name, optimizers, metric, epoch, training_
         else:
             phase = 'pretrain'
         # filefolder = f'./models/{args.dataset_name}/{phase}/{training_step}/{args.irm}/{real_style_integ}'
-        filefolder = f'./models/{model_name}/{phase}/{training_step}'
+        filefolder = f'./models/{args.dataset_name}/{model_name}/{phase}/{training_step}'
 
         if args.finetune:
             filefolder += f'/{args.finetune}/{args.original_seed}'
@@ -467,7 +466,7 @@ def save_all_model(args, model, model_name, optimizers, metric, epoch, training_
     # Check whether the specified path exists or not
     if not os.path.exists(filefolder): os.makedirs(filefolder)
 
-    filename = f'{filefolder}/{get_model_name(args, epoch=epoch, t_step=training_step)}.pth.tar'
+    filename = f'{filefolder}/{get_model_name(epoch=epoch)}.pth.tar'
     torch.save(checkpoint, filename)
     logging.info(f" --> Model Saved in {filename}")
 
@@ -495,7 +494,7 @@ def load_all_model(args, model, optimizers):
             update_lr(optimizers['future_decoder'], args.lrfut)
 
         # past decoder
-        model.past_decoder.load_state_dict(models_checkpoint['past_decoder'])
+#        model.past_decoder.load_state_dict(models_checkpoint['past_decoder'])
         if optimizers != None:
             optimizers['past_decoder'].load_state_dict(checkpoint['optimizers']['past_decoder'])
             update_lr(optimizers['past_decoder'], args.lrpast)
