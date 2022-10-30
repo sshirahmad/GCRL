@@ -118,7 +118,7 @@ class GATEncoder(nn.Module):
         return graph_embeded_data
 
 
-class STGAT_encoder(nn.Module):
+class STGAT_encoder_inv(nn.Module):
     def __init__(
             self,
             obs_len,
@@ -134,7 +134,7 @@ class STGAT_encoder(nn.Module):
             z_dim,
             add_confidence=True,
     ):
-        super(STGAT_encoder, self).__init__()
+        super(STGAT_encoder_inv, self).__init__()
 
         self.obs_len = obs_len
         self.fut_len = fut_len
@@ -235,13 +235,139 @@ class STGAT_encoder(nn.Module):
                 else:
                     graph_lstm_hidden_states += [graph_lstm_h_t]
 
-        encoded_before_noise_hidden = torch.cat((traj_lstm_hidden_states[-1], graph_lstm_hidden_states[-1]), dim=1)
-        mu = self.fc_mu(encoded_before_noise_hidden)
-        logvar = self.fc_var(encoded_before_noise_hidden)
+        if training_step in ["P1", "P2"]:
+            return torch.stack(pred_traj_rel)
 
-        z = MultivariateNormal(mu, torch.diag_embed(torch.exp(logvar) + eps))
+        else:
 
-        return z, pred_traj_rel, graph_lstm_hidden_states, traj_lstm_hidden_states
+            encoded_before_noise_hidden = torch.cat((traj_lstm_hidden_states[-1], graph_lstm_hidden_states[-1]), dim=1)
+            mu = self.fc_mu(encoded_before_noise_hidden)
+            logvar = self.fc_var(encoded_before_noise_hidden)
+
+            z = MultivariateNormal(mu, torch.diag_embed(torch.exp(logvar) + eps))
+
+            return z
+
+
+class STGAT_encoder_var(nn.Module):
+    def __init__(
+            self,
+            obs_len,
+            fut_len,
+            n_coordinates,
+            traj_lstm_hidden_size,
+            n_units,
+            n_heads,
+            graph_network_out_dims,
+            dropout,
+            alpha,
+            graph_lstm_hidden_size,
+            z_dim,
+            add_confidence=True,
+    ):
+        super(STGAT_encoder_var, self).__init__()
+
+        self.obs_len = obs_len
+        self.fut_len = fut_len
+
+        self.gatencoder = GATEncoder(
+            n_units=n_units, n_heads=n_heads, dropout=dropout, alpha=alpha
+        )
+
+        self.graph_lstm_hidden_size = graph_lstm_hidden_size
+        self.traj_lstm_hidden_size = traj_lstm_hidden_size
+        self.n_coordinates = n_coordinates
+        self.add_confidence = add_confidence
+
+        self.traj_lstm_model = nn.LSTMCell(
+            n_coordinates + add_confidence,
+            traj_lstm_hidden_size
+        )
+        self.graph_lstm_model = nn.LSTMCell(
+            graph_network_out_dims,
+            graph_lstm_hidden_size
+        )
+        self.traj_hidden2pos = nn.Linear(
+            traj_lstm_hidden_size,
+            n_coordinates
+        )
+        self.traj_gat_hidden2pos = nn.Linear(
+            traj_lstm_hidden_size + graph_lstm_hidden_size,
+            n_coordinates
+        )
+
+        self._initialize_weights()
+
+    def _initialize_weights(self):
+        for m in self.modules():
+            if isinstance(m, nn.LSTMCell):
+                m.weight_hh.data.normal_(0, 0.1)
+                m.weight_ih.data.normal_(0, 0.1)
+                m.bias_hh.data.zero_()
+                m.bias_ih.data.zero_()
+            elif isinstance(m, nn.Linear):
+                m.weight.data.normal_(0, 0.1)
+                m.bias.data.zero_()
+
+    def init_hidden_traj_lstm(self, batch):
+        return (
+            torch.randn(batch, self.traj_lstm_hidden_size).cuda(),
+            torch.randn(batch, self.traj_lstm_hidden_size).cuda(),
+        )
+
+    def init_hidden_graph_lstm(self, batch):
+        return (
+            torch.randn(batch, self.graph_lstm_hidden_size).cuda(),
+            torch.randn(batch, self.graph_lstm_hidden_size).cuda(),
+        )
+
+    def forward(
+            self,
+            batch,
+            training_step=3,
+    ):
+        (_, _, obs_traj_rel, _, seq_start_end) = batch
+        num_peds = obs_traj_rel.shape[1]
+        traj_lstm_h_t, traj_lstm_c_t = self.init_hidden_traj_lstm(num_peds)
+        graph_lstm_h_t, graph_lstm_c_t = self.init_hidden_graph_lstm(num_peds)
+        pred_traj_rel = []
+        traj_lstm_hidden_states = []
+        graph_lstm_hidden_states = []
+
+        # traj_lstm (used in step 1,2,3)
+        for i in range(self.obs_len):
+            traj_lstm_h_t, traj_lstm_c_t = self.traj_lstm_model(
+                obs_traj_rel[i], (traj_lstm_h_t, traj_lstm_c_t)
+            )
+            if training_step == "P1":
+                output = self.traj_hidden2pos(traj_lstm_h_t)
+                pred_traj_rel += [output]
+            else:
+                traj_lstm_hidden_states += [traj_lstm_h_t]
+
+        # graph_lstm (used in step 2,3)
+        if training_step != "P1":
+            graph_lstm_input = self.gatencoder(
+                torch.stack(traj_lstm_hidden_states), seq_start_end
+            )
+            for i in range(self.obs_len):
+                graph_lstm_h_t, graph_lstm_c_t = self.graph_lstm_model(
+                    graph_lstm_input[i], (graph_lstm_h_t, graph_lstm_c_t)
+                )
+                if training_step == "P2":
+                    encoded_before_noise_hidden = torch.cat(
+                        (traj_lstm_hidden_states[i], graph_lstm_h_t), dim=1
+                    )
+                    output = self.traj_gat_hidden2pos(encoded_before_noise_hidden)
+                    pred_traj_rel += [output]
+                else:
+                    graph_lstm_hidden_states += [graph_lstm_h_t]
+
+        if training_step in ["P1", "P2"]:
+            return torch.stack(pred_traj_rel)
+
+        else:
+            return torch.cat((graph_lstm_hidden_states[-1], traj_lstm_hidden_states[-1]), dim=1)
 
 
 class future_STGAT_decoder(nn.Module):
@@ -340,7 +466,7 @@ class future_STGAT_decoder(nn.Module):
                 pred_traj_rel += [output]
                 p += [MultivariateNormal(output, torch.diag_embed(self.var_p * torch.ones(fut_traj_rel.size(1), 2).cuda()))]
 
-            if training_step == "P1":
+            if training_step == "P3":
                 return torch.stack(pred_traj_rel)
             else:
                 return p
@@ -348,7 +474,7 @@ class future_STGAT_decoder(nn.Module):
         # during test
         else:
             for i in range(self.fut_len):
-                if training_step == "P1":
+                if training_step == "P3":
                     pred_lstm_hidden, pred_lstm_c_t = self.pred_lstm_model[1](output, (pred_lstm_hidden, pred_lstm_c_t))
                     output = self.pred_hidden2pos[1](pred_lstm_hidden)
                 else:
@@ -521,13 +647,13 @@ class CRMF(nn.Module):
         self.ptheta1 = MultivariateNormal(torch.zeros(args.latent_dim).cuda(), torch.eye(args.latent_dim).cuda())
         self.ptheta2 = MultivariateNormal(torch.zeros(args.latent_dim).cuda(), torch.eye(args.latent_dim).cuda())
 
-        self.invariant_encoder = STGAT_encoder(args.obs_len, args.fut_len, args.n_coordinates,
+        self.invariant_encoder = STGAT_encoder_inv(args.obs_len, args.fut_len, args.n_coordinates,
                                                args.traj_lstm_hidden_size, args.n_units, args.n_heads,
                                                args.graph_network_out_dims, args.dropout, args.alpha,
                                                args.graph_lstm_hidden_size,
                                                args.z_dim, args.add_confidence)
 
-        self.variant_encoder = STGAT_encoder(args.obs_len, args.fut_len, args.n_coordinates,
+        self.variant_encoder = STGAT_encoder_var(args.obs_len, args.fut_len, args.n_coordinates,
                                              args.traj_lstm_hidden_size, args.n_units, args.n_heads,
                                              args.graph_network_out_dims, args.dropout, args.alpha,
                                              args.graph_lstm_hidden_size,
@@ -545,35 +671,31 @@ class CRMF(nn.Module):
                                                    args.z_dim, args.teachingratio,
                                                    args.noise_dim, args.noise_type)
 
-        # TODO Separate implementation for variant and invariant encoders.
-
     def forward(self, batch, training_step):
 
         obs_traj, fut_traj, obs_traj_rel, fut_traj_rel, seq_start_end, = batch
 
         if self.training:
             if training_step in ["P1", "P2"]:
-                p_zgx, pred_traj_rel_inv, _, _ = self.invariant_encoder(batch, training_step)
-                _, pred_traj_rel_var, _, _ = self.variant_encoder(batch, training_step)
+                pred_traj_rel_inv = self.invariant_encoder(batch, training_step)
+                pred_traj_rel_var = self.variant_encoder(batch, training_step)
 
                 return pred_traj_rel_inv, pred_traj_rel_var
 
             elif training_step == 'P3':
-                p_zgx, _, _, _ = self.invariant_encoder(batch)
+                p_zgx = self.invariant_encoder(batch, training_step)
                 z_vec = p_zgx.rsample()
                 pred_traj_rel = self.future_decoder(batch, z_vec, training_step, False)
 
                 return pred_traj_rel
 
             else:
-                _, _, graph_lstm_hidden_states, traj_lstm_hidden_states = self.variant_encoder(batch)
+                concat_hidden_states = self.variant_encoder(batch, training_step)
 
                 # calculate q(y|x)
                 third_E = []
                 for _ in range(self.num_samples):
-                    ptheta1, ptheta2, mu1, log_var1, mu2, log_var2 = self.variational_mapping(
-                        torch.cat((graph_lstm_hidden_states[-1], traj_lstm_hidden_states[-1]), dim=1)
-                    )
+                    ptheta1, ptheta2, mu1, log_var1, mu2, log_var2 = self.variational_mapping(concat_hidden_states)
 
                     theta2 = ptheta2.rsample()
 
@@ -585,7 +707,7 @@ class CRMF(nn.Module):
                         # calculate E_{z~p(z|x)}[p(y|z,c)]
                         first_E = []
                         for _ in range(self.num_samples):
-                            p_zgx, _, _ = self.invariant_encoder(batch)
+                            p_zgx = self.invariant_encoder(batch, training_step)
                             z_vec = p_zgx.rsample()
                             p_ygzc = self.future_decoder(batch, torch.cat((z_vec, c_vec), dim=1), training_step, True)
                             prob_y_mat = torch.stack([torch.exp(p_ygzc[i].log_prob(fut_traj_rel[i])) for i in range(fut_traj_rel.size(0))])
@@ -602,9 +724,7 @@ class CRMF(nn.Module):
                 E2 = []
                 for _ in range(self.num_samples):
                     # q(theta1|x) and q(theta2|x)
-                    qtheta1, qtheta2, mu1, log_var1, mu2, log_var2 = self.variational_mapping(
-                        torch.cat((graph_lstm_hidden_states[-1], traj_lstm_hidden_states[-1]), dim=1)
-                    )
+                    qtheta1, qtheta2, mu1, log_var1, mu2, log_var2 = self.variational_mapping(concat_hidden_states)
 
                     theta1 = qtheta1.rsample()
                     theta2 = qtheta2.rsample()
@@ -621,8 +741,7 @@ class CRMF(nn.Module):
                     prob_theta2 = self.ptheta2.log_prob(theta2)
 
                     # p(u|theta1, x)
-                    p_ugthetax = self.theta_to_u(
-                        torch.cat((graph_lstm_hidden_states[-1], traj_lstm_hidden_states[-1], theta1), dim=1))
+                    p_ugthetax = self.theta_to_u(torch.cat((concat_hidden_states, theta1), dim=1))
                     u_vec = p_ugthetax.rsample()
                     prob_u = torch.exp(p_ugthetax.log_prob(u_vec))
 
@@ -653,24 +772,22 @@ class CRMF(nn.Module):
                 return q_ygx, A1, A2, pred_past_rel
 
         else:
-            if training_step == "P1":
-                p_zgx, _, _ = self.invariant_encoder(batch)
+            if training_step == "P3":
+                p_zgx = self.invariant_encoder(batch, training_step)
                 z_vec = p_zgx.sample()
                 pred_traj_rel = self.future_decoder(batch, z_vec, training_step, False)
 
             else:
-                _, graph_lstm_hidden_states, traj_lstm_hidden_states = self.variant_encoder(batch)
+                concat_hidden_states = self.variant_encoder(batch, training_step)
 
-                ptheta1, ptheta2, mu1, log_var1, mu2, log_var2 = self.variational_mapping(
-                    torch.cat((graph_lstm_hidden_states[-1], traj_lstm_hidden_states[-1]), dim=1)
-                )
+                ptheta1, ptheta2, mu1, log_var1, mu2, log_var2 = self.variational_mapping(concat_hidden_states)
                 theta2 = ptheta2.sample()
 
                 pC = self.theta_to_c(theta2)
                 c_vec = pC.sample()
 
                 # P(z|x)
-                p_zgx, _, _ = self.invariant_encoder(batch)
+                p_zgx, _, _ = self.invariant_encoder(batch, training_step)
                 z_vec = p_zgx.sample()
 
                 # p(y|z,c)

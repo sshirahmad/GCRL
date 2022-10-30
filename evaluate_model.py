@@ -12,7 +12,7 @@ matplotlib.use('Agg')
 
 from loader import data_loader
 from parser_file import get_evaluation_parser
-from models import STGAT
+from models import CRMF
 from utils import *
 
 
@@ -20,31 +20,17 @@ def get_generator(checkpoint):
     """
     Upload model
     """
-    n_units = (
+    args.n_units = (
             [args.traj_lstm_hidden_size]
             + [int(x) for x in args.hidden_units.strip().split(",")]
             + [args.graph_lstm_hidden_size]
     )
-    n_heads = [int(x) for x in args.heads.strip().split(",")]
-    model = STGAT(
-        obs_len=args.obs_len,
-        fut_len=args.fut_len,
-        n_coordinates=args.n_coordinates,
-        traj_lstm_hidden_size=args.traj_lstm_hidden_size,
-        n_units=n_units,
-        n_heads=n_heads,
-        graph_network_out_dims=args.graph_network_out_dims,
-        dropout=args.dropout,
-        alpha=args.alpha,
-        graph_lstm_hidden_size=args.graph_lstm_hidden_size,
-        noise_dim=args.noise_dim,
-        noise_type=args.noise_type,
-        add_confidence=args.add_confidence,
-        counter=args.counter,
-    )
-    model.load_state_dict(checkpoint["state_dict"])
+    args.n_heads = [int(x) for x in args.heads.strip().split(",")]
+    model = CRMF(args)
+    load_all_model(args, model, None)
     model.cuda()
     model.eval()
+
     return model
 
 
@@ -80,12 +66,7 @@ def evaluate(args, loader, generator):
             total_traj += fut_traj.size(1)
 
             for _ in range(args.best_k):
-                pred_fut_traj_rel = generator(
-                    obs_traj_rel,
-                    seq_start_end,
-                    0,  # No Teacher
-                    3
-                )
+                pred_fut_traj_rel = generator(batch, "P3")
                 pred_fut_traj = relative_to_abs(pred_fut_traj_rel, obs_traj[-1, :, :2])
                 ade_, fde_ = cal_ade_fde(fut_traj, pred_fut_traj)
                 ade.append(ade_)
@@ -192,20 +173,20 @@ def compute_col(predicted_traj, predicted_trajs_all, thres=0.2, num_interp=4):
 
 
 def main(args):
+    print('Using GPU: ' + str(torch.cuda.is_available()))
     os.environ["CUDA_VISIBLE_DEVICES"] = args.gpu_num
-    checkpoint = torch.load(os.path.join('./models/', args.dataset_name, args.resume))
+    checkpoint = torch.load(args.resume, map_location='cpu')
     generator = get_generator(checkpoint)
-    path = get_dset_path(args.dataset_name, args.dset_type)
-    files = os.listdir(path)
-    envs_path = [os.path.join(path, file) for file in files]
-    loaders = [data_loader(args, env_path) for env_path in envs_path]
+    valo_envs_path, valo_envs_name = get_envs_path(args.dataset_name, "test", args.filter_envs)  # +'-'+args.filter_envs_pretrain)
+    loaders = [data_loader(args, valo_env_path, valo_env_name) for valo_env_path, valo_env_name in
+                   zip(valo_envs_path, valo_envs_name)]
     logging.info('Model: {}'.format(args.resume))
     logging.info('Dataset: {}'.format(args.dataset_name))
     logging.info('Eval shift: {}'.format(args.domain_shifts))
     logging.info('Dataset type: {}'.format(args.dset_type))
 
     # quantitative
-    if args.metrics == 'quantitative':
+    if args.metrics == 'accuracy':
         ade = 0
         fde = 0
         total_traj = 0
@@ -224,7 +205,7 @@ def main(args):
             visualize(args, loader, generator)
 
     # collisions [to be implemented]
-    if args.metrics == 'collisions':
+    if args.metrics == 'collision':
         for loader in loaders:
             visualize(args, loader, generator)
 

@@ -67,14 +67,14 @@ def get_training_parser():
     parser.add_argument("--loader_num_workers", default=6, type=int)
     parser.add_argument("--gpu_num", default="1", type=str)
     # training
-    parser.add_argument("--best_k", default=5, type=int)
-    parser.add_argument("--batch_size", default='32', type=str)
+    parser.add_argument("--best_k", default=20, type=int)
+    parser.add_argument("--batch_size", default='64', type=str)
     parser.add_argument("--batch_method", default='hom', type=str,
                         help='Use Homogeneous (hom), Heterogeneous (het) or alternated homogeneous (alt) batches during training')
     parser.add_argument("--shuffle", default=True, type=bool)
     # spurious feature
     parser.add_argument("--add_confidence", default=True, type=bool)
-    parser.add_argument("--domain_shifts", default='1, 2, 4, 8, 64', type=str,
+    parser.add_argument("--domain_shifts", default='1-2-4-8-64', type=str,
                         help='domain_shifts per environment: hotel,univ,zara1,zara2,eth')
 
     parser.add_argument("--start-epoch", default=1, type=int, metavar="N",
@@ -83,8 +83,8 @@ def get_training_parser():
 
     # general training
     parser.add_argument("--finetune", default="", type=str)
-    parser.add_argument("--num_epochs", default='100-200', type=lambda x: int_tuple(x, '-'))  # '150-100-150',
-    parser.add_argument("--resume", default="./models/eth/pretrain/P2/5.0/SSE_data_eth_irm[5.0]_epoch_243.pth.tar",
+    parser.add_argument("--num_epochs", default='150-100-150-200', type=lambda x: int_tuple(x, '-'))  # '150-100-150',
+    parser.add_argument("--resume", default="./models/eth/pretrain/P3/5.0/SSE_data_eth_irm[5.0]_epoch_365.pth.tar",
                         type=str, metavar="PATH", help="path to latest checkpoint (default: none)")
     parser.add_argument("--tfdir", default='runs', type=str)
 
@@ -95,12 +95,14 @@ def get_training_parser():
 
     # learning rates
     parser.add_argument("--lrvar", default=1e-3, type=float,
-                        help="initial learning rate for theta to c mapping optimizer")
-    parser.add_argument('--lrinv', default=1e-2, type=float,
+                        help="initial learning rate for variant encoder optimizer")
+    parser.add_argument("--lrvariation", default=1e-4, type=float,
+                        help="initial learning rate variational models optimizer")
+    parser.add_argument('--lrinv', default=1e-3, type=float,
                         help="initial learning rate for the invariant encoder optimizer")
-    parser.add_argument('--lrfut', default=1e-2, type=float,
+    parser.add_argument('--lrfut', default=1e-3, type=float,
                         help="initial learning rate for the future decoder optimizer")
-    parser.add_argument('--lrpast', default=1e-2, type=float,
+    parser.add_argument('--lrpast', default=1e-4, type=float,
                         help="initial learning rate for the past decoder optimizer")
 
     # other parameters to test after
@@ -120,5 +122,6 @@ def get_training_parser():
 
     parser.add_argument("--complexdecoder", default=True, type=bool, help='')
     parser.add_argument("--unbiased", default=False, type=bool, help='')
+
 
     return parser

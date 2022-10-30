@@ -60,19 +60,19 @@ def main(args):
 
     # create the model
     model = CRMF(args).cuda()
-    sigma_elbo = torch.nn.Parameter(torch.tensor([65.0], device="cuda"))
-    sigma_pred = torch.nn.Parameter(torch.tensor([0.0], device="cuda"))
 
     # style related optimizer
     optimizers = {
-        'variant': torch.optim.Adam(
+        'variational': torch.optim.Adam(
             [
-                {"params": model.variant_encoder.parameters(), "lr": args.lrvar},
-                {"params": model.variational_mapping.parameters(), 'lr': args.lrvar},
-                {"params": model.theta_to_c.parameters(), 'lr': args.lrvar},
-                {"params": model.theta_to_u.parameters(), 'lr': args.lrvar},
-                {"params": [sigma_elbo, sigma_pred], 'lr': args.lrvar}
+                {"params": model.variational_mapping.parameters(), 'lr': args.lrvariation},
+                {"params": model.theta_to_c.parameters(), 'lr': args.lrvariation},
+                {"params": model.theta_to_u.parameters(), 'lr': args.lrvariation},
             ]
+        ),
+        'var': torch.optim.Adam(
+            model.variant_encoder.parameters(),
+            lr=args.lrvar,
         ),
         'inv': torch.optim.Adam(
             model.invariant_encoder.parameters(),
@@ -93,10 +93,10 @@ def main(args):
         model.cuda()
 
     # TRAINING HAPPENS IN 6 STEPS:
-    assert (len(args.num_epochs) == 2)
+    assert (len(args.num_epochs) == 4)
     # 1. Train the invariant encoder along with the future decoder to learn z
     # 2. Train everything except invariant encoder to learn the other variant latent variables
-    training_steps = {f'P{i}': [sum(args.num_epochs[:i - 1]), sum(args.num_epochs[:i])] for i in range(1, 3)}
+    training_steps = {f'P{i}': [sum(args.num_epochs[:i - 1]), sum(args.num_epochs[:i])] for i in range(1, 5)}
     print(training_steps)
 
     def get_training_step(epoch):
@@ -105,7 +105,7 @@ def main(args):
         for step, r in training_steps.items():
             if r[0] < epoch <= r[1]:
                 return step
-        return 'P3'
+        return 'P5'
 
     # SOME TEST
     if args.testonly == 1:
@@ -124,12 +124,17 @@ def main(args):
     for epoch in range(args.start_epoch, sum(args.num_epochs) + 1):
 
         training_step = get_training_step(epoch)
+        # if training_step in ["P1", "P2", "P3"]:
+        #     continue
         logging.info(f"\n===> EPOCH: {epoch} ({training_step})")
 
-        if training_step == 'P1':
+        if training_step in ["P1", "P2"]:
+            freeze(True, (model.variational_mapping, model.theta_to_c, model.theta_to_u, model.past_decoder, model.future_decoder))
+            freeze(False, (model.invariant_encoder, model.variant_encoder))
+        elif training_step == 'P3':
             freeze(True, (model.variant_encoder, model.variational_mapping, model.theta_to_c, model.theta_to_u, model.past_decoder))
             freeze(False, (model.invariant_encoder, model.future_decoder))
-        elif training_step == 'P2':
+        elif training_step == 'P4':
             freeze(True, (model.invariant_encoder,))
             freeze(False, (model.variant_encoder, model.variational_mapping, model.theta_to_c, model.theta_to_u, model.past_decoder,
                            model.future_decoder))
@@ -137,15 +142,16 @@ def main(args):
         train_all(args, model, optimizers, train_dataset, epoch, training_step, train_envs_name,
                   writer, stage='training')
 
-        with torch.no_grad():
-            metric = validate_ade(model, valido_dataset, epoch, training_step, writer, stage='validation o')
-            validate_ade(model, valid_dataset, epoch, training_step, writer, stage='validation')
-            validate_ade(model, train_dataset, epoch, training_step, writer, stage='training')
+        if training_step not in ["P1", "P2"]:
+            with torch.no_grad():
+                metric = validate_ade(model, valido_dataset, epoch, training_step, writer, stage='validation o')
+                validate_ade(model, valid_dataset, epoch, training_step, writer, stage='validation')
+                validate_ade(model, train_dataset, epoch, training_step, writer, stage='training')
 
-            #### EVALUATE ALSO THE TRAINING ADE and the validation loss
-            # if epoch % 2 == 0:
-            #     train_all(args, model, optimizers, valid_dataset, epoch, training_step, val_envs_name,
-            #               writer, sigma_pred, sigma_elbo, stage='validation')
+                #### EVALUATE ALSO THE TRAINING ADE and the validation loss
+                # if epoch % 2 == 0:
+                #     train_all(args, model, optimizers, valid_dataset, epoch, training_step, val_envs_name,
+                #               writer, sigma_pred, sigma_elbo, stage='validation')
 
         if args.finetune:
             if metric < min_metric:
@@ -278,7 +284,27 @@ def train_all(args, model, optimizers, train_dataset, epoch, training_step, trai
 
                 scale = torch.tensor(1.).cuda().requires_grad_()
 
-                if training_step == "P1":
+                if training_step in ["P1", "P2"]:
+                    past_pred_rel_inv, past_pred_rel_var = model(batch, training_step)
+
+                    # compute reconstruction loss between output and past
+                    l2_loss_rel_inv = torch.stack([l2_loss(past_pred_rel_inv * scale, obs_traj_rel, mode="raw")], dim=1)
+                    l2_loss_rel_var = torch.stack([l2_loss(past_pred_rel_var, obs_traj_rel, mode="raw")], dim=1)
+
+                    # empirical risk (ERM classic loss)
+                    loss_sum_even, loss_sum_odd = erm_loss(l2_loss_rel_inv, seq_start_end, obs_traj_rel.shape[0])
+                    loss_inv = loss_sum_even + loss_sum_odd
+
+                    # invariance constraint (IRM)
+                    if args.irm and stage == 'training':
+                        loss_inv += irm_loss(loss_sum_even, loss_sum_odd, scale, args)
+
+                    loss_sum_even, loss_sum_odd = erm_loss(l2_loss_rel_var, seq_start_end, obs_traj_rel.shape[0])
+                    loss_var = loss_sum_even + loss_sum_odd
+
+                    loss = loss_var + loss_inv
+
+                elif training_step == "P3":
                     fut_pred_rel = []
                     for _ in range(args.best_k):
                         fut_pred_rel += [model(batch, training_step)]
@@ -317,18 +343,23 @@ def train_all(args, model, optimizers, train_dataset, epoch, training_step, trai
                     loss.backward()
 
                 # choose which optimizer to use depending on the training step
-                if training_step in ['P1']: optimizers['inv'].step()
-                if training_step in ['P1', 'P2']: optimizers['future_decoder'].step()
-                if training_step in ['P2']: optimizers['past_decoder'].step()
-                if training_step in ['P2']: optimizers['variant'].step()
+                if training_step in ['P1', 'P2', 'P3']: optimizers['inv'].step()
+                if training_step in ['P3', 'P4']: optimizers['future_decoder'].step()
+                if training_step in ['P4']: optimizers['past_decoder'].step()
+                if training_step in ['P1', 'P2', 'P4']: optimizers['var'].step()
+                if training_step in ['P4']: optimizers['variational'].step()
 
                 total_loss_meter.update(loss.item(), obs_traj.shape[1])
                 loss_meter.update(loss.item(), obs_traj.shape[1])
                 progress.display(batch_idx + 1)
 
-        if training_step == "P1":
+        if training_step in "P1":
+            writer.add_scalar(f"STGAT_loss_p1/{stage}", total_loss_meter.avg, epoch)
+        elif training_step in "P2":
+            writer.add_scalar(f"STGAT_loss_p2/{stage}", total_loss_meter.avg, epoch)
+        elif training_step == "P3":
             writer.add_scalar(f"irm_loss/{stage}", total_loss_meter.avg, epoch)
-        elif training_step == "P2":
+        elif training_step == "P4":
             writer.add_scalar(f"Total_loss/{stage}", total_loss_meter.avg, epoch)
             writer.add_scalar(f"Reconstruction_loss/{stage}", r_loss_meter.avg, epoch)
             writer.add_scalar(f"ELBO_loss/{stage}", e_loss_meter.avg, epoch)

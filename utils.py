@@ -505,12 +505,16 @@ def load_all_model(args, model, optimizers):
 
         # style encoder
         model.variant_encoder.load_state_dict(models_checkpoint['variant_encoder'])
+        if optimizers != None:
+            optimizers['var'].load_state_dict(checkpoint['optimizers']['var'])
+            update_lr(optimizers['var'], args.lrvar)
+
         model.variational_mapping.load_state_dict(models_checkpoint['variational_mapping'])
         model.theta_to_c.load_state_dict(models_checkpoint['theta_to_c'])
         model.theta_to_u.load_state_dict(models_checkpoint['theta_to_u'])
         if optimizers != None:
-            optimizers['variant'].load_state_dict(checkpoint['optimizers']['variant'])
-            update_lr(optimizers['variant'], args.lrvar)
+            optimizers['variational'].load_state_dict(checkpoint['optimizers']['variational'])
+            update_lr(optimizers['variational'], args.lrvariation)
 
         logging.info("=> loaded checkpoint '{}' (epoch {})".format(model_path, checkpoint["epoch"]))
 
