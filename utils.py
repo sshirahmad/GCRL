@@ -257,7 +257,7 @@ def set_domain_shift(domain_shifts, env_name):
     return alpha_e
 
 
-def set_name_experiment(args):
+def set_name_experiment(args, name):
     if args.counter:
         name_method = 'counter'
     else:
@@ -270,7 +270,7 @@ def set_name_experiment(args):
     else:
         name_risk = 'erm_0.0'
 
-    return f'STGAT_{name_method}_risk_{name_risk}_batch_{args.batch_method}_data_{args.dataset_name}_ds_{args.domain_shifts}_bk_{args.best_k}_ep_{args.num_epochs}_shuffle_{str(args.shuffle).lower()}_seed_{args.seed}'
+    return f'{name}_{name_method}_risk_{name_risk}_batch_{args.batch_method}_data_{args.dataset_name}_ds_{args.domain_shifts}_bk_{args.best_k}_ep_{args.num_epochs}_shuffle_{str(args.shuffle).lower()}_seed_{args.seed}'
 
 
 def set_batch_size(batch_method, batch_sizes, env_name):

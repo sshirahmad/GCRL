@@ -14,7 +14,7 @@ def main(args):
     # Set environment variables
     set_seed_globally(args.seed)
     os.environ["CUDA_VISIBLE_DEVICES"] = args.gpu_num
-    model_name = get_model_name(args, time=False)
+    model_name = set_name_experiment(args, name='CRMF')
     print('model name: ', model_name)
     if not os.path.exists(args.tfdir + '/' + model_name):
         os.makedirs(args.tfdir + '/' + model_name)
@@ -323,7 +323,7 @@ def train_all(args, model, optimizers, train_dataset, epoch, training_step, trai
 
                 else:
                     q_ygx, A1, A2, pred_past_rel = model(batch, training_step)
-                    l2_loss_reconst = l2_loss(pred_past_rel, obs_traj_rel, mode="raw")
+                    l2_loss_reconst = l2_loss(pred_past_rel, obs_traj_rel[:, :, :args.n_coordinates], mode="raw")
                     loss_sum_even, loss_sum_odd = erm_loss(l2_loss_reconst, seq_start_end, obs_traj_rel.shape[0])
                     r_loss = loss_sum_even + loss_sum_odd
 
