@@ -3,6 +3,7 @@ import torch.nn as nn
 import torch.nn.functional as F
 import random
 from utils import *
+import math
 from torch.distributions import MultivariateNormal, Gamma, Poisson
 
 eps = 0.0
@@ -436,7 +437,6 @@ class future_STGAT_decoder(nn.Module):
             batch,
             pred_lstm_hidden,
             training_step,
-            scale,
             variant_feats,
     ):
 
@@ -467,12 +467,10 @@ class future_STGAT_decoder(nn.Module):
                                                                               (pred_lstm_hidden, pred_lstm_c_t))
                     output = self.pred_hidden2pos[1](pred_lstm_hidden)
                 pred_traj_rel += [output]
+                p += [MultivariateNormal(output, torch.diag_embed(self.var_p * torch.ones(fut_traj_rel.size(1), 2).cuda()))]
 
-                if training_step == "P3":
-                    p += [MultivariateNormal(output * scale, torch.diag_embed(self.var_p * torch.ones(fut_traj_rel.size(1), 2).cuda()))]
-
-                else:
-                    p += [MultivariateNormal(output, torch.diag_embed(self.var_p * torch.ones(fut_traj_rel.size(1), 2).cuda()))]
+            if training_step == "P3":
+                return torch.stack(pred_traj_rel)
 
             return p
 
@@ -689,7 +687,7 @@ class CRMF(nn.Module):
                                                    args.z_dim, args.teachingratio,
                                                    args.noise_dim, args.noise_type)
 
-    def forward(self, batch, training_step, scale=None):
+    def forward(self, batch, training_step, dummy_w=None):
 
         obs_traj, fut_traj, obs_traj_rel, fut_traj_rel, seq_start_end, = batch
 
@@ -706,14 +704,11 @@ class CRMF(nn.Module):
                 q_zgx = self.invariant_encoder(batch, training_step)
                 for _ in range(self.num_samples):
                     z_vec = q_zgx.rsample()
-                    p_ygz = self.future_decoder(batch, z_vec, training_step, scale, False)
-                    prob_y_mat = torch.stack(
-                        [torch.exp(p_ygz[i].log_prob(fut_traj_rel[i, :, :self.n_coordinates])) for i in
-                         range(fut_traj_rel.size(0))])
-                    prob_y = torch.prod(prob_y_mat, dim=0)
-                    first_E.append(prob_y)
+                    pred_traj_rel_fut = self.future_decoder(batch, z_vec, training_step, False)
+                    predict_loss = -l2_loss(pred_traj_rel_fut * dummy_w, fut_traj_rel, mode="raw") + math.sqrt(2 * math.pi * 0.5)
+                    first_E.append(predict_loss)
 
-                q_ygx = torch.mean(torch.stack(first_E), dim=0)
+                log_q_ygx = torch.mean(torch.stack(first_E), dim=0)
 
                 first_E = []
                 for _ in range(self.num_samples):
@@ -721,21 +716,19 @@ class CRMF(nn.Module):
                     qprob_z = q_zgx.log_prob(z_vec)
                     prob_z = self.pz.log_prob(z_vec)
                     pred_past_rel = self.past_decoder(batch, z_vec, False)
-                    reconstruction_loss = l2_loss(pred_past_rel * scale, obs_traj_rel, mode="raw")
-                    p_ygz = self.future_decoder(batch, z_vec, training_step, scale, False)
-                    prob_y_mat = torch.stack(
-                        [torch.exp(p_ygz[i].log_prob(fut_traj_rel[i, :, :self.n_coordinates])) for i in
-                         range(fut_traj_rel.size(0))])
-                    prob_y = torch.prod(prob_y_mat, dim=0)
+                    reconstruction_loss = -l2_loss(pred_past_rel * dummy_w, obs_traj_rel, mode="raw") + math.sqrt(2 * math.pi * 0.5)
+                    pred_traj_rel_fut = self.future_decoder(batch, z_vec, training_step, False)
+                    predict_loss = -l2_loss(pred_traj_rel_fut * dummy_w, fut_traj_rel, mode="raw") + math.sqrt(2 * math.pi * 0.5)
+                    p_ygz = torch.exp(predict_loss)
 
-                    A1 = torch.multiply(prob_y, - reconstruction_loss)
-                    A2 = torch.multiply(prob_y, prob_z - qprob_z)
+                    A1 = torch.multiply(p_ygz, reconstruction_loss)
+                    A2 = torch.multiply(p_ygz, prob_z - qprob_z)
 
                     first_E.append(A1 + A2)
 
                 E = torch.mean(torch.stack(first_E), dim=0)
 
-                return q_ygx, E
+                return log_q_ygx, E
 
             else:
                 concat_hidden_states = self.variant_encoder(batch, training_step)
@@ -821,9 +814,11 @@ class CRMF(nn.Module):
 
         else:
             if training_step == "P3":
-                p_zgx = self.invariant_encoder(batch, training_step)
-                z_vec = p_zgx.sample()
-                pred_traj_rel = self.future_decoder(batch, z_vec, training_step, None, False)
+                pred_traj_rel = []
+                q_zgx = self.invariant_encoder(batch, training_step)
+                for _ in range(self.num_samples):
+                    z_vec = q_zgx.rsample()
+                    pred_traj_rel += [self.future_decoder(batch, z_vec, training_step, False)]
 
             else:
                 concat_hidden_states = self.variant_encoder(batch, training_step)

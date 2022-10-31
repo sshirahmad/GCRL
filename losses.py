@@ -206,14 +206,14 @@ def erm_loss(l2_loss_rel, seq_start_end, length_fut):
     return loss_sum_even, loss_sum_odd
 
 
-def irm_loss(loss_sum_even, loss_sum_odd, scale, args):
+def irm_loss(loss_sum_even, loss_sum_odd, dummy_w, args):
     if args.unbiased:
-        g1 = torch.autograd.grad(loss_sum_even, [scale], create_graph=True)[0]
-        g2 = torch.autograd.grad(loss_sum_odd, [scale], create_graph=True)[0]
+        g1 = torch.autograd.grad(loss_sum_even, dummy_w, create_graph=True)[0]
+        g2 = torch.autograd.grad(loss_sum_odd, dummy_w, create_graph=True)[0]
         inv_constr = g1 * g2
         additional_loss = inv_constr * args.irm
     else:
-        grad = torch.autograd.grad(loss_sum_even + loss_sum_odd, [scale], create_graph=True)[0]
+        grad = torch.autograd.grad(loss_sum_even + loss_sum_odd, dummy_w, create_graph=True)[0]
         inv_constr = torch.sum(grad ** 2)
         additional_loss = inv_constr * args.irm
     return additional_loss

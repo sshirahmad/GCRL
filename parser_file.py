@@ -121,7 +121,7 @@ def get_training_parser():
     parser.add_argument("--vrex", default=0.0, type=float, help='v-REx parameter (beta)')
 
     parser.add_argument("--complexdecoder", default=True, type=bool, help='')
-    parser.add_argument("--unbiased", default=False, type=bool, help='')
+    parser.add_argument("--unbiased", default=True, type=bool, help='')
 
 
     return parser
