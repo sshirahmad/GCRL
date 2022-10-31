@@ -659,8 +659,6 @@ class CRMF(nn.Module):
         self.num_samples = args.num_samples
         self.n_coordinates = args.n_coordinates
 
-        self.ptheta1 = MultivariateNormal(torch.zeros(args.latent_dim).cuda(), torch.eye(args.latent_dim).cuda())
-        self.ptheta2 = MultivariateNormal(torch.zeros(args.latent_dim).cuda(), torch.eye(args.latent_dim).cuda())
         self.pz = MultivariateNormal(torch.zeros(args.z_dim).cuda(), torch.eye(args.z_dim).cuda())
 
         self.invariant_encoder = STGAT_encoder_inv(args.obs_len, args.fut_len, args.n_coordinates,
@@ -705,7 +703,8 @@ class CRMF(nn.Module):
                 for _ in range(self.num_samples):
                     z_vec = q_zgx.rsample()
                     pred_traj_rel_fut = self.future_decoder(batch, z_vec, training_step, False)
-                    predict_loss = -l2_loss(pred_traj_rel_fut * dummy_w, fut_traj_rel, mode="raw") + math.sqrt(2 * math.pi * 0.5)
+                    predict_loss = -l2_loss(pred_traj_rel_fut * dummy_w, fut_traj_rel, mode="raw") - \
+                                   0.5 * fut_traj_rel.shape[1] * torch.log(torch.tensor(2 * math.pi * 0.5))
                     first_E.append(predict_loss)
 
                 log_q_ygx = torch.mean(torch.stack(first_E), dim=0)
@@ -716,9 +715,11 @@ class CRMF(nn.Module):
                     qprob_z = q_zgx.log_prob(z_vec)
                     prob_z = self.pz.log_prob(z_vec)
                     pred_past_rel = self.past_decoder(batch, z_vec, False)
-                    reconstruction_loss = -l2_loss(pred_past_rel * dummy_w, obs_traj_rel, mode="raw") + math.sqrt(2 * math.pi * 0.5)
+                    reconstruction_loss = -l2_loss(pred_past_rel * dummy_w, obs_traj_rel, mode="raw") -\
+                                          0.5 * obs_traj_rel.shape[1] * torch.log(torch.tensor(2 * math.pi * 0.5))
                     pred_traj_rel_fut = self.future_decoder(batch, z_vec, training_step, False)
-                    predict_loss = -l2_loss(pred_traj_rel_fut * dummy_w, fut_traj_rel, mode="raw") + math.sqrt(2 * math.pi * 0.5)
+                    predict_loss = -l2_loss(pred_traj_rel_fut * dummy_w, fut_traj_rel, mode="raw") -\
+                                   0.5 * fut_traj_rel.shape[1] * torch.log(torch.tensor(2 * math.pi * 0.5))
                     p_ygz = torch.exp(predict_loss)
 
                     A1 = torch.multiply(p_ygz, reconstruction_loss)
