@@ -21,6 +21,7 @@ requests-oauthlib
 rsa
 six
 tensorboard
+tensorflow
 tensorboard-data-server
 tensorboard-plugin-wit
 typing-extensions

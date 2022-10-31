@@ -2,7 +2,7 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 import random
-import numpy as np
+from utils import *
 from torch.distributions import MultivariateNormal, Gamma, Poisson
 
 eps = 0.0
@@ -400,6 +400,8 @@ class future_STGAT_decoder(nn.Module):
         self.pred_lstm_model = nn.ModuleList([nn.LSTMCell(n_coordinates, self.pred_lstm_hidden_size1),
                                               nn.LSTMCell(n_coordinates, self.pred_lstm_hidden_size2)])
 
+        self.scale = torch.tensor(1.).cuda().requires_grad_()
+
         self._initialize_weights()
 
 
@@ -434,6 +436,7 @@ class future_STGAT_decoder(nn.Module):
             batch,
             pred_lstm_hidden,
             training_step,
+            scale,
             variant_feats,
     ):
 
@@ -464,12 +467,14 @@ class future_STGAT_decoder(nn.Module):
                                                                               (pred_lstm_hidden, pred_lstm_c_t))
                     output = self.pred_hidden2pos[1](pred_lstm_hidden)
                 pred_traj_rel += [output]
-                p += [MultivariateNormal(output, torch.diag_embed(self.var_p * torch.ones(fut_traj_rel.size(1), 2).cuda()))]
 
-            if training_step == "P3":
-                return torch.stack(pred_traj_rel)
-            else:
-                return p
+                if training_step == "P3":
+                    p += [MultivariateNormal(output * scale, torch.diag_embed(self.var_p * torch.ones(fut_traj_rel.size(1), 2).cuda()))]
+
+                else:
+                    p += [MultivariateNormal(output, torch.diag_embed(self.var_p * torch.ones(fut_traj_rel.size(1), 2).cuda()))]
+
+            return p
 
         # during test
         else:
@@ -490,6 +495,7 @@ class past_decoder(nn.Module):
             self,
             obs_len,
             n_coordinates,
+            z_dim,
             c_dim,
     ):
         super(past_decoder, self).__init__()
@@ -497,9 +503,12 @@ class past_decoder(nn.Module):
         self.obs_len = obs_len
 
         self.n_coordinates = n_coordinates
-        self.pred_lstm_hidden_size = c_dim
-        self.pred_hidden2pos = nn.Linear(self.pred_lstm_hidden_size, n_coordinates)
-        self.pred_lstm_model = nn.LSTMCell(n_coordinates, self.pred_lstm_hidden_size)
+        self.pred_lstm_hidden_size1 = z_dim + c_dim
+        self.pred_lstm_hidden_size2 = z_dim
+        self.pred_hidden2pos = nn.ModuleList([nn.Linear(self.pred_lstm_hidden_size1, n_coordinates),
+                                              nn.Linear(self.pred_lstm_hidden_size2, n_coordinates)])
+        self.pred_lstm_model = nn.ModuleList([nn.LSTMCell(n_coordinates, self.pred_lstm_hidden_size1),
+                                              nn.LSTMCell(n_coordinates, self.pred_lstm_hidden_size2)])
         self._initialize_weights()
 
     def _initialize_weights(self):
@@ -517,6 +526,7 @@ class past_decoder(nn.Module):
             self,
             batch,
             pred_lstm_hidden,
+            variant_feats
     ):
 
         (_, _, obs_traj_rel, _, seq_start_end) = batch
@@ -528,8 +538,14 @@ class past_decoder(nn.Module):
                 input_t = obs_traj_rel[i - 1, :, :self.n_coordinates]
             else:
                 input_t = obs_traj_rel[0, :, :self.n_coordinates]
-            pred_lstm_hidden, pred_lstm_c_t = self.pred_lstm_model(input_t, (pred_lstm_hidden, pred_lstm_c_t))
-            output = self.pred_hidden2pos(pred_lstm_hidden)
+
+            if variant_feats:
+                pred_lstm_hidden, pred_lstm_c_t = self.pred_lstm_model[0](input_t, (pred_lstm_hidden, pred_lstm_c_t))
+                output = self.pred_hidden2pos[0](pred_lstm_hidden)
+            else:
+                pred_lstm_hidden, pred_lstm_c_t = self.pred_lstm_model[1](input_t, (pred_lstm_hidden, pred_lstm_c_t))
+                output = self.pred_hidden2pos[1](pred_lstm_hidden)
+
             pred_traj_rel += [output]
 
         return torch.stack(pred_traj_rel)
@@ -647,6 +663,7 @@ class CRMF(nn.Module):
 
         self.ptheta1 = MultivariateNormal(torch.zeros(args.latent_dim).cuda(), torch.eye(args.latent_dim).cuda())
         self.ptheta2 = MultivariateNormal(torch.zeros(args.latent_dim).cuda(), torch.eye(args.latent_dim).cuda())
+        self.pz = MultivariateNormal(torch.zeros(args.z_dim).cuda(), torch.eye(args.z_dim).cuda())
 
         self.invariant_encoder = STGAT_encoder_inv(args.obs_len, args.fut_len, args.n_coordinates,
                                                args.traj_lstm_hidden_size, args.n_units, args.n_heads,
@@ -666,13 +683,13 @@ class CRMF(nn.Module):
         self.theta_to_u = simple_mapping(args.latent_dim + args.traj_lstm_hidden_size + args.graph_lstm_hidden_size,
                                          None, args.u_dim)
 
-        self.past_decoder = past_decoder(args.obs_len, args.n_coordinates, args.c_dim)
+        self.past_decoder = past_decoder(args.obs_len, args.n_coordinates, args.z_dim, args.c_dim)
 
         self.future_decoder = future_STGAT_decoder(args.obs_len, args.fut_len, args.n_coordinates, args.c_dim,
                                                    args.z_dim, args.teachingratio,
                                                    args.noise_dim, args.noise_type)
 
-    def forward(self, batch, training_step):
+    def forward(self, batch, training_step, scale=None):
 
         obs_traj, fut_traj, obs_traj_rel, fut_traj_rel, seq_start_end, = batch
 
@@ -684,11 +701,41 @@ class CRMF(nn.Module):
                 return pred_traj_rel_inv, pred_traj_rel_var
 
             elif training_step == 'P3':
-                p_zgx = self.invariant_encoder(batch, training_step)
-                z_vec = p_zgx.rsample()
-                pred_traj_rel = self.future_decoder(batch, z_vec, training_step, False)
+                # calculate q(y|x)
+                first_E = []
+                q_zgx = self.invariant_encoder(batch, training_step)
+                for _ in range(self.num_samples):
+                    z_vec = q_zgx.rsample()
+                    p_ygz = self.future_decoder(batch, z_vec, training_step, scale, False)
+                    prob_y_mat = torch.stack(
+                        [torch.exp(p_ygz[i].log_prob(fut_traj_rel[i, :, :self.n_coordinates])) for i in
+                         range(fut_traj_rel.size(0))])
+                    prob_y = torch.prod(prob_y_mat, dim=0)
+                    first_E.append(prob_y)
 
-                return pred_traj_rel
+                q_ygx = torch.mean(torch.stack(first_E), dim=0)
+
+                first_E = []
+                for _ in range(self.num_samples):
+                    z_vec = q_zgx.rsample()
+                    qprob_z = q_zgx.log_prob(z_vec)
+                    prob_z = self.pz.log_prob(z_vec)
+                    pred_past_rel = self.past_decoder(batch, z_vec, False)
+                    reconstruction_loss = l2_loss(pred_past_rel * scale, obs_traj_rel, mode="raw")
+                    p_ygz = self.future_decoder(batch, z_vec, training_step, scale, False)
+                    prob_y_mat = torch.stack(
+                        [torch.exp(p_ygz[i].log_prob(fut_traj_rel[i, :, :self.n_coordinates])) for i in
+                         range(fut_traj_rel.size(0))])
+                    prob_y = torch.prod(prob_y_mat, dim=0)
+
+                    A1 = torch.multiply(prob_y, - reconstruction_loss)
+                    A2 = torch.multiply(prob_y, prob_z - qprob_z)
+
+                    first_E.append(A1 + A2)
+
+                E = torch.mean(torch.stack(first_E), dim=0)
+
+                return q_ygx, E
 
             else:
                 concat_hidden_states = self.variant_encoder(batch, training_step)
@@ -776,7 +823,7 @@ class CRMF(nn.Module):
             if training_step == "P3":
                 p_zgx = self.invariant_encoder(batch, training_step)
                 z_vec = p_zgx.sample()
-                pred_traj_rel = self.future_decoder(batch, z_vec, training_step, False)
+                pred_traj_rel = self.future_decoder(batch, z_vec, training_step, None, False)
 
             else:
                 concat_hidden_states = self.variant_encoder(batch, training_step)

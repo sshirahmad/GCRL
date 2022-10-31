@@ -124,8 +124,8 @@ def main(args):
     for epoch in range(args.start_epoch, sum(args.num_epochs) + 1):
 
         training_step = get_training_step(epoch)
-        # if training_step in ["P1", "P2", "P3"]:
-        #     continue
+        if training_step in ["P1", "P2"]:
+            continue
         logging.info(f"\n===> EPOCH: {epoch} ({training_step})")
 
         if training_step in ["P1", "P2"]:
@@ -290,7 +290,7 @@ def train_all(args, model, optimizers, train_dataset, epoch, training_step, trai
                 scale = torch.tensor(1.).cuda().requires_grad_()
 
                 if training_step in ["P1", "P2"]:
-                    past_pred_rel_inv, past_pred_rel_var = model(batch, training_step)
+                    past_pred_rel_inv, past_pred_rel_var = model(batch, training_step, scale)
 
                     # compute reconstruction loss between output and past
                     l2_loss_rel_inv = torch.stack([l2_loss(past_pred_rel_inv * scale, obs_traj_rel, mode="raw")], dim=1)
@@ -310,21 +310,22 @@ def train_all(args, model, optimizers, train_dataset, epoch, training_step, trai
                     loss = loss_var + loss_inv
 
                 elif training_step == "P3":
-                    fut_pred_rel = []
-                    for _ in range(args.best_k):
-                        fut_pred_rel += [model(batch, training_step)]
+                    q_ygx, E = model(batch, training_step, scale)
 
-                    # compute variety loss between output and future
-                    l2_loss_rel = torch.stack(
-                        [l2_loss(fut_pred_rel[i] * scale, fut_traj_rel, mode="raw") for i in range(args.best_k)], dim=1)
+                    loss_sum_even_p, loss_sum_odd_p = erm_loss(torch.log(q_ygx), seq_start_end, fut_traj_rel.shape[0])
+                    predict_loss = loss_sum_even_p + loss_sum_odd_p
 
-                    # empirical risk (ERM classic loss)
-                    loss_sum_even, loss_sum_odd = erm_loss(l2_loss_rel, seq_start_end, fut_traj_rel.shape[0])
-                    loss = loss_sum_even + loss_sum_odd
+                    loss_sum_even_e, loss_sum_odd_e = erm_loss(torch.divide(E, q_ygx), seq_start_end, fut_traj_rel.shape[0])
+                    elbo_loss = loss_sum_even_e + loss_sum_odd_e
+
+                    loss = (- predict_loss) + (- elbo_loss)
 
                     # invariance constraint (IRM)
                     if args.irm and stage == 'training':
-                        loss += irm_loss(loss_sum_even, loss_sum_odd, scale, args)
+                        loss += irm_loss(loss_sum_even_e + loss_sum_even_p, loss_sum_odd_e + loss_sum_odd_p, scale, args)
+
+                    e_loss_meter.update(elbo_loss.item(), obs_traj.shape[1])
+                    p_loss_meter.update(predict_loss.item(), obs_traj.shape[1])
 
                 else:
                     q_ygx, A1, A2, pred_past_rel = model(batch, training_step)
@@ -350,7 +351,7 @@ def train_all(args, model, optimizers, train_dataset, epoch, training_step, trai
                 # choose which optimizer to use depending on the training step
                 if training_step in ['P1', 'P2', 'P3']: optimizers['inv'].step()
                 if training_step in ['P3', 'P4']: optimizers['future_decoder'].step()
-                if training_step in ['P4']: optimizers['past_decoder'].step()
+                if training_step in ['P3', 'P4']: optimizers['past_decoder'].step()
                 if training_step in ['P1', 'P2', 'P4']: optimizers['var'].step()
                 if training_step in ['P4']: optimizers['variational'].step()
 
@@ -363,7 +364,8 @@ def train_all(args, model, optimizers, train_dataset, epoch, training_step, trai
         elif training_step in "P2":
             writer.add_scalar(f"STGAT_loss_p2/{stage}", total_loss_meter.avg, epoch)
         elif training_step == "P3":
-            writer.add_scalar(f"irm_loss/{stage}", total_loss_meter.avg, epoch)
+            writer.add_scalar(f"pred_loss/{stage}", p_loss_meter.avg, epoch)
+            writer.add_scalar(f"elbo_loss/{stage}", e_loss_meter.avg, epoch)
         elif training_step == "P4":
             writer.add_scalar(f"Total_loss/{stage}", total_loss_meter.avg, epoch)
             writer.add_scalar(f"Reconstruction_loss/{stage}", r_loss_meter.avg, epoch)
