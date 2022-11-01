@@ -126,7 +126,7 @@ def main(args):
         training_step = get_training_step(epoch)
         logging.info(f"\n===> EPOCH: {epoch} ({training_step})")
 
-        if training_step in ["P1", "P2", "P3"]:
+        if training_step in ["P1", "P2"]:
             freeze(True, (model.variational_mapping, model.theta_to_c, model.theta_to_u, model.past_decoder, model.future_decoder))
             freeze(False, (model.invariant_encoder, model.variant_encoder))
         elif training_step == 'P3':
