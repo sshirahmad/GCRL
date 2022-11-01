@@ -123,8 +123,6 @@ def main(args):
     for epoch in range(args.start_epoch, sum(args.num_epochs) + 1):
 
         training_step = get_training_step(epoch)
-        if training_step in ["P1", "P2", "P3"]:
-            continue
         logging.info(f"\n===> EPOCH: {epoch} ({training_step})")
 
         if training_step in ["P1", "P2"]:
@@ -373,7 +371,7 @@ def train_all(args, model, optimizers, train_dataset, epoch, training_step, trai
             writer.add_scalar(f"pred_loss/{stage}", p_loss_meter.avg, epoch)
             writer.add_scalar(f"theta_hotel/{stage}", torch.norm(model.theta[0]), epoch)
             writer.add_scalar(f"theta_univ/{stage}", torch.norm(model.theta[1]), epoch)
-            writer.add_scalar(f"theta_zaral/{stage}", torch.norm(model.theta[2]), epoch)
+            writer.add_scalar(f"theta_zara1/{stage}", torch.norm(model.theta[2]), epoch)
             writer.add_scalar(f"theta_zara2/{stage}", torch.norm(model.theta[3]), epoch)
 
 

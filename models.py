@@ -664,8 +664,8 @@ class CRMF(nn.Module):
         self.n_coordinates = args.n_coordinates
 
         self.theta = nn.Parameter(torch.randn(args.num_envs, args.latent_dim))
-        self.pz = MultivariateNormal(torch.zeros(args.z_dim).cuda(), torch.eye(args.z_dim).cuda())
-        self.ptheta = MultivariateNormal(torch.zeros(args.latent_dim).cuda(), torch.eye(args.latent_dim).cuda())
+        self.pz = MultivariateNormal(torch.zeros(args.z_dim).cuda(), torch.eye(args.z_dim).cuda()) # TODO add learnable variance and mean
+        self.ptheta = MultivariateNormal(torch.zeros(args.latent_dim).cuda(), torch.eye(args.latent_dim).cuda()) # TODO add learnable variance and mean
 
         self.invariant_encoder = STGAT_encoder_inv(args.obs_len, args.fut_len, args.n_coordinates,
                                                args.traj_lstm_hidden_size, args.n_units, args.n_heads,
@@ -720,7 +720,7 @@ class CRMF(nn.Module):
                 for _ in range(self.num_samples):
                     z_vec = q_zgx.rsample()
                     qprob_z = q_zgx.log_prob(z_vec)
-                    prob_z = self.pz.log_prob(z_vec)  # TODO add learnable variance and mean
+                    prob_z = self.pz.log_prob(z_vec)
                     pred_past_rel = self.past_decoder(batch, z_vec, False)
                     reconstruction_loss = -l2_loss(pred_past_rel * dummy_w, obs_traj_rel, mode="raw") -\
                                           0.5 * 1/obs_traj_rel.shape[0] * torch.log(torch.tensor(2 * math.pi * 0.5))
