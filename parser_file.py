@@ -83,7 +83,7 @@ def get_training_parser():
 
     # general training
     parser.add_argument("--finetune", default="", type=str)
-    parser.add_argument("--num_epochs", default='150-100-200-200', type=lambda x: int_tuple(x, '-'))  # '150-100-150',
+    parser.add_argument("--num_epochs", default='200-150-300-200', type=lambda x: int_tuple(x, '-'))  # '150-100-150',
     parser.add_argument("--resume", default="",
                         type=str, metavar="PATH", help="path to latest checkpoint (default: none)")
     parser.add_argument("--tfdir", default='runs', type=str)

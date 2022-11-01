@@ -438,8 +438,7 @@ def save_all_model(args, model, model_name, optimizers, metric, epoch, training_
         'state_dicts': {
             'variant_encoder': model.variant_encoder.state_dict(),
             'variational_mapping': model.variational_mapping.state_dict(),
-            'theta_to_c': model.theta_to_c.state_dict(),
-            'theta_to_u': model.theta_to_u.state_dict(),
+            'theta_to_s': model.theta_to_s.state_dict(),
             'invariant_encoder': model.invariant_encoder.state_dict(),
             'future_decoder': model.future_decoder.state_dict(),
             'past_decoder': model.past_decoder.state_dict(),
@@ -506,8 +505,7 @@ def load_all_model(args, model, optimizers):
             update_lr(optimizers['var'], args.lrvar)
 
         model.variational_mapping.load_state_dict(models_checkpoint['variational_mapping'])
-        model.theta_to_c.load_state_dict(models_checkpoint['theta_to_c'])
-        model.theta_to_u.load_state_dict(models_checkpoint['theta_to_u'])
+        model.theta_to_s.load_state_dict(models_checkpoint['theta_to_s'])
         if optimizers != None:
             optimizers['variational'].load_state_dict(checkpoint['optimizers']['variational'])
             update_lr(optimizers['variational'], args.lrvariation)

@@ -815,24 +815,32 @@ class CRMF(nn.Module):
         else:
             if training_step == "P3":
                 q_zgx = self.invariant_encoder(batch, training_step)
-                z_vec = q_zgx.rsample()
-                pred_traj_rel = self.future_decoder(batch, z_vec, training_step, False)
+                pred_traj_rel = []
+                for _ in range(self.num_samples):
+
+                    # P(z|x)
+                    z_vec = q_zgx.rsample()
+
+                    # p(y|z,c)
+                    pred_traj_rel += [self.future_decoder(batch, z_vec, training_step, False)]
 
             else:
                 concat_hidden_states = self.variant_encoder(batch, training_step)
 
-                ptheta1, ptheta2, mu1, log_var1, mu2, log_var2 = self.variational_mapping(concat_hidden_states)
-                theta2 = ptheta2.sample()
-
-                pC = self.theta_to_c(theta2)
-                c_vec = pC.sample()
-
-                # P(z|x)
+                qtheta = self.variational_mapping(concat_hidden_states)
+                theta = qtheta.sample()
+                ps = self.thetax_to_s(theta, concat_hidden_states)
                 p_zgx = self.invariant_encoder(batch, training_step)
-                z_vec = p_zgx.sample()
+                pred_traj_rel = []
+                for _ in range(self.num_samples):
+                    # p(s|theta,x)
+                    s_vec = ps.sample()
 
-                # p(y|z,c)
-                pred_traj_rel = self.future_decoder(batch, torch.cat((z_vec, c_vec), dim=1), training_step, True)
+                    # P(z|x)
+                    z_vec = p_zgx.sample()
+
+                    # p(y|z,c)
+                    pred_traj_rel += [self.future_decoder(batch, torch.cat((z_vec, s_vec), dim=1), training_step, True)]
 
             return pred_traj_rel
 

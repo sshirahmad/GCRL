@@ -65,12 +65,19 @@ def evaluate(args, loader, generator, training_step):
             step += seq_start_end.shape[0]
             ade, fde = [], []
             total_traj += fut_traj.size(1)
-
             for _ in range(args.best_k):
                 pred_fut_traj_rel = generator(batch, training_step)
-                pred_fut_traj = relative_to_abs(pred_fut_traj_rel, obs_traj[-1, :, :2])
+                pred_fut_traj = [relative_to_abs(pred_fut_traj_rel[i], obs_traj[-1, :, :2]) for i in range(len(pred_fut_traj_rel))]
                 # compute ADE and FDE metrics
-                ade_, fde_ = cal_ade_fde(fut_traj, pred_fut_traj)
+                ade_list = []
+                fde_list = []
+                for i in range(len(pred_fut_traj)):
+                    a, f = cal_ade_fde(fut_traj, pred_fut_traj[i])
+                    ade_list.append(a)
+                    fde_list.append(f)
+
+                ade_, fde_ = torch.mean(torch.stack(ade_list), dim=0), torch.mean(torch.stack(fde_list), dim=0)
+
                 ade.append(ade_)
                 fde.append(fde_)
 
@@ -193,7 +200,7 @@ def main(args):
         fde = 0
         total_traj = 0
         for loader in loaders:
-            ade_sum_i, fde_sum_i, total_traj_i = evaluate(args, loader, generator, training_step="P3")
+            ade_sum_i, fde_sum_i, total_traj_i = evaluate(args, loader, generator, training_step="P4")
             ade += ade_sum_i
             fde += fde_sum_i
             total_traj += total_traj_i
