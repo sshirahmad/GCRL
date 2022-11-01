@@ -1,14 +1,14 @@
-2022-10-31 19:01:50,756:INFO: Initializing Training Set
-2022-10-31 19:01:55,091:INFO: Initializing Validation Set
-2022-10-31 19:01:55,544:INFO: Initializing Validation O Set
-2022-10-31 19:01:58,025:INFO: 
-===> EPOCH: 251 (P3)
-2022-10-31 19:01:58,026:INFO: - Computing loss (training)
-2022-10-31 19:02:07,112:INFO: Dataset: hotel               Batch: 1/8	Loss 5.8656 (5.8656)
-2022-10-31 19:02:07,600:INFO: Dataset: hotel               Batch: 2/8	Loss 5.0687 (5.4279)
-2022-10-31 19:02:08,103:INFO: Dataset: hotel               Batch: 3/8	Loss 5.6905 (5.5100)
-2022-10-31 19:02:08,511:INFO: Dataset: hotel               Batch: 4/8	Loss 5.2376 (5.4397)
-2022-10-31 19:02:08,799:INFO: Dataset: hotel               Batch: 5/8	Loss 4.9713 (5.3456)
-2022-10-31 19:02:09,081:INFO: Dataset: hotel               Batch: 6/8	Loss 4.1643 (5.1434)
-2022-10-31 19:02:09,358:INFO: Dataset: hotel               Batch: 7/8	Loss 5.8449 (5.2419)
-2022-10-31 19:02:09,528:INFO: Dataset: hotel               Batch: 8/8	Loss 1.3631 (5.1191)
+2022-10-31 20:03:35,873:INFO: Initializing Training Set
+2022-10-31 20:03:39,833:INFO: Initializing Validation Set
+2022-10-31 20:03:40,251:INFO: Initializing Validation O Set
+2022-10-31 20:03:42,641:INFO: 
+===> EPOCH: 1 (P1)
+2022-10-31 20:03:42,641:INFO: - Computing loss (training)
+2022-10-31 20:03:49,163:INFO: Dataset: hotel               Batch: 1/8	Loss 6.2237 (6.2237)
+2022-10-31 20:03:49,599:INFO: Dataset: hotel               Batch: 2/8	Loss 5.5484 (5.8528)
+2022-10-31 20:03:49,966:INFO: Dataset: hotel               Batch: 3/8	Loss 5.9356 (5.8787)
+2022-10-31 20:03:50,300:INFO: Dataset: hotel               Batch: 4/8	Loss 5.3253 (5.7357)
+2022-10-31 20:03:50,570:INFO: Dataset: hotel               Batch: 5/8	Loss 5.0873 (5.6055)
+2022-10-31 20:03:50,735:INFO: Dataset: hotel               Batch: 6/8	Loss 4.4438 (5.4067)
+2022-10-31 20:03:50,791:INFO: Dataset: hotel               Batch: 7/8	Loss 5.9412 (5.4817)
+2022-10-31 20:03:50,824:INFO: Dataset: hotel               Batch: 8/8	Loss 1.2938 (5.3491)

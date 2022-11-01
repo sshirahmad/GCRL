@@ -124,11 +124,9 @@ def main(args):
     for epoch in range(args.start_epoch, sum(args.num_epochs) + 1):
 
         training_step = get_training_step(epoch)
-        if training_step in ["P1", "P2"]:
-            continue
         logging.info(f"\n===> EPOCH: {epoch} ({training_step})")
 
-        if training_step in ["P1", "P2"]:
+        if training_step in ["P1", "P2", "P3"]:
             freeze(True, (model.variational_mapping, model.theta_to_c, model.theta_to_u, model.past_decoder, model.future_decoder))
             freeze(False, (model.invariant_encoder, model.variant_encoder))
         elif training_step == 'P3':
@@ -293,7 +291,7 @@ def train_all(args, model, optimizers, train_dataset, epoch, training_step, trai
                     past_pred_rel_inv, past_pred_rel_var = model(batch, training_step)
 
                     # compute reconstruction loss between output and past
-                    l2_loss_rel_inv = torch.stack([l2_loss(past_pred_rel_inv, obs_traj_rel, mode="raw")], dim=1)
+                    l2_loss_rel_inv = torch.stack([l2_loss(past_pred_rel_inv * dummy_w, obs_traj_rel, mode="raw")], dim=1)
                     l2_loss_rel_var = torch.stack([l2_loss(past_pred_rel_var, obs_traj_rel, mode="raw")], dim=1)
 
                     # empirical risk (ERM classic loss)
