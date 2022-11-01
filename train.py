@@ -66,8 +66,7 @@ def main(args):
         'variational': torch.optim.Adam(
             [
                 {"params": model.variational_mapping.parameters(), 'lr': args.lrvariation},
-                {"params": model.theta_to_c.parameters(), 'lr': args.lrvariation},
-                {"params": model.theta_to_u.parameters(), 'lr': args.lrvariation},
+                {"params": model.theta_to_s.parameters(), 'lr': args.lrvariation},
             ]
         ),
         'var': torch.optim.Adam(
@@ -124,17 +123,19 @@ def main(args):
     for epoch in range(args.start_epoch, sum(args.num_epochs) + 1):
 
         training_step = get_training_step(epoch)
+        if training_step in ["P1", "P2", "P3"]:
+            continue
         logging.info(f"\n===> EPOCH: {epoch} ({training_step})")
 
         if training_step in ["P1", "P2"]:
-            freeze(True, (model.variational_mapping, model.theta_to_c, model.theta_to_u, model.past_decoder, model.future_decoder))
+            freeze(True, (model.variational_mapping, model.theta_to_s, model.past_decoder, model.future_decoder))
             freeze(False, (model.invariant_encoder, model.variant_encoder))
         elif training_step == 'P3':
-            freeze(True, (model.variant_encoder, model.variational_mapping, model.theta_to_c, model.theta_to_u))
+            freeze(True, (model.variant_encoder, model.variational_mapping, model.theta_to_s))
             freeze(False, (model.invariant_encoder, model.future_decoder, model.past_decoder))
         elif training_step == 'P4':
             freeze(True, (model.invariant_encoder,))
-            freeze(False, (model.variant_encoder, model.variational_mapping, model.theta_to_c, model.theta_to_u, model.past_decoder,
+            freeze(False, (model.variant_encoder, model.variational_mapping, model.theta_to_s, model.past_decoder,
                            model.future_decoder))
 
         if args.finetune:
@@ -308,7 +309,7 @@ def train_all(args, model, optimizers, train_dataset, epoch, training_step, trai
                     loss = loss_var + loss_inv
 
                 elif training_step == "P3":
-                    log_q_ygx, E = model(batch, training_step, dummy_w)
+                    log_q_ygx, E = model(batch, training_step, dummy_w=dummy_w)
 
                     loss_sum_even_p, loss_sum_odd_p = erm_loss(log_q_ygx, seq_start_end, fut_traj_rel.shape[0])
                     predict_loss = loss_sum_even_p + loss_sum_odd_p
@@ -326,19 +327,20 @@ def train_all(args, model, optimizers, train_dataset, epoch, training_step, trai
                     p_loss_meter.update(predict_loss.item(), obs_traj.shape[1])
 
                 else:
-                    q_ygx, A1, A2, pred_past_rel = model(batch, training_step)
-                    l2_loss_reconst = l2_loss(pred_past_rel, obs_traj_rel, mode="raw")
-                    loss_sum_even, loss_sum_odd = erm_loss(l2_loss_reconst, seq_start_end, obs_traj_rel.shape[0])
-                    r_loss = loss_sum_even + loss_sum_odd
+                    log_q_ygthetax, log_q_thetagx, E = model(batch, training_step, env_idx=train_idx)
+                    loss_sum_even_p, loss_sum_odd_p = erm_loss(log_q_ygthetax, seq_start_end, fut_traj_rel.shape[0])
+                    predict_loss = loss_sum_even_p + loss_sum_odd_p
 
-                    loss_sum_even, loss_sum_odd = erm_loss(torch.log(q_ygx), seq_start_end, fut_traj_rel.shape[0])
-                    predict_loss = loss_sum_even + loss_sum_odd
-                    loss_sum_even, loss_sum_odd = erm_loss(torch.multiply(A1, -l2_loss_reconst) + A2, seq_start_end, obs_traj_rel.shape[0])
-                    elbo_loss = loss_sum_even + loss_sum_odd
+                    loss_sum_even_e, loss_sum_odd_e = erm_loss(E, seq_start_end, fut_traj_rel.shape[0])
+                    predict_loss += loss_sum_even_e + loss_sum_odd_e
 
-                    loss = (- predict_loss) + 1e24 * (- elbo_loss)
+                    loss_sum_even_e, loss_sum_odd_e = erm_loss(E, seq_start_end, fut_traj_rel.shape[0])
+                    elbo_loss = loss_sum_even_e + loss_sum_odd_e
 
-                    r_loss_meter.update(r_loss.item(), obs_traj.shape[1])
+                    theta_constraint = - model.ptheta.log_prob(model.theta[train_idx])
+
+                    loss = (- predict_loss) + (- elbo_loss) + (- theta_constraint)
+
                     e_loss_meter.update(elbo_loss.item(), obs_traj.shape[1])
                     p_loss_meter.update(predict_loss.item(), obs_traj.shape[1])
 
@@ -366,10 +368,13 @@ def train_all(args, model, optimizers, train_dataset, epoch, training_step, trai
             writer.add_scalar(f"elbo_loss/{stage}", e_loss_meter.avg, epoch)
             writer.add_scalar(f"irm_loss/{stage}", total_loss_meter.avg, epoch)
         elif training_step == "P4":
-            writer.add_scalar(f"Total_loss/{stage}", total_loss_meter.avg, epoch)
-            writer.add_scalar(f"Reconstruction_loss/{stage}", r_loss_meter.avg, epoch)
-            writer.add_scalar(f"ELBO_loss/{stage}", e_loss_meter.avg, epoch)
-            writer.add_scalar(f"Predict_loss/{stage}", p_loss_meter.avg, epoch)
+            writer.add_scalar(f"variational_loss/{stage}", total_loss_meter.avg, epoch)
+            writer.add_scalar(f"elbo_loss/{stage}", e_loss_meter.avg, epoch)
+            writer.add_scalar(f"pred_loss/{stage}", p_loss_meter.avg, epoch)
+            writer.add_scalar(f"theta_hotel/{stage}", torch.norm(model.theta[0]), epoch)
+            writer.add_scalar(f"theta_univ/{stage}", torch.norm(model.theta[1]), epoch)
+            writer.add_scalar(f"theta_zaral/{stage}", torch.norm(model.theta[2]), epoch)
+            writer.add_scalar(f"theta_zara2/{stage}", torch.norm(model.theta[3]), epoch)
 
 
 def validate_ade(model, valid_dataset, epoch, training_step, writer, stage, write=True):

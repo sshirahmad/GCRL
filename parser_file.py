@@ -18,6 +18,7 @@ def get_training_parser():
 
     # dataset
     parser.add_argument("--dataset_name", default="eth", type=str)
+    parser.add_argument("--num_envs", default=4, type=int, help="Number of environments in the dataset")
     parser.add_argument("--delim", default="\t")
     parser.add_argument("--obs_len", default=8, type=int)
     parser.add_argument("--fut_len", default=12, type=int)
@@ -52,8 +53,7 @@ def get_training_parser():
     # architecture (VE)
     parser.add_argument('--latent_dim', type=int, default=16, help="Dimension of latent selection variables")
     parser.add_argument("--z_dim", type=int, default=16, help="Dimension of z latent variable")
-    parser.add_argument("--c_dim", type=int, default=16, help="Dimension of c latent variable")
-    parser.add_argument("--u_dim", type=int, default=16, help="Dimension of u latent variable")
+    parser.add_argument("--s_dim", type=int, default=16, help="Dimension of c latent variable")
     parser.add_argument('--contrastive', default=0, type=float)
     parser.add_argument("--aggrstyle", default='minpol-mean', type=str)
     parser.add_argument("--classification", default=3, type=int)
