@@ -67,6 +67,9 @@ def main(args):
             [
                 {"params": model.variational_mapping.parameters(), 'lr': args.lrvariation},
                 {"params": model.theta_to_s.parameters(), 'lr': args.lrvariation},
+                {"params": model.thetax_to_s.parameters(), 'lr': args.lrvariation},
+                {"params": model.theta, 'lr': args.lrvariation},
+
             ]
         ),
         'var': torch.optim.Adam(
@@ -123,18 +126,20 @@ def main(args):
     for epoch in range(args.start_epoch, sum(args.num_epochs) + 1):
 
         training_step = get_training_step(epoch)
+        if training_step in ["P1", "P2"]:
+            continue
         logging.info(f"\n===> EPOCH: {epoch} ({training_step})")
 
         if training_step in ["P1", "P2"]:
-            freeze(True, (model.variational_mapping, model.theta_to_s, model.past_decoder, model.future_decoder))
+            freeze(True, (model.variational_mapping, model.theta_to_s, model.thetax_to_s, model.past_decoder, model.future_decoder), (model.theta,))
             freeze(False, (model.invariant_encoder, model.variant_encoder))
         elif training_step == 'P3':
-            freeze(True, (model.variant_encoder, model.variational_mapping, model.theta_to_s))
+            freeze(True, (model.variant_encoder, model.variational_mapping, model.theta_to_s, model.thetax_to_s), (model.theta,))
             freeze(False, (model.invariant_encoder, model.future_decoder, model.past_decoder))
         elif training_step == 'P4':
             freeze(True, (model.invariant_encoder,))
-            freeze(False, (model.variant_encoder, model.variational_mapping, model.theta_to_s, model.past_decoder,
-                           model.future_decoder))
+            freeze(False, (model.variant_encoder, model.variational_mapping, model.theta_to_s, model.thetax_to_s, model.past_decoder,
+                           model.future_decoder), (model.theta,))
 
         if args.finetune:
             freeze(True, (model.invariant_encoder,))

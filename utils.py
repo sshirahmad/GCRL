@@ -439,6 +439,8 @@ def save_all_model(args, model, model_name, optimizers, metric, epoch, training_
             'variant_encoder': model.variant_encoder.state_dict(),
             'variational_mapping': model.variational_mapping.state_dict(),
             'theta_to_s': model.theta_to_s.state_dict(),
+            'thetax_to_s': model.thetax_to_s.state_dict(),
+            'theta': model.theta,
             'invariant_encoder': model.invariant_encoder.state_dict(),
             'future_decoder': model.future_decoder.state_dict(),
             'past_decoder': model.past_decoder.state_dict(),
@@ -498,14 +500,17 @@ def load_all_model(args, model, optimizers):
             optimizers['past_decoder'].load_state_dict(checkpoint['optimizers']['past_decoder'])
             update_lr(optimizers['past_decoder'], args.lrpast)
 
-        # style encoder
+        # variant encoder
         model.variant_encoder.load_state_dict(models_checkpoint['variant_encoder'])
         if optimizers != None:
             optimizers['var'].load_state_dict(checkpoint['optimizers']['var'])
             update_lr(optimizers['var'], args.lrvar)
 
+        # variational models
         model.variational_mapping.load_state_dict(models_checkpoint['variational_mapping'])
         model.theta_to_s.load_state_dict(models_checkpoint['theta_to_s'])
+        model.thetax_to_s.load_state_dict(models_checkpoint['thetax_to_s'])
+        model.theta = models_checkpoint['theta']
         if optimizers != None:
             optimizers['variational'].load_state_dict(checkpoint['optimizers']['variational'])
             update_lr(optimizers['variational'], args.lrvariation)
@@ -522,11 +527,15 @@ def get_fake_optim():
     return torch.optim.Adam(l.parameters())
 
 
-def freeze(freez, models):
+def freeze(freez, models, parameters_list=None):
     for model in models:
         if model != None:
             for p in model.parameters():
                 p.requires_grad = not freez
+
+    if parameters_list != None:
+        for parameters in parameters_list:
+            parameters.requires_grad = not freez
 
 
 def update_lr(opt, lr):
