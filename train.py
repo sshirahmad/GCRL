@@ -91,12 +91,11 @@ def main(args):
         )
     }
 
+    if args.resume:
+        sigma = load_all_model(args, model, optimizers)
+
     sigma.cuda()
     model.cuda()
-
-    if args.resume:
-        load_all_model(args, model, optimizers)
-        model.cuda()
 
     # TRAINING HAPPENS IN 6 STEPS:
     assert (len(args.num_epochs) == 4)
@@ -135,15 +134,15 @@ def main(args):
         logging.info(f"\n===> EPOCH: {epoch} ({training_step})")
 
         if training_step in ["P1", "P2"]:
-            freeze(True, (model.variational_mapping, model.theta_to_s, model.past_decoder, model.future_decoder), (model.theta,))
+            freeze(True, (model.variational_mapping, model.theta_to_s, model.past_decoder, model.future_decoder), (model.theta, sigma))
             freeze(False, (model.invariant_encoder, model.variant_encoder))
         elif training_step == 'P3':
-            freeze(True, (model.variant_encoder, model.variational_mapping, model.theta_to_s), (model.theta,))
+            freeze(True, (model.variant_encoder, model.variational_mapping, model.theta_to_s), (model.theta, sigma))
             freeze(False, (model.invariant_encoder, model.future_decoder, model.past_decoder))
         elif training_step == 'P4':
             freeze(True, (model.invariant_encoder,))
             freeze(False, (model.variant_encoder, model.variational_mapping, model.theta_to_s, model.past_decoder,
-                           model.future_decoder), (model.theta,))
+                           model.future_decoder), (model.theta, sigma))
 
         if args.finetune:
             freeze(True, (model.invariant_encoder,))
@@ -167,10 +166,10 @@ def main(args):
         if args.finetune:
             if metric < min_metric:
                 min_metric = metric
-                save_all_model(args, model, model_name, optimizers, metric, epoch, training_step)
+                save_all_model(args, model, model_name, sigma, optimizers, metric, epoch, training_step)
                 print(f'\n{"_" * 150}\n')
         else:
-            save_all_model(args, model, model_name, optimizers, metric, epoch, training_step)
+            save_all_model(args, model, model_name, sigma, optimizers, metric, epoch, training_step)
 
     writer.close()
 

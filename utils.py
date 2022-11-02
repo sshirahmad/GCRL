@@ -432,7 +432,7 @@ def set_name_finetune(finetune):
         return 'Update f + Refinement'
 
 
-def save_all_model(args, model, model_name, optimizers, metric, epoch, training_step):
+def save_all_model(args, model, model_name, sigma, optimizers, metric, epoch, training_step):
     checkpoint = {
         'epoch': epoch + 1,
         'state_dicts': {
@@ -443,6 +443,8 @@ def save_all_model(args, model, model_name, optimizers, metric, epoch, training_
             'invariant_encoder': model.invariant_encoder.state_dict(),
             'future_decoder': model.future_decoder.state_dict(),
             'past_decoder': model.past_decoder.state_dict(),
+            'sigma': sigma,
+
         },
         'optimizers': {
             key: val.state_dict() for key, val in optimizers.items()
@@ -514,6 +516,8 @@ def load_all_model(args, model, optimizers):
             update_lr(optimizers['variational'], args.lrvariation)
 
         logging.info("=> loaded checkpoint '{}' (epoch {})".format(model_path, checkpoint["epoch"]))
+
+        return models_checkpoint['sigma']
 
     else:
         logging.info('model {} not found'.format(model_path))
