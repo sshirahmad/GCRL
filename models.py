@@ -661,8 +661,8 @@ class CRMF(nn.Module):
         self.n_coordinates = args.n_coordinates
 
         self.theta = nn.Parameter(torch.randn(args.num_envs, args.latent_dim))
-        self.ptheta = MultivariateNormal(torch.zeros(self.latent_dim).cuda(), torch.diag(torch.ones(self.latent_dim)).cuda())
-        self.pz = MultivariateNormal(torch.zeros(self.z_dim).cuda(), torch.diag(torch.ones(self.z_dim)).cuda())
+        self.ptheta = MultivariateNormal(torch.zeros(self.latent_dim).cuda(), torch.diag(torch.ones(self.latent_dim)).cuda()) # TODO add learnable mean and variance?
+        self.pz = MultivariateNormal(torch.zeros(self.z_dim).cuda(), torch.diag(torch.ones(self.z_dim)).cuda()) # TODO add learnable mean and variance?
         self.invariant_encoder = STGAT_encoder_inv(args.obs_len, args.fut_len, args.n_coordinates,
                                                args.traj_lstm_hidden_size, args.n_units, args.n_heads,
                                                args.graph_network_out_dims, args.dropout, args.alpha,
@@ -677,7 +677,7 @@ class CRMF(nn.Module):
 
         self.variational_mapping = VE(args.traj_lstm_hidden_size, args.graph_lstm_hidden_size, args.latent_dim)
 
-        self.theta_to_s = simple_mapping(args.traj_lstm_hidden_size, args.graph_lstm_hidden_size, args.latent_dim, None, args.s_dim)
+        self.theta_to_s = simple_mapping(args.traj_lstm_hidden_size, args.graph_lstm_hidden_size, args.latent_dim, None, args.s_dim) # TODO do not assume same p(s|theta) and q(s|theta,x)
 
         self.past_decoder = past_decoder(args.obs_len, args.n_coordinates, args.z_dim, args.s_dim)
 
