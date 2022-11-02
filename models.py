@@ -662,6 +662,7 @@ class CRMF(nn.Module):
 
         self.theta = nn.Parameter(torch.randn(args.num_envs, args.latent_dim))
         self.ptheta = MultivariateNormal(torch.zeros(self.latent_dim).cuda(), torch.diag(torch.ones(self.latent_dim)).cuda())
+        self.pz = MultivariateNormal(torch.zeros(self.z_dim).cuda(), torch.diag(torch.ones(self.z_dim)).cuda())
         self.invariant_encoder = STGAT_encoder_inv(args.obs_len, args.fut_len, args.n_coordinates,
                                                args.traj_lstm_hidden_size, args.n_units, args.n_heads,
                                                args.graph_network_out_dims, args.dropout, args.alpha,
@@ -733,8 +734,6 @@ class CRMF(nn.Module):
 
             else:
                 env_idx = kwargs.get("env_idx")
-                self.pz = MultivariateNormal(torch.zeros(obs_traj_rel.shape[1], self.z_dim).cuda(), torch.diag_embed(
-                    torch.ones(obs_traj_rel.shape[1], self.z_dim)).cuda())
 
                 concat_hidden_states = self.variant_encoder(batch, training_step)
 
@@ -754,7 +753,7 @@ class CRMF(nn.Module):
 
                 log_qygthetax = torch.mean(torch.stack(first_E), dim=0)
                 log_qthetagx = q_thetagx.log_prob(self.theta[env_idx].repeat(obs_traj_rel.shape[1], 1))
-                log_ptheta = self.ptheta.log_prob(self.theta[env_idx])
+                log_ptheta = self.ptheta.log_prob(self.theta[env_idx].repeat(obs_traj_rel.shape[1], 1))
 
                 first_E = []
                 for _ in range(self.num_samples):
@@ -770,7 +769,7 @@ class CRMF(nn.Module):
                     p_ygzs = torch.exp(predict_loss)
 
                     pred_past_rel = self.past_decoder(batch, torch.cat((z_vec, s_vec), dim=1), True)
-                    reconstruction_loss = -l2_loss(pred_past_rel , obs_traj_rel, mode="raw") - \
+                    reconstruction_loss = -l2_loss(pred_past_rel, obs_traj_rel, mode="raw") - \
                                           0.5 * 1 / obs_traj_rel.shape[0] * torch.log(torch.tensor(2 * math.pi * 0.5))
 
                     A1 = torch.multiply(p_ygzs, reconstruction_loss)

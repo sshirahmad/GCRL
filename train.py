@@ -59,7 +59,8 @@ def main(args):
     args.n_heads = [int(x) for x in args.heads.strip().split(",")]
 
     # create the model
-    model = CRMF(args).cuda()
+    model = CRMF(args)
+    sigma = torch.nn.Parameter(torch.tensor(0.0))
 
     # style related optimizer
     optimizers = {
@@ -68,6 +69,7 @@ def main(args):
                 {"params": model.variational_mapping.parameters(), 'lr': args.lrvariation},
                 {"params": model.theta_to_s.parameters(), 'lr': args.lrvariation},
                 {"params": model.theta, 'lr': args.lrvariation},
+                {"params": sigma, 'lr': args.lrvariation},
 
             ]
         ),
@@ -88,6 +90,9 @@ def main(args):
             lr=args.lrpast,
         )
     }
+
+    sigma.cuda()
+    model.cuda()
 
     if args.resume:
         load_all_model(args, model, optimizers)
@@ -145,7 +150,7 @@ def main(args):
             freeze(False, (model.variant_encoder, model.variational_mapping, model.theta_to_c, model.theta_to_u, model.past_decoder,
                            model.future_decoder))
 
-        train_all(args, model, optimizers, train_dataset, epoch, training_step, train_envs_name,
+        train_all(args, model, optimizers, train_dataset, epoch, training_step, train_envs_name, sigma,
                   writer, stage='training')
 
         if training_step not in ["P1", "P2"]:
@@ -170,7 +175,7 @@ def main(args):
     writer.close()
 
 
-def train_all(args, model, optimizers, train_dataset, epoch, training_step, train_envs_name, writer,
+def train_all(args, model, optimizers, train_dataset, epoch, training_step, train_envs_name, sigma, writer,
               stage,
               update=True):
     """
@@ -337,12 +342,12 @@ def train_all(args, model, optimizers, train_dataset, epoch, training_step, trai
                     loss_sum_even_t, loss_sum_odd_t = erm_loss(log_q_thetagx, seq_start_end, fut_traj_rel.shape[0])
                     theta_loss = loss_sum_even_t + loss_sum_odd_t
 
-                    loss_sum_even_e, loss_sum_odd_e = erm_loss(torch.divide(E, torch.exp(log_q_ygthetax) + 1e-10), seq_start_end, fut_traj_rel.shape[0])
+                    loss_sum_even_e, loss_sum_odd_e = erm_loss(torch.divide(E, torch.exp(log_q_ygthetax)), seq_start_end, fut_traj_rel.shape[0])
                     elbo_loss = loss_sum_even_e + loss_sum_odd_e
 
                     theta_constraint = - model.ptheta.log_prob(model.theta[train_idx])
 
-                    loss = (- predict_loss) + 1e-24 * (- elbo_loss) + (- theta_loss) + (- theta_constraint)
+                    loss = (- predict_loss) + torch.exp(sigma) * (- elbo_loss) + (- theta_loss) + (- theta_constraint)
 
                     t_loss_meter.update(theta_loss.item(), obs_traj.shape[1])
                     e_loss_meter.update(elbo_loss.item(), obs_traj.shape[1])
@@ -380,6 +385,8 @@ def train_all(args, model, optimizers, train_dataset, epoch, training_step, trai
             writer.add_scalar(f"theta_univ/{stage}", torch.norm(model.theta[1]), epoch)
             writer.add_scalar(f"theta_zara1/{stage}", torch.norm(model.theta[2]), epoch)
             writer.add_scalar(f"theta_zara2/{stage}", torch.norm(model.theta[3]), epoch)
+            writer.add_scalar(f"sigma/{stage}", sigma, epoch)
+
 
 
 def validate_ade(model, valid_dataset, epoch, training_step, writer, stage, write=True):
