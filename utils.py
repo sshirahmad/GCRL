@@ -444,7 +444,6 @@ def save_all_model(args, model, model_name, sigma, optimizers, metric, epoch, tr
             'future_decoder': model.future_decoder.state_dict(),
             'past_decoder': model.past_decoder.state_dict(),
             'sigma': sigma,
-
         },
         'optimizers': {
             key: val.state_dict() for key, val in optimizers.items()
@@ -517,7 +516,7 @@ def load_all_model(args, model, optimizers):
 
         logging.info("=> loaded checkpoint '{}' (epoch {})".format(model_path, checkpoint["epoch"]))
 
-        return models_checkpoint['sigma']
+        return models_checkpoint['sigma'].data
 
     else:
         logging.info('model {} not found'.format(model_path))

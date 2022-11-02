@@ -59,8 +59,8 @@ def main(args):
     args.n_heads = [int(x) for x in args.heads.strip().split(",")]
 
     # create the model
-    model = CRMF(args)
-    sigma = torch.nn.Parameter(torch.tensor(0.0))
+    model = CRMF(args).cuda()
+    sigma = torch.nn.Parameter(torch.tensor(0.0, device="cuda"))
 
     # style related optimizer
     optimizers = {
@@ -92,10 +92,13 @@ def main(args):
     }
 
     if args.resume:
-        sigma = load_all_model(args, model, optimizers)
+        sigma_data = load_all_model(args, model, optimizers)
+        sigma.data = sigma_data
+        sigma.data = sigma.to('cuda')
+        if sigma.grad is not None:
+            sigma.grad.data = sigma.grad.to('cuda')
+        model.cuda()
 
-    sigma.cuda()
-    model.cuda()
 
     # TRAINING HAPPENS IN 6 STEPS:
     assert (len(args.num_epochs) == 4)

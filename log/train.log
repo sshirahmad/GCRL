@@ -1,14 +1,4 @@
-2022-11-02 17:24:04,221:INFO: Initializing Training Set
-2022-11-02 17:24:08,564:INFO: Initializing Validation Set
-2022-11-02 17:24:09,021:INFO: Initializing Validation O Set
-2022-11-02 17:24:11,614:INFO: 
-===> EPOCH: 551 (P4)
-2022-11-02 17:24:11,614:INFO: - Computing loss (training)
-2022-11-02 17:24:20,374:INFO: Dataset: hotel               Batch: 1/8	Loss 46.4507 (46.4507)
-2022-11-02 17:24:20,854:INFO: Dataset: hotel               Batch: 2/8	Loss 44.0851 (45.2409)
-2022-11-02 17:24:21,288:INFO: Dataset: hotel               Batch: 3/8	Loss 45.4829 (45.3213)
-2022-11-02 17:24:21,888:INFO: Dataset: hotel               Batch: 4/8	Loss 44.4493 (45.1098)
-2022-11-02 17:24:22,293:INFO: Dataset: hotel               Batch: 5/8	Loss 46.2412 (45.3081)
-2022-11-02 17:24:22,591:INFO: Dataset: hotel               Batch: 6/8	Loss 44.0012 (45.0817)
-2022-11-02 17:24:22,862:INFO: Dataset: hotel               Batch: 7/8	Loss 47.4335 (45.3989)
-2022-11-02 17:24:23,062:INFO: Dataset: hotel               Batch: 8/8	Loss -8.5929 (43.6894)
+2022-11-02 18:18:03,880:INFO: Initializing Training Set
+2022-11-02 18:18:08,283:INFO: Initializing Validation Set
+2022-11-02 18:18:08,823:INFO: Initializing Validation O Set
+2022-11-02 18:18:11,344:INFO: => loaded checkpoint './models/eth/CRMF_risk_irm_5.0_batch_hom_data_eth_ds_0_bk_20_ep_(150, 100, 300, 400)_shuffle_true_seed_72/pretrain/P4/CRMF_epoch_551.pth.tar' (epoch 552)
