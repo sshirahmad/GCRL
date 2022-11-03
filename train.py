@@ -60,7 +60,7 @@ def main(args):
 
     # create the model
     model = CRMF(args).cuda()
-    sigma = torch.nn.Parameter(torch.tensor(0.0, device="cuda"))
+    sigma = torch.nn.Parameter(torch.tensor([0.0, 0.0, 2.0, 0.0], device="cuda"))
 
     # style related optimizer
     optimizers = {
@@ -68,6 +68,7 @@ def main(args):
             [
                 {"params": model.variational_mapping.parameters(), 'lr': args.lrvariation},
                 {"params": model.theta_to_s.parameters(), 'lr': args.lrvariation},
+                {"params": model.thetax_to_s.parameters(), 'lr': args.lrvariation},
                 {"params": model.theta, 'lr': args.lrvariation},
                 {"params": sigma, 'lr': args.lrvariation},
 
@@ -132,19 +133,17 @@ def main(args):
     for epoch in range(args.start_epoch, sum(args.num_epochs) + 1):
 
         training_step = get_training_step(epoch)
-        if training_step in ["P1", "P2", "P3"]:
-            continue
         logging.info(f"\n===> EPOCH: {epoch} ({training_step})")
 
         if training_step in ["P1", "P2"]:
-            freeze(True, (model.variational_mapping, model.theta_to_s, model.past_decoder, model.future_decoder), (model.theta, sigma))
+            freeze(True, (model.variational_mapping, model.theta_to_s, model.thetax_to_s,  model.past_decoder, model.future_decoder), (model.theta, sigma))
             freeze(False, (model.invariant_encoder, model.variant_encoder))
         elif training_step == 'P3':
-            freeze(True, (model.variant_encoder, model.variational_mapping, model.theta_to_s), (model.theta, sigma))
+            freeze(True, (model.variant_encoder, model.variational_mapping, model.theta_to_s, model.thetax_to_s), (model.theta, sigma))
             freeze(False, (model.invariant_encoder, model.future_decoder, model.past_decoder))
         elif training_step == 'P4':
             freeze(True, (model.invariant_encoder,))
-            freeze(False, (model.variant_encoder, model.variational_mapping, model.theta_to_s, model.past_decoder,
+            freeze(False, (model.variant_encoder, model.variational_mapping, model.theta_to_s, model.thetax_to_s, model.past_decoder,
                            model.future_decoder), (model.theta, sigma))
 
         if args.finetune:
@@ -196,16 +195,19 @@ def train_all(args, model, optimizers, train_dataset, epoch, training_step, trai
 
     if args.batch_method == "het" or args.batch_method == "alt":
         train_iter = [iter(train_loader) for train_loader in train_dataset['loaders']]
-        loss_meter = AverageMeter("Loss", ":.4f")
-        progress = ProgressMeter(train_dataset['num_batches'], [loss_meter], prefix="")
+        total_loss_meter = AverageMeter("Total Loss", ":.4f")
+        progress = ProgressMeter(train_dataset['num_batches'], [total_loss_meter], prefix="")
 
-        for _ in range(train_dataset['num_batches']):
+        t_loss_meter = AverageMeter("Theta Loss", ":.4f")
+        e_loss_meter = AverageMeter("ELBO Loss", ":.4f")
+        p_loss_meter = AverageMeter("Prediction Loss", ":.4f")
+        for batch_idx in range(train_dataset['num_batches']):
 
             # compute loss (which depends on the training step)
             batch_loss = []
             ped_tot = torch.zeros(1).cuda()
             # COMPUTE LOSS ON EACH OF THE ENVIRONMENTS
-            for env_iter, env_name in zip(train_iter, train_dataset['names']):
+            for train_idx, (env_iter, env_name) in enumerate(zip(train_iter, train_dataset['names'])):
                 try:
                     batch = next(env_iter)
                 except StopIteration:
@@ -220,56 +222,110 @@ def train_all(args, model, optimizers, train_dataset, epoch, training_step, trai
                     opt.zero_grad()
 
                 ped_tot += fut_traj_rel.shape[1]
-                scale = torch.tensor(1.).cuda().requires_grad_()
+                dummy_w = torch.nn.Parameter(torch.Tensor([1.0])).cuda()
 
-                if training_step == "P1":
-                    fut_pred_rel = []
-                    for _ in range(args.best_k):
-                        fut_pred_rel += [model(batch, training_step)]
+                if training_step in ["P1", "P2"]:
+                    past_pred_rel_inv, past_pred_rel_var = model(batch, training_step)
 
-                    # compute variety loss between output and future
-                    l2_loss_rel = torch.stack(
-                        [l2_loss(fut_pred_rel[i] * scale, fut_traj_rel, mode="raw") for i in range(args.best_k)], dim=1)
+                    # compute reconstruction loss between output and past
+                    l2_loss_rel_inv = torch.stack([l2_loss(past_pred_rel_inv * dummy_w, obs_traj_rel, mode="raw")],
+                                                  dim=1)
+                    l2_loss_rel_var = torch.stack([l2_loss(past_pred_rel_var, obs_traj_rel, mode="raw")], dim=1)
 
                     # empirical risk (ERM classic loss)
-                    loss_sum_even, loss_sum_odd = erm_loss(l2_loss_rel, seq_start_end, fut_traj_rel.shape[0])
-                    single_env_loss = loss_sum_even + loss_sum_odd
+                    loss_sum_even, loss_sum_odd = erm_loss(l2_loss_rel_inv, seq_start_end, obs_traj_rel.shape[0])
+                    loss_inv = loss_sum_even + loss_sum_odd
 
                     # invariance constraint (IRM)
                     if args.irm and stage == 'training':
-                        single_env_loss += irm_loss(loss_sum_even, loss_sum_odd, scale, args)
+                        loss_inv += irm_loss(loss_sum_even, loss_sum_odd, dummy_w, args)
+
+                    loss_sum_even, loss_sum_odd = erm_loss(l2_loss_rel_var, seq_start_end, obs_traj_rel.shape[0])
+                    loss_var = loss_sum_even + loss_sum_odd
+
+                    single_env_loss = loss_var + loss_inv
+
+                elif training_step == "P3":
+                    log_q_ygx, E = model(batch, training_step, dummy_w=dummy_w)
+
+                    loss_sum_even_p, loss_sum_odd_p = erm_loss(log_q_ygx, seq_start_end, fut_traj_rel.shape[0])
+                    predict_loss = loss_sum_even_p + loss_sum_odd_p
+
+                    loss_sum_even_e, loss_sum_odd_e = erm_loss(torch.divide(E, torch.exp(log_q_ygx)), seq_start_end,
+                                                               fut_traj_rel.shape[0])
+                    elbo_loss = loss_sum_even_e + loss_sum_odd_e
+
+                    single_env_loss = (- predict_loss) + (- elbo_loss)
+
+                    # invariance constraint (IRM)
+                    if args.irm and stage == 'training':
+                        single_env_loss += irm_loss(loss_sum_even_e + loss_sum_even_p, loss_sum_odd_e + loss_sum_odd_p, dummy_w,
+                                         args)
+
+                else:
+                    log_q_ygthetax, log_q_thetagx, E = model(batch, training_step, env_idx=train_idx)
+
+                    loss_sum_even_p, loss_sum_odd_p = erm_loss(log_q_ygthetax, seq_start_end, fut_traj_rel.shape[0])
+                    predict_loss = loss_sum_even_p + loss_sum_odd_p
+
+                    loss_sum_even_t, loss_sum_odd_t = erm_loss(log_q_thetagx, seq_start_end, fut_traj_rel.shape[0])
+                    theta_loss = loss_sum_even_t + loss_sum_odd_t
+
+                    loss_sum_even_e, loss_sum_odd_e = erm_loss(torch.divide(E, torch.exp(log_q_ygthetax)),
+                                                               seq_start_end, fut_traj_rel.shape[0])
+                    elbo_loss = loss_sum_even_e + loss_sum_odd_e
+
+                    theta_constraint = - model.ptheta.log_prob(model.theta[train_idx]).unsqueeze(0)
+                    stacked_loss = torch.cat((-predict_loss, -theta_loss, -elbo_loss, -theta_constraint))
+
+                    single_env_loss = torch.sum(stacked_loss * torch.exp(-sigma)) + torch.sum(sigma)
 
                 batch_loss.append(single_env_loss)
 
             # COMPUTE THE TOTAL LOSS ON ALL ENVIRONMENTS
             loss = torch.zeros(()).cuda()
-
-            # content loss
-            if training_step in ['P1', 'P2']:
-                batch_loss = torch.stack(batch_loss)
-                loss += batch_loss.sum()
+            batch_loss = torch.stack(batch_loss)
+            loss += batch_loss.sum()
 
             # backpropagate if needed
             if stage == 'training' and update:
                 loss.backward()
 
                 # choose which optimizer to use depending on the training step
-                if args.finetune and args.finetune != 'all':
-                    if training_step in ['P1', 'P2', 'P3', ] and args.finetune == 'stgat_enc': optimizers['inv'].step()
-                    if training_step in ['P3', 'P6'] and args.finetune == 'decoder': optimizers['decoder'].step()
-                    if training_step in ['P4', 'P6'] and args.finetune in ['style', 'integ+']: optimizers[
-                        'style'].step()
-                    if training_step in ['P5', 'P6'] and args.finetune in ['integ', 'integ+']: optimizers[
-                        'integ'].step()
-                else:
-                    if training_step in ['P1']: optimizers['inv'].step()
-                    if training_step in ['P1', 'P2']: optimizers['future_decoder'].step()
-                    if training_step in ['P2']: optimizers['past_decoder'].step()
-                    if training_step in ['P2']: optimizers['style'].step()
+                if training_step in ['P1', 'P2', 'P3']: optimizers['inv'].step()
+                if training_step in ['P3', 'P4']: optimizers['future_decoder'].step()
+                if training_step in ['P3', 'P4']: optimizers['past_decoder'].step()
+                if training_step in ['P1', 'P2', 'P4']: optimizers['var'].step()
+                if training_step in ['P4']: optimizers['variational'].step()
 
-            loss_meter.update(loss.item(), ped_tot.item())
-        progress.display(train_dataset['num_batches'])
-        writer.add_scalar(f"{'erm' if training_step != 'P4' else 'style'}_loss/{stage}", loss_meter.avg, epoch)
+            if training_step == "P3":
+                e_loss_meter.update(elbo_loss.item(), ped_tot.item())
+                p_loss_meter.update(predict_loss.item(), ped_tot.item())
+            elif training_step == "P4":
+                t_loss_meter.update(theta_loss.item(), ped_tot.item())
+                e_loss_meter.update(elbo_loss.item(), ped_tot.item())
+                p_loss_meter.update(predict_loss.item(), ped_tot.item())
+
+            total_loss_meter.update(loss.item(), ped_tot.item())
+            progress.display(batch_idx)
+
+        if training_step in "P1":
+            writer.add_scalar(f"STGAT_loss_p1/{stage}", total_loss_meter.avg, epoch)
+        elif training_step in "P2":
+            writer.add_scalar(f"STGAT_loss_p2/{stage}", total_loss_meter.avg, epoch)
+        elif training_step == "P3":
+            writer.add_scalar(f"pred_loss/{stage}", p_loss_meter.avg, epoch)
+            writer.add_scalar(f"elbo_loss/{stage}", e_loss_meter.avg, epoch)
+            writer.add_scalar(f"irm_loss/{stage}", total_loss_meter.avg, epoch)
+        elif training_step == "P4":
+            writer.add_scalar(f"variational_loss/{stage}", total_loss_meter.avg, epoch)
+            writer.add_scalar(f"elbo_loss/{stage}", e_loss_meter.avg, epoch)
+            writer.add_scalar(f"pred_loss/{stage}", p_loss_meter.avg, epoch)
+            writer.add_scalar(f"theta_loss/{stage}", t_loss_meter.avg, epoch)
+            writer.add_scalar(f"theta_hotel/{stage}", torch.norm(model.theta[0]), epoch)
+            writer.add_scalar(f"theta_univ/{stage}", torch.norm(model.theta[1]), epoch)
+            writer.add_scalar(f"theta_zara1/{stage}", torch.norm(model.theta[2]), epoch)
+            writer.add_scalar(f"theta_zara2/{stage}", torch.norm(model.theta[3]), epoch)
 
     # Homogenous batches
     else:
@@ -359,12 +415,12 @@ def train_all(args, model, optimizers, train_dataset, epoch, training_step, trai
                 if stage == 'training' and update:
                     loss.backward()
 
-                # choose which optimizer to use depending on the training step
-                if training_step in ['P1', 'P2', 'P3']: optimizers['inv'].step()
-                if training_step in ['P3', 'P4']: optimizers['future_decoder'].step()
-                if training_step in ['P3', 'P4']: optimizers['past_decoder'].step()
-                if training_step in ['P1', 'P2', 'P4']: optimizers['var'].step()
-                if training_step in ['P4']: optimizers['variational'].step()
+                    # choose which optimizer to use depending on the training step
+                    if training_step in ['P1', 'P2', 'P3']: optimizers['inv'].step()
+                    if training_step in ['P3', 'P4']: optimizers['future_decoder'].step()
+                    if training_step in ['P3', 'P4']: optimizers['past_decoder'].step()
+                    if training_step in ['P1', 'P2', 'P4']: optimizers['var'].step()
+                    if training_step in ['P4']: optimizers['variational'].step()
 
                 total_loss_meter.update(loss.item(), obs_traj.shape[1])
                 loss_meter.update(loss.item(), obs_traj.shape[1])

@@ -591,7 +591,7 @@ class VE(nn.Module):
         mu, logvar = self.encode(input)
         qtheta = MultivariateNormal(mu, torch.diag_embed(torch.exp(logvar) + eps))
 
-        return qtheta, mu, logvar
+        return qtheta
 
 
 class simple_mapping(nn.Module):
@@ -636,15 +636,19 @@ class simple_mapping(nn.Module):
                 m.bias.data.zero_()
 
     def forward(self, theta, hidden_states):
-
-        if len(theta.size()) == 1:
-            theta_rep = theta.repeat(hidden_states.shape[0], 1)
+        if hidden_states is None:
+            mu = self.fc_mu(self.mapping(theta))
+            logvar = self.fc_logvar(self.mapping(theta))
+            ps = MultivariateNormal(mu, torch.diag_embed(torch.exp(logvar) + eps))
         else:
-            theta_rep = theta
-        vec = torch.cat((theta_rep, hidden_states), dim=1)
-        mu = self.fc_mu(self.mapping(vec))
-        logvar = self.fc_logvar(self.mapping(vec))
-        ps = MultivariateNormal(mu, torch.diag_embed(torch.exp(logvar) + eps))
+            if len(theta.size()) == 1:
+                theta_rep = theta.repeat(hidden_states.shape[0], 1)
+            else:
+                theta_rep = theta
+            vec = torch.cat((theta_rep, hidden_states), dim=1)
+            mu = self.fc_mu(self.mapping(vec))
+            logvar = self.fc_logvar(self.mapping(vec))
+            ps = MultivariateNormal(mu, torch.diag_embed(torch.exp(logvar) + eps))
 
         return ps
 
@@ -677,7 +681,9 @@ class CRMF(nn.Module):
 
         self.variational_mapping = VE(args.traj_lstm_hidden_size, args.graph_lstm_hidden_size, args.latent_dim)
 
-        self.theta_to_s = simple_mapping(args.traj_lstm_hidden_size, args.graph_lstm_hidden_size, args.latent_dim, None, args.s_dim) # TODO do not assume same p(s|theta) and q(s|theta,x)
+        self.theta_to_s = simple_mapping(0, 0, args.latent_dim, None, args.s_dim) # TODO do not assume same p(s|theta) and q(s|theta,x)
+        self.thetax_to_s = simple_mapping(args.traj_lstm_hidden_size, args.graph_lstm_hidden_size, args.latent_dim, None, args.s_dim) # TODO do not assume same p(s|theta) and q(s|theta,x)
+
 
         self.past_decoder = past_decoder(args.obs_len, args.n_coordinates, args.z_dim, args.s_dim)
 
@@ -739,13 +745,14 @@ class CRMF(nn.Module):
 
                 first_E = []
                 q_zgx = self.invariant_encoder(batch, training_step)
-                q_thetagx, mu_theta, logvar_theta = self.variational_mapping(concat_hidden_states)
-                p_sgtheta = self.theta_to_s(self.theta[env_idx], concat_hidden_states)
+                q_thetagx = self.variational_mapping(concat_hidden_states)
+                p_sgtheta = self.theta_to_s(self.theta[env_idx], None)
+                q_sgthetax = self.thetax_to_s(self.theta[env_idx], concat_hidden_states)
 
                 # calculate q(y|theta, x)
                 for _ in range(self.num_samples):
                     z_vec = q_zgx.rsample()
-                    s_vec = p_sgtheta.rsample()
+                    s_vec = q_sgthetax.rsample()
                     pred_traj_rel_fut = self.future_decoder(batch, torch.cat((z_vec, s_vec), dim=1), training_step, True)
                     predict_loss = -l2_loss(pred_traj_rel_fut, fut_traj_rel, mode="raw") -\
                                    0.5 * 1/fut_traj_rel.shape[0] * torch.log(torch.tensor(2 * math.pi * 0.5))
@@ -758,10 +765,12 @@ class CRMF(nn.Module):
                 first_E = []
                 for _ in range(self.num_samples):
                     z_vec = q_zgx.rsample()
-                    s_vec = p_sgtheta.rsample()
+                    s_vec = q_sgthetax.rsample()
 
                     log_pz = self.pz.log_prob(z_vec)
                     log_qzgx = q_zgx.log_prob(z_vec)
+                    log_psgtheta = p_sgtheta.log_prob(s_vec)
+                    log_qsgthetax = q_sgthetax.log_prob(s_vec)
 
                     pred_traj_rel_fut = self.future_decoder(batch, torch.cat((z_vec, s_vec), dim=1), training_step, True)
                     predict_loss = -l2_loss(pred_traj_rel_fut, fut_traj_rel, mode="raw") - \
@@ -773,7 +782,7 @@ class CRMF(nn.Module):
                                           0.5 * 1 / obs_traj_rel.shape[0] * torch.log(torch.tensor(2 * math.pi * 0.5))
 
                     A1 = torch.multiply(p_ygzs, reconstruction_loss)
-                    A2 = torch.multiply(p_ygzs, log_pz + log_ptheta - log_qzgx - log_qthetagx)
+                    A2 = torch.multiply(p_ygzs, log_pz + log_ptheta + log_psgtheta - log_qzgx - log_qthetagx - log_qsgthetax)
 
                     first_E.append(A1 + A2)
 
@@ -797,7 +806,7 @@ class CRMF(nn.Module):
                 concat_hidden_states = self.variant_encoder(batch, training_step)
 
                 if env_idx is not None:
-                    ps = self.theta_to_s(self.theta[env_idx], concat_hidden_states)
+                    ps = self.thetax_to_s(self.theta[env_idx], concat_hidden_states)
                     p_zgx = self.invariant_encoder(batch, training_step)
                     pred_traj_rel = []
                     for _ in range(self.num_samples):
@@ -813,7 +822,7 @@ class CRMF(nn.Module):
 
                     qtheta = self.variational_mapping(concat_hidden_states)
                     theta = qtheta.sample()
-                    ps = self.theta_to_s(theta, concat_hidden_states)
+                    ps = self.thetax_to_s(theta, concat_hidden_states)
                     p_zgx = self.invariant_encoder(batch, training_step)
                     pred_traj_rel = []
                     for _ in range(self.num_samples):

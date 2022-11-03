@@ -34,7 +34,7 @@ def get_training_parser():
                         help='Only test model. 0 -> training, 1 -> testing, 3 -> testing with refinement')  # 0 is normal train, 1 is test, 2 is test with k, 3 is ttr
     # randomness
     parser.add_argument("--seed", type=int, default=72, help="Random seed")
-    parser.add_argument("--num_samples", type=int, default=3, help="Number of samples to calculate MC expectations")
+    parser.add_argument("--num_samples", type=int, default=5, help="Number of samples to calculate MC expectations")
     parser.add_argument("--noise_dim", default=(16,), type=int_tuple)
     parser.add_argument("--noise_type", default="gaussian")
     parser.add_argument("--original_seed", type=int, default=1, help="Seed of original training")
@@ -68,8 +68,8 @@ def get_training_parser():
     parser.add_argument("--gpu_num", default="1", type=str)
     # training
     parser.add_argument("--best_k", default=20, type=int)
-    parser.add_argument("--batch_size", default='32', type=str)
-    parser.add_argument("--batch_method", default='hom', type=str,
+    parser.add_argument("--batch_size", default='', type=str)
+    parser.add_argument("--batch_method", default='het', type=str,
                         help='Use Homogeneous (hom), Heterogeneous (het) or alternated homogeneous (alt) batches during training')
     parser.add_argument("--shuffle", default=True, type=bool)
     # spurious feature
@@ -84,10 +84,8 @@ def get_training_parser():
     # general training
     parser.add_argument("--finetune", default="", type=str)
     parser.add_argument("--num_epochs", default='150-100-300-400', type=lambda x: int_tuple(x, '-'))  # '150-100-150',
-    parser.add_argument("--resume", default="./models/eth/CRMF_risk_irm_5.0_batch_hom_data_eth_ds_0_bk_20_ep_(150, 100, 300, 400)_shuffle_true_seed_72/pretrain/P4/CRMF_epoch_551.pth.tar",
+    parser.add_argument("--resume", default="./models/eth/CRMF_risk_irm_5.0_batch_het_data_eth_ds_0_bk_20_ep_(150, 100, 300, 400)_shuffle_true_seed_72/pretrain/P4/CRMF_epoch_678.pth.tar",
                         type=str, metavar="PATH", help="path to latest checkpoint (default: none)")
-    # parser.add_argument("--resume", default="",
-    #                     type=str, metavar="PATH", help="path to latest checkpoint (default: none)")
     parser.add_argument("--tfdir", default='runs', type=str)
 
     # arguments for training style encoder
