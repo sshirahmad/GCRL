@@ -772,7 +772,6 @@ class CRMF(nn.Module):
                     log_psgtheta = p_sgtheta.log_prob(s_vec)
                     log_qsgthetax = q_sgthetax.log_prob(s_vec)
 
-
                     pred_traj_rel_fut = self.future_decoder(batch, torch.cat((z_vec, s_vec), dim=1), training_step, True)
                     predict_loss = -l2_loss(pred_traj_rel_fut, fut_traj_rel, mode="raw") - \
                                    0.5 * 1 / fut_traj_rel.shape[0] * torch.log(torch.tensor(2 * math.pi * 0.5))
