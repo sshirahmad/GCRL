@@ -100,8 +100,7 @@ def main(args):
             sigma.grad.data = sigma.grad.to('cuda')
         model.cuda()
 
-
-    # TRAINING HAPPENS IN 6 STEPS:
+    # TRAINING HAPPENS IN 4 STEPS:
     assert (len(args.num_epochs) == 4)
     # 1. Train the invariant encoder along with the future decoder to learn z
     # 2. Train everything except invariant encoder to learn the other variant latent variables
@@ -276,9 +275,9 @@ def train_all(args, model, optimizers, train_dataset, epoch, training_step, trai
                     elbo_loss = loss_sum_even_e + loss_sum_odd_e
 
                     theta_constraint = - model.ptheta.log_prob(model.theta[train_idx]).unsqueeze(0)
-                    stacked_loss = torch.cat((-predict_loss, -theta_loss, -elbo_loss, -theta_constraint))
+                    stacked_loss = torch.cat((-predict_loss, -theta_loss, - elbo_loss, -theta_constraint))
 
-                    single_env_loss = torch.sum(stacked_loss * torch.exp(-sigma)) + torch.sum(sigma)
+                    single_env_loss = torch.sum(stacked_loss)
 
                 batch_loss.append(single_env_loss)
 
@@ -307,7 +306,7 @@ def train_all(args, model, optimizers, train_dataset, epoch, training_step, trai
                 p_loss_meter.update(predict_loss.item(), ped_tot.item())
 
             total_loss_meter.update(loss.item(), ped_tot.item())
-            progress.display(batch_idx)
+            progress.display(batch_idx + 1)
 
         if training_step in "P1":
             writer.add_scalar(f"STGAT_loss_p1/{stage}", total_loss_meter.avg, epoch)

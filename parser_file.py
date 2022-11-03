@@ -64,7 +64,7 @@ def get_training_parser():
             want to change the styleinteg. Set the --styleinteg param to the value of the checkpoint \
             (to avoid state_dict problems) one you want to load, and then set the new styleinteg value in this parameter ')
     # computation
-    parser.add_argument("--loader_num_workers", default=6, type=int)
+    parser.add_argument("--loader_num_workers", default=2, type=int)
     parser.add_argument("--gpu_num", default="1", type=str)
     # training
     parser.add_argument("--best_k", default=20, type=int)
@@ -84,7 +84,7 @@ def get_training_parser():
     # general training
     parser.add_argument("--finetune", default="", type=str)
     parser.add_argument("--num_epochs", default='150-100-300-400', type=lambda x: int_tuple(x, '-'))  # '150-100-150',
-    parser.add_argument("--resume", default="./models/eth/CRMF_risk_irm_5.0_batch_het_data_eth_ds_0_bk_20_ep_(150, 100, 300, 400)_shuffle_true_seed_72/pretrain/P4/CRMF_epoch_678.pth.tar",
+    parser.add_argument("--resume", default="./models/eth/CRMF_risk_irm_5.0_batch_het_data_eth_ds_0_bk_20_ep_(150, 100, 300, 400)_shuffle_true_seed_72/pretrain/P3/CRMF_epoch_550.pth.tar",
                         type=str, metavar="PATH", help="path to latest checkpoint (default: none)")
     parser.add_argument("--tfdir", default='runs', type=str)
 
@@ -94,13 +94,13 @@ def get_training_parser():
     parser.add_argument('--backclassencoder', default=False, type=bool)
 
     # learning rates
-    parser.add_argument("--lrvar", default=1e-3, type=float,
+    parser.add_argument("--lrvar", default=1e-4, type=float,
                         help="initial learning rate for variant encoder optimizer")
     parser.add_argument("--lrvariation", default=1e-4, type=float,
                         help="initial learning rate variational models optimizer")
     parser.add_argument('--lrinv', default=1e-3, type=float,
                         help="initial learning rate for the invariant encoder optimizer")
-    parser.add_argument('--lrfut', default=1e-3, type=float,
+    parser.add_argument('--lrfut', default=1e-4, type=float,
                         help="initial learning rate for the future decoder optimizer")
     parser.add_argument('--lrpast', default=1e-4, type=float,
                         help="initial learning rate for the past decoder optimizer")
