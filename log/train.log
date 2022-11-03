@@ -1,4 +1,413 @@
-2022-11-02 18:18:03,880:INFO: Initializing Training Set
-2022-11-02 18:18:08,283:INFO: Initializing Validation Set
-2022-11-02 18:18:08,823:INFO: Initializing Validation O Set
-2022-11-02 18:18:11,344:INFO: => loaded checkpoint './models/eth/CRMF_risk_irm_5.0_batch_hom_data_eth_ds_0_bk_20_ep_(150, 100, 300, 400)_shuffle_true_seed_72/pretrain/P4/CRMF_epoch_551.pth.tar' (epoch 552)
+2022-11-02 22:22:24,802:INFO: Initializing Training Set
+2022-11-02 22:22:26,547:INFO: Initializing Validation Set
+2022-11-02 22:22:26,737:INFO: Initializing Validation O Set
+2022-11-02 22:22:28,658:INFO: => loaded checkpoint './models/eth/CRMF_risk_irm_5.0_batch_het_data_eth_ds_0_bk_20_ep_(150, 100, 300, 400)_shuffle_true_seed_72/pretrain/P4/CRMF_epoch_651.pth.tar' (epoch 652)
+2022-11-02 22:22:28,658:INFO: 
+===> EPOCH: 652 (P4)
+2022-11-02 22:22:28,658:INFO: - Computing loss (training)
+2022-11-02 22:22:29,692:INFO: Batch:  0/31	Total Loss -136.4946 (-136.4946)
+2022-11-02 22:22:30,067:INFO: Batch:  1/31	Total Loss -154.6793 (-145.9896)
+2022-11-02 22:22:30,444:INFO: Batch:  2/31	Total Loss -144.0894 (-145.4106)
+2022-11-02 22:22:30,827:INFO: Batch:  3/31	Total Loss -163.5353 (-150.2257)
+2022-11-02 22:22:31,193:INFO: Batch:  4/31	Total Loss -163.8980 (-152.9446)
+2022-11-02 22:22:31,568:INFO: Batch:  5/31	Total Loss -140.0254 (-150.9407)
+2022-11-02 22:22:31,936:INFO: Batch:  6/31	Total Loss -161.1022 (-152.3391)
+2022-11-02 22:22:32,300:INFO: Batch:  7/31	Total Loss -148.7821 (-151.9263)
+2022-11-02 22:22:32,693:INFO: Batch:  8/31	Total Loss -156.2049 (-152.3940)
+2022-11-02 22:22:33,077:INFO: Batch:  9/31	Total Loss -174.4757 (-154.6011)
+2022-11-02 22:22:33,502:INFO: Batch: 10/31	Total Loss -162.6835 (-155.3232)
+2022-11-02 22:22:33,928:INFO: Batch: 11/31	Total Loss -140.0143 (-154.1379)
+2022-11-02 22:22:34,349:INFO: Batch: 12/31	Total Loss -143.5922 (-153.4504)
+2022-11-02 22:22:34,721:INFO: Batch: 13/31	Total Loss -153.8666 (-153.4770)
+2022-11-02 22:22:35,085:INFO: Batch: 14/31	Total Loss -161.5270 (-154.0090)
+2022-11-02 22:22:35,446:INFO: Batch: 15/31	Total Loss -153.2580 (-153.9673)
+2022-11-02 22:22:35,810:INFO: Batch: 16/31	Total Loss -152.1373 (-153.8436)
+2022-11-02 22:22:36,189:INFO: Batch: 17/31	Total Loss 28.0779 (-143.3414)
+2022-11-02 22:22:36,557:INFO: Batch: 18/31	Total Loss -149.9309 (-143.6572)
+2022-11-02 22:22:36,918:INFO: Batch: 19/31	Total Loss -153.8418 (-144.1358)
+2022-11-02 22:22:37,285:INFO: Batch: 20/31	Total Loss -135.7148 (-143.7316)
+2022-11-02 22:22:37,668:INFO: Batch: 21/31	Total Loss -131.2805 (-143.1919)
+2022-11-02 22:22:38,044:INFO: Batch: 22/31	Total Loss -71.2092 (-140.2833)
+2022-11-02 22:22:38,425:INFO: Batch: 23/31	Total Loss -88.8246 (-138.3939)
+2022-11-02 22:22:38,814:INFO: Batch: 24/31	Total Loss -40.4467 (-134.3869)
+2022-11-02 22:22:39,196:INFO: Batch: 25/31	Total Loss -117.9091 (-133.7412)
+2022-11-02 22:22:39,559:INFO: Batch: 26/31	Total Loss -87.0820 (-131.9091)
+2022-11-02 22:22:39,924:INFO: Batch: 27/31	Total Loss -95.3860 (-130.6694)
+2022-11-02 22:22:40,294:INFO: Batch: 28/31	Total Loss -78.9319 (-129.0079)
+2022-11-02 22:22:40,675:INFO: Batch: 29/31	Total Loss -124.3018 (-128.8508)
+2022-11-02 22:22:40,941:INFO: Batch: 30/31	Total Loss -89.8839 (-128.4997)
+2022-11-02 22:22:41,087:INFO: - Computing ADE (validation o)
+2022-11-02 22:22:41,680:INFO: 		 ADE on eth                       dataset:	 0.9146745800971985
+2022-11-02 22:22:41,681:INFO: Average validation o:	ADE  0.9147	FDE  1.9040
+2022-11-02 22:22:41,681:INFO: - Computing ADE (validation)
+2022-11-02 22:22:42,003:INFO: 		 ADE on hotel                     dataset:	 0.3944024443626404
+2022-11-02 22:22:42,363:INFO: 		 ADE on univ                      dataset:	 0.5358704328536987
+2022-11-02 22:22:42,646:INFO: 		 ADE on zara1                     dataset:	 0.411602258682251
+2022-11-02 22:22:43,104:INFO: 		 ADE on zara2                     dataset:	 0.4011034667491913
+2022-11-02 22:22:43,104:INFO: Average validation:	ADE  0.4715	FDE  0.9973
+2022-11-02 22:22:43,105:INFO: - Computing ADE (training)
+2022-11-02 22:22:43,630:INFO: 		 ADE on hotel                     dataset:	 0.4000292122364044
+2022-11-02 22:22:44,617:INFO: 		 ADE on univ                      dataset:	 0.5339779257774353
+2022-11-02 22:22:45,359:INFO: 		 ADE on zara1                     dataset:	 0.4341066777706146
+2022-11-02 22:22:46,494:INFO: 		 ADE on zara2                     dataset:	 0.3881840705871582
+2022-11-02 22:22:46,494:INFO: Average training:	ADE  0.4946	FDE  1.0514
+2022-11-02 22:22:46,501:INFO:  --> Model Saved in ./models/eth/CRMF_risk_irm_5.0_batch_het_data_eth_ds_0_bk_20_ep_(150, 100, 300, 400)_shuffle_true_seed_72/pretrain/P4/CRMF_epoch_652.pth.tar
+2022-11-02 22:22:46,501:INFO: 
+===> EPOCH: 653 (P4)
+2022-11-02 22:22:46,502:INFO: - Computing loss (training)
+2022-11-02 22:22:47,515:INFO: Batch:  0/31	Total Loss -93.1272 (-93.1272)
+2022-11-02 22:22:47,880:INFO: Batch:  1/31	Total Loss -119.5821 (-106.4148)
+2022-11-02 22:22:48,244:INFO: Batch:  2/31	Total Loss -102.1362 (-105.0340)
+2022-11-02 22:22:48,603:INFO: Batch:  3/31	Total Loss -121.6386 (-109.2361)
+2022-11-02 22:22:48,967:INFO: Batch:  4/31	Total Loss -103.6451 (-108.0951)
+2022-11-02 22:22:49,329:INFO: Batch:  5/31	Total Loss -123.0173 (-110.5079)
+2022-11-02 22:22:49,692:INFO: Batch:  6/31	Total Loss -111.9644 (-110.7161)
+2022-11-02 22:22:50,054:INFO: Batch:  7/31	Total Loss -140.0520 (-114.3163)
+2022-11-02 22:22:50,413:INFO: Batch:  8/31	Total Loss -106.9448 (-113.4948)
+2022-11-02 22:22:50,776:INFO: Batch:  9/31	Total Loss -141.2855 (-116.4973)
+2022-11-02 22:22:51,136:INFO: Batch: 10/31	Total Loss -115.1814 (-116.3839)
+2022-11-02 22:22:51,496:INFO: Batch: 11/31	Total Loss -148.4154 (-119.3310)
+2022-11-02 22:22:51,857:INFO: Batch: 12/31	Total Loss -133.8334 (-120.4495)
+2022-11-02 22:22:52,219:INFO: Batch: 13/31	Total Loss -155.3423 (-123.1156)
+2022-11-02 22:22:52,580:INFO: Batch: 14/31	Total Loss -130.4867 (-123.6085)
+2022-11-02 22:22:52,944:INFO: Batch: 15/31	Total Loss -105.2057 (-122.5763)
+2022-11-02 22:22:53,306:INFO: Batch: 16/31	Total Loss -134.9272 (-123.3482)
+2022-11-02 22:22:53,670:INFO: Batch: 17/31	Total Loss -115.7846 (-122.9659)
+2022-11-02 22:22:54,032:INFO: Batch: 18/31	Total Loss -122.3010 (-122.9302)
+2022-11-02 22:22:54,393:INFO: Batch: 19/31	Total Loss -130.4476 (-123.2562)
+2022-11-02 22:22:54,758:INFO: Batch: 20/31	Total Loss -159.4652 (-125.0323)
+2022-11-02 22:22:55,120:INFO: Batch: 21/31	Total Loss -144.9046 (-125.9264)
+2022-11-02 22:22:55,481:INFO: Batch: 22/31	Total Loss -164.7664 (-127.7578)
+2022-11-02 22:22:55,843:INFO: Batch: 23/31	Total Loss -138.2598 (-128.2375)
+2022-11-02 22:22:56,204:INFO: Batch: 24/31	Total Loss -143.9704 (-128.8632)
+2022-11-02 22:22:56,644:INFO: Batch: 25/31	Total Loss -116.6702 (-128.4481)
+2022-11-02 22:22:57,008:INFO: Batch: 26/31	Total Loss -118.7632 (-128.1297)
+2022-11-02 22:22:57,369:INFO: Batch: 27/31	Total Loss -163.4444 (-129.3786)
+2022-11-02 22:22:57,731:INFO: Batch: 28/31	Total Loss -134.2332 (-129.5393)
+2022-11-02 22:22:58,093:INFO: Batch: 29/31	Total Loss -159.5466 (-130.6447)
+2022-11-02 22:22:58,356:INFO: Batch: 30/31	Total Loss -96.0500 (-130.3017)
+2022-11-02 22:22:58,510:INFO: - Computing ADE (validation o)
+2022-11-02 22:22:59,127:INFO: 		 ADE on eth                       dataset:	 0.9223971366882324
+2022-11-02 22:22:59,127:INFO: Average validation o:	ADE  0.9224	FDE  1.9532
+2022-11-02 22:22:59,128:INFO: - Computing ADE (validation)
+2022-11-02 22:22:59,416:INFO: 		 ADE on hotel                     dataset:	 0.3769914507865906
+2022-11-02 22:22:59,780:INFO: 		 ADE on univ                      dataset:	 0.5323290824890137
+2022-11-02 22:23:00,066:INFO: 		 ADE on zara1                     dataset:	 0.3747187554836273
+2022-11-02 22:23:00,522:INFO: 		 ADE on zara2                     dataset:	 0.3909176290035248
+2022-11-02 22:23:00,522:INFO: Average validation:	ADE  0.4628	FDE  0.9856
+2022-11-02 22:23:00,523:INFO: - Computing ADE (training)
+2022-11-02 22:23:01,047:INFO: 		 ADE on hotel                     dataset:	 0.3785664737224579
+2022-11-02 22:23:02,057:INFO: 		 ADE on univ                      dataset:	 0.5293682813644409
+2022-11-02 22:23:02,755:INFO: 		 ADE on zara1                     dataset:	 0.43233975768089294
+2022-11-02 22:23:03,861:INFO: 		 ADE on zara2                     dataset:	 0.3794515132904053
+2022-11-02 22:23:03,862:INFO: Average training:	ADE  0.4889	FDE  1.0489
+2022-11-02 22:23:03,870:INFO:  --> Model Saved in ./models/eth/CRMF_risk_irm_5.0_batch_het_data_eth_ds_0_bk_20_ep_(150, 100, 300, 400)_shuffle_true_seed_72/pretrain/P4/CRMF_epoch_653.pth.tar
+2022-11-02 22:23:03,870:INFO: 
+===> EPOCH: 654 (P4)
+2022-11-02 22:23:03,870:INFO: - Computing loss (training)
+2022-11-02 22:23:04,909:INFO: Batch:  0/31	Total Loss -137.6246 (-137.6246)
+2022-11-02 22:23:05,281:INFO: Batch:  1/31	Total Loss -137.3707 (-137.5025)
+2022-11-02 22:23:05,654:INFO: Batch:  2/31	Total Loss -134.7563 (-136.5534)
+2022-11-02 22:23:06,022:INFO: Batch:  3/31	Total Loss -150.6096 (-140.2174)
+2022-11-02 22:23:06,395:INFO: Batch:  4/31	Total Loss -148.6244 (-141.9653)
+2022-11-02 22:23:06,771:INFO: Batch:  5/31	Total Loss -118.2898 (-138.3043)
+2022-11-02 22:23:07,143:INFO: Batch:  6/31	Total Loss -173.6219 (-143.6807)
+2022-11-02 22:23:07,513:INFO: Batch:  7/31	Total Loss -127.3437 (-141.4576)
+2022-11-02 22:23:07,880:INFO: Batch:  8/31	Total Loss -156.2909 (-143.0376)
+2022-11-02 22:23:08,247:INFO: Batch:  9/31	Total Loss -142.1225 (-142.9402)
+2022-11-02 22:23:08,614:INFO: Batch: 10/31	Total Loss -163.2020 (-144.8353)
+2022-11-02 22:23:08,982:INFO: Batch: 11/31	Total Loss -160.7673 (-146.2600)
+2022-11-02 22:23:09,356:INFO: Batch: 12/31	Total Loss -159.6569 (-147.2195)
+2022-11-02 22:23:09,727:INFO: Batch: 13/31	Total Loss -141.5828 (-146.8355)
+2022-11-02 22:23:10,098:INFO: Batch: 14/31	Total Loss -154.9501 (-147.3638)
+2022-11-02 22:23:10,469:INFO: Batch: 15/31	Total Loss -127.1574 (-146.2341)
+2022-11-02 22:23:10,840:INFO: Batch: 16/31	Total Loss -144.7371 (-146.1464)
+2022-11-02 22:23:11,212:INFO: Batch: 17/31	Total Loss -162.4651 (-147.0512)
+2022-11-02 22:23:11,582:INFO: Batch: 18/31	Total Loss -164.8482 (-148.0593)
+2022-11-02 22:23:11,949:INFO: Batch: 19/31	Total Loss -102.9600 (-146.2648)
+2022-11-02 22:23:12,323:INFO: Batch: 20/31	Total Loss -140.5399 (-146.0007)
+2022-11-02 22:23:12,695:INFO: Batch: 21/31	Total Loss -130.1890 (-145.2069)
+2022-11-02 22:23:13,065:INFO: Batch: 22/31	Total Loss -167.3802 (-146.1870)
+2022-11-02 22:23:13,436:INFO: Batch: 23/31	Total Loss -166.0409 (-147.0816)
+2022-11-02 22:23:13,806:INFO: Batch: 24/31	Total Loss -158.7940 (-147.5307)
+2022-11-02 22:23:14,178:INFO: Batch: 25/31	Total Loss -150.9045 (-147.6605)
+2022-11-02 22:23:14,548:INFO: Batch: 26/31	Total Loss -161.6902 (-148.2115)
+2022-11-02 22:23:14,922:INFO: Batch: 27/31	Total Loss -130.1330 (-147.6339)
+2022-11-02 22:23:15,292:INFO: Batch: 28/31	Total Loss -158.7600 (-148.0319)
+2022-11-02 22:23:15,663:INFO: Batch: 29/31	Total Loss -176.2826 (-149.0568)
+2022-11-02 22:23:15,932:INFO: Batch: 30/31	Total Loss -98.4870 (-148.5382)
+2022-11-02 22:23:16,078:INFO: - Computing ADE (validation o)
+2022-11-02 22:23:16,739:INFO: 		 ADE on eth                       dataset:	 0.9053231477737427
+2022-11-02 22:23:16,740:INFO: Average validation o:	ADE  0.9053	FDE  1.8815
+2022-11-02 22:23:16,740:INFO: - Computing ADE (validation)
+2022-11-02 22:23:17,046:INFO: 		 ADE on hotel                     dataset:	 0.39445000886917114
+2022-11-02 22:23:17,407:INFO: 		 ADE on univ                      dataset:	 0.5304032564163208
+2022-11-02 22:23:17,705:INFO: 		 ADE on zara1                     dataset:	 0.4051688313484192
+2022-11-02 22:23:18,167:INFO: 		 ADE on zara2                     dataset:	 0.3860790729522705
+2022-11-02 22:23:18,167:INFO: Average validation:	ADE  0.4627	FDE  0.9825
+2022-11-02 22:23:18,168:INFO: - Computing ADE (training)
+2022-11-02 22:23:18,697:INFO: 		 ADE on hotel                     dataset:	 0.40201306343078613
+2022-11-02 22:23:19,696:INFO: 		 ADE on univ                      dataset:	 0.5279200673103333
+2022-11-02 22:23:20,419:INFO: 		 ADE on zara1                     dataset:	 0.4288409650325775
+2022-11-02 22:23:21,577:INFO: 		 ADE on zara2                     dataset:	 0.3778807818889618
+2022-11-02 22:23:21,578:INFO: Average training:	ADE  0.4880	FDE  1.0414
+2022-11-02 22:23:21,585:INFO:  --> Model Saved in ./models/eth/CRMF_risk_irm_5.0_batch_het_data_eth_ds_0_bk_20_ep_(150, 100, 300, 400)_shuffle_true_seed_72/pretrain/P4/CRMF_epoch_654.pth.tar
+2022-11-02 22:23:21,585:INFO: 
+===> EPOCH: 655 (P4)
+2022-11-02 22:23:21,586:INFO: - Computing loss (training)
+2022-11-02 22:23:22,601:INFO: Batch:  0/31	Total Loss -170.3802 (-170.3802)
+2022-11-02 22:23:22,982:INFO: Batch:  1/31	Total Loss -156.2444 (-163.1534)
+2022-11-02 22:23:23,369:INFO: Batch:  2/31	Total Loss -174.6887 (-167.1604)
+2022-11-02 22:23:23,763:INFO: Batch:  3/31	Total Loss -144.6375 (-161.4452)
+2022-11-02 22:23:24,157:INFO: Batch:  4/31	Total Loss -100.1246 (-150.0100)
+2022-11-02 22:23:24,586:INFO: Batch:  5/31	Total Loss -162.6318 (-152.0301)
+2022-11-02 22:23:25,001:INFO: Batch:  6/31	Total Loss -163.7427 (-153.4909)
+2022-11-02 22:23:25,385:INFO: Batch:  7/31	Total Loss -146.5571 (-152.6917)
+2022-11-02 22:23:25,758:INFO: Batch:  8/31	Total Loss -155.7132 (-153.0333)
+2022-11-02 22:23:26,129:INFO: Batch:  9/31	Total Loss -147.3268 (-152.4879)
+2022-11-02 22:23:26,495:INFO: Batch: 10/31	Total Loss -161.6364 (-153.3517)
+2022-11-02 22:23:26,862:INFO: Batch: 11/31	Total Loss -123.7564 (-150.9941)
+2022-11-02 22:23:27,257:INFO: Batch: 12/31	Total Loss -143.4070 (-150.3691)
+2022-11-02 22:23:27,634:INFO: Batch: 13/31	Total Loss -123.1051 (-148.6887)
+2022-11-02 22:23:28,061:INFO: Batch: 14/31	Total Loss -121.9151 (-147.1154)
+2022-11-02 22:23:28,492:INFO: Batch: 15/31	Total Loss -154.8560 (-147.6339)
+2022-11-02 22:23:28,920:INFO: Batch: 16/31	Total Loss -143.4296 (-147.3870)
+2022-11-02 22:23:29,342:INFO: Batch: 17/31	Total Loss -160.2357 (-148.1729)
+2022-11-02 22:23:29,762:INFO: Batch: 18/31	Total Loss -168.3081 (-149.3375)
+2022-11-02 22:23:30,167:INFO: Batch: 19/31	Total Loss -132.1301 (-148.5955)
+2022-11-02 22:23:30,565:INFO: Batch: 20/31	Total Loss -158.7260 (-149.0935)
+2022-11-02 22:23:30,966:INFO: Batch: 21/31	Total Loss -146.0424 (-148.9571)
+2022-11-02 22:23:31,346:INFO: Batch: 22/31	Total Loss -148.6487 (-148.9449)
+2022-11-02 22:23:31,718:INFO: Batch: 23/31	Total Loss -156.2393 (-149.2368)
+2022-11-02 22:23:32,089:INFO: Batch: 24/31	Total Loss -138.3861 (-148.7874)
+2022-11-02 22:23:32,466:INFO: Batch: 25/31	Total Loss -170.7605 (-149.6390)
+2022-11-02 22:23:32,846:INFO: Batch: 26/31	Total Loss -135.0295 (-149.1253)
+2022-11-02 22:23:33,219:INFO: Batch: 27/31	Total Loss -132.3169 (-148.4976)
+2022-11-02 22:23:33,593:INFO: Batch: 28/31	Total Loss -163.4492 (-149.0298)
+2022-11-02 22:23:33,962:INFO: Batch: 29/31	Total Loss -139.4110 (-148.7209)
+2022-11-02 22:23:34,230:INFO: Batch: 30/31	Total Loss -91.1522 (-148.1866)
+2022-11-02 22:23:34,383:INFO: - Computing ADE (validation o)
+2022-11-02 22:23:35,000:INFO: 		 ADE on eth                       dataset:	 0.9262716174125671
+2022-11-02 22:23:35,000:INFO: Average validation o:	ADE  0.9263	FDE  1.9482
+2022-11-02 22:23:35,001:INFO: - Computing ADE (validation)
+2022-11-02 22:23:35,290:INFO: 		 ADE on hotel                     dataset:	 0.37775489687919617
+2022-11-02 22:23:35,648:INFO: 		 ADE on univ                      dataset:	 0.535275936126709
+2022-11-02 22:23:35,931:INFO: 		 ADE on zara1                     dataset:	 0.38835811614990234
+2022-11-02 22:23:36,420:INFO: 		 ADE on zara2                     dataset:	 0.3895938992500305
+2022-11-02 22:23:36,420:INFO: Average validation:	ADE  0.4647	FDE  0.9892
+2022-11-02 22:23:36,421:INFO: - Computing ADE (training)
+2022-11-02 22:23:36,997:INFO: 		 ADE on hotel                     dataset:	 0.3842432498931885
+2022-11-02 22:23:38,094:INFO: 		 ADE on univ                      dataset:	 0.529008150100708
+2022-11-02 22:23:38,846:INFO: 		 ADE on zara1                     dataset:	 0.4324910640716553
+2022-11-02 22:23:39,991:INFO: 		 ADE on zara2                     dataset:	 0.3782137334346771
+2022-11-02 22:23:39,991:INFO: Average training:	ADE  0.4886	FDE  1.0457
+2022-11-02 22:23:39,999:INFO:  --> Model Saved in ./models/eth/CRMF_risk_irm_5.0_batch_het_data_eth_ds_0_bk_20_ep_(150, 100, 300, 400)_shuffle_true_seed_72/pretrain/P4/CRMF_epoch_655.pth.tar
+2022-11-02 22:23:39,999:INFO: 
+===> EPOCH: 656 (P4)
+2022-11-02 22:23:39,999:INFO: - Computing loss (training)
+2022-11-02 22:23:41,075:INFO: Batch:  0/31	Total Loss -130.1844 (-130.1844)
+2022-11-02 22:23:41,496:INFO: Batch:  1/31	Total Loss -141.1247 (-135.4661)
+2022-11-02 22:23:41,912:INFO: Batch:  2/31	Total Loss -165.0013 (-146.4968)
+2022-11-02 22:23:42,314:INFO: Batch:  3/31	Total Loss -154.9556 (-148.6187)
+2022-11-02 22:23:42,722:INFO: Batch:  4/31	Total Loss -153.0591 (-149.5753)
+2022-11-02 22:23:43,120:INFO: Batch:  5/31	Total Loss -157.0844 (-150.7669)
+2022-11-02 22:23:43,501:INFO: Batch:  6/31	Total Loss -159.7390 (-152.1324)
+2022-11-02 22:23:43,881:INFO: Batch:  7/31	Total Loss -165.1912 (-153.7822)
+2022-11-02 22:23:44,264:INFO: Batch:  8/31	Total Loss -151.1334 (-153.4966)
+2022-11-02 22:23:44,627:INFO: Batch:  9/31	Total Loss -188.7589 (-157.5000)
+2022-11-02 22:23:44,994:INFO: Batch: 10/31	Total Loss -185.7748 (-160.2371)
+2022-11-02 22:23:45,357:INFO: Batch: 11/31	Total Loss -142.1601 (-158.7546)
+2022-11-02 22:23:45,730:INFO: Batch: 12/31	Total Loss -139.3449 (-157.2849)
+2022-11-02 22:23:46,102:INFO: Batch: 13/31	Total Loss -181.3892 (-159.0730)
+2022-11-02 22:23:46,470:INFO: Batch: 14/31	Total Loss -176.1577 (-160.2475)
+2022-11-02 22:23:46,836:INFO: Batch: 15/31	Total Loss -175.4117 (-161.2150)
+2022-11-02 22:23:47,219:INFO: Batch: 16/31	Total Loss -151.5756 (-160.6990)
+2022-11-02 22:23:47,594:INFO: Batch: 17/31	Total Loss -126.9527 (-159.0470)
+2022-11-02 22:23:47,967:INFO: Batch: 18/31	Total Loss -158.5468 (-159.0174)
+2022-11-02 22:23:48,367:INFO: Batch: 19/31	Total Loss -139.3469 (-158.1257)
+2022-11-02 22:23:48,773:INFO: Batch: 20/31	Total Loss -130.0205 (-156.9900)
+2022-11-02 22:23:49,181:INFO: Batch: 21/31	Total Loss -168.7486 (-157.5131)
+2022-11-02 22:23:49,566:INFO: Batch: 22/31	Total Loss -171.9032 (-158.1636)
+2022-11-02 22:23:49,947:INFO: Batch: 23/31	Total Loss -144.2475 (-157.6261)
+2022-11-02 22:23:50,325:INFO: Batch: 24/31	Total Loss -163.6549 (-157.8664)
+2022-11-02 22:23:50,703:INFO: Batch: 25/31	Total Loss -160.1518 (-157.9543)
+2022-11-02 22:23:51,077:INFO: Batch: 26/31	Total Loss -166.0763 (-158.2623)
+2022-11-02 22:23:51,441:INFO: Batch: 27/31	Total Loss -149.0361 (-157.9781)
+2022-11-02 22:23:51,826:INFO: Batch: 28/31	Total Loss -189.4811 (-159.1517)
+2022-11-02 22:23:52,203:INFO: Batch: 29/31	Total Loss -165.0081 (-159.3530)
+2022-11-02 22:23:52,469:INFO: Batch: 30/31	Total Loss -83.8470 (-158.5913)
+2022-11-02 22:23:52,616:INFO: - Computing ADE (validation o)
+2022-11-02 22:23:53,262:INFO: 		 ADE on eth                       dataset:	 0.9100398421287537
+2022-11-02 22:23:53,262:INFO: Average validation o:	ADE  0.9100	FDE  1.9187
+2022-11-02 22:23:53,263:INFO: - Computing ADE (validation)
+2022-11-02 22:23:53,562:INFO: 		 ADE on hotel                     dataset:	 0.38197067379951477
+2022-11-02 22:23:53,931:INFO: 		 ADE on univ                      dataset:	 0.5298970341682434
+2022-11-02 22:23:54,209:INFO: 		 ADE on zara1                     dataset:	 0.3850899338722229
+2022-11-02 22:23:54,662:INFO: 		 ADE on zara2                     dataset:	 0.3890904188156128
+2022-11-02 22:23:54,662:INFO: Average validation:	ADE  0.4617	FDE  0.9860
+2022-11-02 22:23:54,663:INFO: - Computing ADE (training)
+2022-11-02 22:23:55,222:INFO: 		 ADE on hotel                     dataset:	 0.3790953755378723
+2022-11-02 22:23:56,227:INFO: 		 ADE on univ                      dataset:	 0.5286109447479248
+2022-11-02 22:23:56,916:INFO: 		 ADE on zara1                     dataset:	 0.4212677776813507
+2022-11-02 22:23:58,115:INFO: 		 ADE on zara2                     dataset:	 0.3750068247318268
+2022-11-02 22:23:58,115:INFO: Average training:	ADE  0.4868	FDE  1.0449
+2022-11-02 22:23:58,124:INFO:  --> Model Saved in ./models/eth/CRMF_risk_irm_5.0_batch_het_data_eth_ds_0_bk_20_ep_(150, 100, 300, 400)_shuffle_true_seed_72/pretrain/P4/CRMF_epoch_656.pth.tar
+2022-11-02 22:23:58,124:INFO: 
+===> EPOCH: 657 (P4)
+2022-11-02 22:23:58,124:INFO: - Computing loss (training)
+2022-11-02 22:23:59,134:INFO: Batch:  0/31	Total Loss -137.6501 (-137.6501)
+2022-11-02 22:23:59,510:INFO: Batch:  1/31	Total Loss -177.9626 (-158.9881)
+2022-11-02 22:23:59,898:INFO: Batch:  2/31	Total Loss -100.7842 (-138.7606)
+2022-11-02 22:24:00,271:INFO: Batch:  3/31	Total Loss -155.8967 (-143.3414)
+2022-11-02 22:24:00,646:INFO: Batch:  4/31	Total Loss -168.2517 (-148.6815)
+2022-11-02 22:24:01,022:INFO: Batch:  5/31	Total Loss -188.7262 (-155.7788)
+2022-11-02 22:24:01,397:INFO: Batch:  6/31	Total Loss -141.5142 (-153.8680)
+2022-11-02 22:24:01,769:INFO: Batch:  7/31	Total Loss -169.0298 (-156.0422)
+2022-11-02 22:24:02,143:INFO: Batch:  8/31	Total Loss -51.5740 (-143.9234)
+2022-11-02 22:24:02,515:INFO: Batch:  9/31	Total Loss -151.0045 (-144.5931)
+2022-11-02 22:24:02,891:INFO: Batch: 10/31	Total Loss -177.0206 (-147.6240)
+2022-11-02 22:24:03,270:INFO: Batch: 11/31	Total Loss -167.1143 (-149.3289)
+2022-11-02 22:24:03,645:INFO: Batch: 12/31	Total Loss -155.3349 (-149.8103)
+2022-11-02 22:24:04,022:INFO: Batch: 13/31	Total Loss -110.8971 (-147.3317)
+2022-11-02 22:24:04,397:INFO: Batch: 14/31	Total Loss -132.8633 (-146.4496)
+2022-11-02 22:24:04,773:INFO: Batch: 15/31	Total Loss -163.7788 (-147.4923)
+2022-11-02 22:24:05,147:INFO: Batch: 16/31	Total Loss -135.1894 (-146.8227)
+2022-11-02 22:24:05,522:INFO: Batch: 17/31	Total Loss -161.3145 (-147.6892)
+2022-11-02 22:24:05,897:INFO: Batch: 18/31	Total Loss -146.3966 (-147.6249)
+2022-11-02 22:24:06,348:INFO: Batch: 19/31	Total Loss -166.9025 (-148.6465)
+2022-11-02 22:24:06,723:INFO: Batch: 20/31	Total Loss -73.4443 (-145.5824)
+2022-11-02 22:24:07,101:INFO: Batch: 21/31	Total Loss -164.2130 (-146.4977)
+2022-11-02 22:24:07,476:INFO: Batch: 22/31	Total Loss -168.6452 (-147.5113)
+2022-11-02 22:24:07,850:INFO: Batch: 23/31	Total Loss -118.4516 (-146.3450)
+2022-11-02 22:24:08,223:INFO: Batch: 24/31	Total Loss -134.4192 (-145.8689)
+2022-11-02 22:24:08,597:INFO: Batch: 25/31	Total Loss -134.0114 (-145.4646)
+2022-11-02 22:24:08,971:INFO: Batch: 26/31	Total Loss -153.7500 (-145.7968)
+2022-11-02 22:24:09,346:INFO: Batch: 27/31	Total Loss -146.6297 (-145.8253)
+2022-11-02 22:24:09,721:INFO: Batch: 28/31	Total Loss -167.6934 (-146.6457)
+2022-11-02 22:24:10,097:INFO: Batch: 29/31	Total Loss -156.8033 (-147.0246)
+2022-11-02 22:24:10,370:INFO: Batch: 30/31	Total Loss -97.3352 (-146.5166)
+2022-11-02 22:24:10,520:INFO: - Computing ADE (validation o)
+2022-11-02 22:24:11,120:INFO: 		 ADE on eth                       dataset:	 0.9368814826011658
+2022-11-02 22:24:11,120:INFO: Average validation o:	ADE  0.9369	FDE  1.9933
+2022-11-02 22:24:11,121:INFO: - Computing ADE (validation)
+2022-11-02 22:24:11,411:INFO: 		 ADE on hotel                     dataset:	 0.3949527442455292
+2022-11-02 22:24:11,788:INFO: 		 ADE on univ                      dataset:	 0.5415502786636353
+2022-11-02 22:24:12,088:INFO: 		 ADE on zara1                     dataset:	 0.3820401728153229
+2022-11-02 22:24:12,542:INFO: 		 ADE on zara2                     dataset:	 0.4140341281890869
+2022-11-02 22:24:12,542:INFO: Average validation:	ADE  0.4775	FDE  1.0189
+2022-11-02 22:24:12,543:INFO: - Computing ADE (training)
+2022-11-02 22:24:13,055:INFO: 		 ADE on hotel                     dataset:	 0.3955053389072418
+2022-11-02 22:24:14,070:INFO: 		 ADE on univ                      dataset:	 0.5458202362060547
+2022-11-02 22:24:14,775:INFO: 		 ADE on zara1                     dataset:	 0.4313579201698303
+2022-11-02 22:24:15,901:INFO: 		 ADE on zara2                     dataset:	 0.39477330446243286
+2022-11-02 22:24:15,901:INFO: Average training:	ADE  0.5041	FDE  1.0808
+2022-11-02 22:24:15,916:INFO:  --> Model Saved in ./models/eth/CRMF_risk_irm_5.0_batch_het_data_eth_ds_0_bk_20_ep_(150, 100, 300, 400)_shuffle_true_seed_72/pretrain/P4/CRMF_epoch_657.pth.tar
+2022-11-02 22:24:15,917:INFO: 
+===> EPOCH: 658 (P4)
+2022-11-02 22:24:15,917:INFO: - Computing loss (training)
+2022-11-02 22:24:16,948:INFO: Batch:  0/31	Total Loss -171.3177 (-171.3177)
+2022-11-02 22:24:17,329:INFO: Batch:  1/31	Total Loss -142.4054 (-157.0029)
+2022-11-02 22:24:17,704:INFO: Batch:  2/31	Total Loss -137.7486 (-150.9215)
+2022-11-02 22:24:18,078:INFO: Batch:  3/31	Total Loss -158.1955 (-152.7261)
+2022-11-02 22:24:18,453:INFO: Batch:  4/31	Total Loss -164.8626 (-155.0928)
+2022-11-02 22:24:18,827:INFO: Batch:  5/31	Total Loss -147.6455 (-153.8775)
+2022-11-02 22:24:19,203:INFO: Batch:  6/31	Total Loss -149.3744 (-153.3183)
+2022-11-02 22:24:19,580:INFO: Batch:  7/31	Total Loss -113.0725 (-148.0323)
+2022-11-02 22:24:19,951:INFO: Batch:  8/31	Total Loss -173.1333 (-151.2094)
+2022-11-02 22:24:20,325:INFO: Batch:  9/31	Total Loss -153.4066 (-151.4378)
+2022-11-02 22:24:20,697:INFO: Batch: 10/31	Total Loss -155.4433 (-151.8240)
+2022-11-02 22:24:21,070:INFO: Batch: 11/31	Total Loss -157.5103 (-152.3651)
+2022-11-02 22:24:21,444:INFO: Batch: 12/31	Total Loss -135.6315 (-151.0518)
+2022-11-02 22:24:21,819:INFO: Batch: 13/31	Total Loss -138.2748 (-150.1882)
+2022-11-02 22:24:22,194:INFO: Batch: 14/31	Total Loss -173.5637 (-151.9698)
+2022-11-02 22:24:22,568:INFO: Batch: 15/31	Total Loss -149.9905 (-151.8339)
+2022-11-02 22:24:22,942:INFO: Batch: 16/31	Total Loss -111.2359 (-149.6239)
+2022-11-02 22:24:23,316:INFO: Batch: 17/31	Total Loss -121.5427 (-148.0643)
+2022-11-02 22:24:23,692:INFO: Batch: 18/31	Total Loss -149.5438 (-148.1440)
+2022-11-02 22:24:24,067:INFO: Batch: 19/31	Total Loss -140.4512 (-147.7766)
+2022-11-02 22:24:24,442:INFO: Batch: 20/31	Total Loss -132.0832 (-147.0222)
+2022-11-02 22:24:24,824:INFO: Batch: 21/31	Total Loss -178.3913 (-148.6895)
+2022-11-02 22:24:25,212:INFO: Batch: 22/31	Total Loss -127.5066 (-147.8742)
+2022-11-02 22:24:25,597:INFO: Batch: 23/31	Total Loss -141.5196 (-147.6083)
+2022-11-02 22:24:25,972:INFO: Batch: 24/31	Total Loss -143.9992 (-147.4620)
+2022-11-02 22:24:26,352:INFO: Batch: 25/31	Total Loss -153.6495 (-147.7065)
+2022-11-02 22:24:26,735:INFO: Batch: 26/31	Total Loss -153.3799 (-147.9282)
+2022-11-02 22:24:27,125:INFO: Batch: 27/31	Total Loss -178.6154 (-149.1220)
+2022-11-02 22:24:27,506:INFO: Batch: 28/31	Total Loss -143.2018 (-148.9130)
+2022-11-02 22:24:27,885:INFO: Batch: 29/31	Total Loss -148.6393 (-148.9034)
+2022-11-02 22:24:28,159:INFO: Batch: 30/31	Total Loss -105.1107 (-148.4499)
+2022-11-02 22:24:28,326:INFO: - Computing ADE (validation o)
+2022-11-02 22:24:29,019:INFO: 		 ADE on eth                       dataset:	 0.9246004819869995
+2022-11-02 22:24:29,019:INFO: Average validation o:	ADE  0.9246	FDE  1.9579
+2022-11-02 22:24:29,020:INFO: - Computing ADE (validation)
+2022-11-02 22:24:29,411:INFO: 		 ADE on hotel                     dataset:	 0.39126384258270264
+2022-11-02 22:24:30,002:INFO: 		 ADE on univ                      dataset:	 0.5443450808525085
+2022-11-02 22:24:30,348:INFO: 		 ADE on zara1                     dataset:	 0.39637491106987
+2022-11-02 22:24:30,836:INFO: 		 ADE on zara2                     dataset:	 0.4000128209590912
+2022-11-02 22:24:30,836:INFO: Average validation:	ADE  0.4744	FDE  1.0164
+2022-11-02 22:24:30,837:INFO: - Computing ADE (training)
+2022-11-02 22:24:31,431:INFO: 		 ADE on hotel                     dataset:	 0.39858055114746094
+2022-11-02 22:24:32,534:INFO: 		 ADE on univ                      dataset:	 0.5356609225273132
+2022-11-02 22:24:33,237:INFO: 		 ADE on zara1                     dataset:	 0.4317287802696228
+2022-11-02 22:24:34,443:INFO: 		 ADE on zara2                     dataset:	 0.3845503032207489
+2022-11-02 22:24:34,444:INFO: Average training:	ADE  0.4949	FDE  1.0623
+2022-11-02 22:24:34,452:INFO:  --> Model Saved in ./models/eth/CRMF_risk_irm_5.0_batch_het_data_eth_ds_0_bk_20_ep_(150, 100, 300, 400)_shuffle_true_seed_72/pretrain/P4/CRMF_epoch_658.pth.tar
+2022-11-02 22:24:34,453:INFO: 
+===> EPOCH: 659 (P4)
+2022-11-02 22:24:34,453:INFO: - Computing loss (training)
+2022-11-02 22:24:35,529:INFO: Batch:  0/31	Total Loss -154.3119 (-154.3119)
+2022-11-02 22:24:35,922:INFO: Batch:  1/31	Total Loss -172.3672 (-163.2199)
+2022-11-02 22:24:36,314:INFO: Batch:  2/31	Total Loss -166.6364 (-164.4314)
+2022-11-02 22:24:36,706:INFO: Batch:  3/31	Total Loss -162.7018 (-164.0213)
+2022-11-02 22:24:37,101:INFO: Batch:  4/31	Total Loss -161.0374 (-163.4132)
+2022-11-02 22:24:37,486:INFO: Batch:  5/31	Total Loss -138.8183 (-159.3722)
+2022-11-02 22:24:37,870:INFO: Batch:  6/31	Total Loss -168.6924 (-160.8516)
+2022-11-02 22:24:38,251:INFO: Batch:  7/31	Total Loss -143.8960 (-158.8368)
+2022-11-02 22:24:38,635:INFO: Batch:  8/31	Total Loss -148.6707 (-157.7221)
+2022-11-02 22:24:39,017:INFO: Batch:  9/31	Total Loss -155.5350 (-157.5128)
+2022-11-02 22:24:39,396:INFO: Batch: 10/31	Total Loss -165.1448 (-158.2095)
+2022-11-02 22:24:39,772:INFO: Batch: 11/31	Total Loss -175.8736 (-159.7514)
+2022-11-02 22:24:40,148:INFO: Batch: 12/31	Total Loss -166.5882 (-160.2738)
+2022-11-02 22:24:40,528:INFO: Batch: 13/31	Total Loss -175.6762 (-161.3429)
+2022-11-02 22:24:40,907:INFO: Batch: 14/31	Total Loss -145.3791 (-160.2919)
+2022-11-02 22:24:41,284:INFO: Batch: 15/31	Total Loss -162.8058 (-160.4441)
+2022-11-02 22:24:41,661:INFO: Batch: 16/31	Total Loss -148.9676 (-159.7674)
+2022-11-02 22:24:42,036:INFO: Batch: 17/31	Total Loss -167.1217 (-160.1884)
+2022-11-02 22:24:42,417:INFO: Batch: 18/31	Total Loss -172.1896 (-160.7995)
+2022-11-02 22:24:42,789:INFO: Batch: 19/31	Total Loss -133.6495 (-159.6176)
+2022-11-02 22:24:43,168:INFO: Batch: 20/31	Total Loss -160.4465 (-159.6577)
+2022-11-02 22:24:43,541:INFO: Batch: 21/31	Total Loss -138.1823 (-158.7354)
+2022-11-02 22:24:43,910:INFO: Batch: 22/31	Total Loss -150.5104 (-158.4224)
+2022-11-02 22:24:44,283:INFO: Batch: 23/31	Total Loss -155.0452 (-158.2800)
+2022-11-02 22:24:44,669:INFO: Batch: 24/31	Total Loss -130.2019 (-157.2442)
+2022-11-02 22:24:45,066:INFO: Batch: 25/31	Total Loss -154.3135 (-157.1490)
+2022-11-02 22:24:45,447:INFO: Batch: 26/31	Total Loss -172.1475 (-157.7048)
+2022-11-02 22:24:45,836:INFO: Batch: 27/31	Total Loss -163.8296 (-157.9322)
+2022-11-02 22:24:46,214:INFO: Batch: 28/31	Total Loss -158.7680 (-157.9616)
+2022-11-02 22:24:46,596:INFO: Batch: 29/31	Total Loss -179.1879 (-158.6930)
+2022-11-02 22:24:46,875:INFO: Batch: 30/31	Total Loss -92.3526 (-158.1264)
+2022-11-02 22:24:47,025:INFO: - Computing ADE (validation o)
+2022-11-02 22:24:47,670:INFO: 		 ADE on eth                       dataset:	 0.9058942794799805
+2022-11-02 22:24:47,671:INFO: Average validation o:	ADE  0.9059	FDE  1.8851
+2022-11-02 22:24:47,671:INFO: - Computing ADE (validation)
+2022-11-02 22:24:47,989:INFO: 		 ADE on hotel                     dataset:	 0.3800492286682129
+2022-11-02 22:24:48,352:INFO: 		 ADE on univ                      dataset:	 0.5332342982292175
+2022-11-02 22:24:48,647:INFO: 		 ADE on zara1                     dataset:	 0.40588870644569397
+2022-11-02 22:24:49,119:INFO: 		 ADE on zara2                     dataset:	 0.38986828923225403
+2022-11-02 22:24:49,119:INFO: Average validation:	ADE  0.4649	FDE  0.9951
+2022-11-02 22:24:49,120:INFO: - Computing ADE (training)
+2022-11-02 22:24:49,659:INFO: 		 ADE on hotel                     dataset:	 0.3820652663707733
+2022-11-02 22:24:50,652:INFO: 		 ADE on univ                      dataset:	 0.5279477834701538
+2022-11-02 22:24:51,387:INFO: 		 ADE on zara1                     dataset:	 0.42735999822616577
+2022-11-02 22:24:52,559:INFO: 		 ADE on zara2                     dataset:	 0.37414711713790894
+2022-11-02 22:24:52,559:INFO: Average training:	ADE  0.4866	FDE  1.0453
+2022-11-02 22:24:52,567:INFO:  --> Model Saved in ./models/eth/CRMF_risk_irm_5.0_batch_het_data_eth_ds_0_bk_20_ep_(150, 100, 300, 400)_shuffle_true_seed_72/pretrain/P4/CRMF_epoch_659.pth.tar
+2022-11-02 22:24:52,567:INFO: 
+===> EPOCH: 660 (P4)
+2022-11-02 22:24:52,567:INFO: - Computing loss (training)
+2022-11-02 22:24:53,604:INFO: Batch:  0/31	Total Loss -171.5463 (-171.5463)
+2022-11-02 22:24:53,986:INFO: Batch:  1/31	Total Loss -159.8660 (-165.5126)
+2022-11-02 22:24:54,367:INFO: Batch:  2/31	Total Loss -168.2813 (-166.4287)
+2022-11-02 22:24:54,736:INFO: Batch:  3/31	Total Loss -156.5391 (-164.0195)
+2022-11-02 22:24:55,102:INFO: Batch:  4/31	Total Loss -163.3537 (-163.8765)
+2022-11-02 22:24:55,478:INFO: Batch:  5/31	Total Loss -163.8903 (-163.8788)
