@@ -515,11 +515,10 @@ def load_all_model(args, model, optimizers):
         # Regressor
         model.mapping.load_state_dict(models_checkpoint['mapping'])
         if optimizers != None:
-            optimizers['var'].load_state_dict(checkpoint['optimizers']['map'])
+            optimizers['map'].load_state_dict(checkpoint['optimizers']['map'])
             update_lr(optimizers['map'], args.lrmap)
 
         # variational models
-        model.variational_mapping.load_state_dict(models_checkpoint['variational_mapping'])
         model.theta_to_s.load_state_dict(models_checkpoint['theta_to_s'])
         model.thetax_to_s.load_state_dict(models_checkpoint['thetax_to_s'])
         model.theta = models_checkpoint['theta']

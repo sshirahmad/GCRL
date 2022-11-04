@@ -73,8 +73,6 @@ def main(args):
                 {"params": model.thetax_to_s.parameters(), 'lr': args.lrvariation},
                 {"params": model.theta, 'lr': args.lrvariation},
                 {"params": model.sigma, 'lr': args.lrvariation},
-                {"params": model.mean, 'lr': args.lrvariation},
-                {"params": model.logvar, 'lr': args.lrvariation},
 
             ]
         ),
@@ -87,8 +85,11 @@ def main(args):
             lr=args.lrmap,
         ),
         'inv': torch.optim.Adam(
-            model.invariant_encoder.parameters(),
-            lr=args.lrinv,
+            [
+                {"params": model.invariant_encoder.parameters(), 'lr': args.lrinv},
+                {"params": [model.mean, model.logvar, model.sigma], 'lr': args.lrinv},
+            ]
+
         ),
         'future_decoder': torch.optim.Adam(
             model.future_decoder.parameters(),
@@ -298,7 +299,7 @@ def train_all(args, model, optimizers, train_dataset, epoch, training_step, trai
 
             # backpropagate if needed
             if stage == 'training' and update:
-                loss.backward()
+                loss.backward(retain_graph=True)
 
                 # choose which optimizer to use depending on the training step
                 if training_step in ['P1', 'P2', 'P3']: optimizers['inv'].step()
@@ -318,14 +319,18 @@ def train_all(args, model, optimizers, train_dataset, epoch, training_step, trai
             total_loss_meter.update(loss.item(), ped_tot.item())
             progress.display(batch_idx + 1)
 
-        if training_step in "P1":
+        if training_step == "P1":
             writer.add_scalar(f"STGAT_loss_p1/{stage}", total_loss_meter.avg, epoch)
-        elif training_step in "P2":
+        elif training_step == "P2":
             writer.add_scalar(f"STGAT_loss_p2/{stage}", total_loss_meter.avg, epoch)
         elif training_step == "P3":
             writer.add_scalar(f"pred_loss/{stage}", p_loss_meter.avg, epoch)
             writer.add_scalar(f"elbo_loss/{stage}", e_loss_meter.avg, epoch)
             writer.add_scalar(f"irm_loss/{stage}", total_loss_meter.avg, epoch)
+            writer.add_scalar(f"mean/{stage}", torch.norm(model.mean), epoch)
+            writer.add_scalar(f"log_var/{stage}", torch.norm(model.logvar), epoch)
+            writer.add_scalar(f"sigma_pred/{stage}", model.sigma[0], epoch)
+            writer.add_scalar(f"sigma_reconstruct/{stage}", model.sigma[1], epoch)
         elif training_step == "P4":
             writer.add_scalar(f"variational_loss/{stage}", total_loss_meter.avg, epoch)
             writer.add_scalar(f"elbo_loss/{stage}", e_loss_meter.avg, epoch)
@@ -450,6 +455,8 @@ def train_all(args, model, optimizers, train_dataset, epoch, training_step, trai
             writer.add_scalar(f"pred_loss/{stage}", p_loss_meter.avg, epoch)
             writer.add_scalar(f"elbo_loss/{stage}", e_loss_meter.avg, epoch)
             writer.add_scalar(f"irm_loss/{stage}", total_loss_meter.avg, epoch)
+            writer.add_scalar(f"mean/{stage}", torch.norm(model.mean), epoch)
+            writer.add_scalar(f"log_var/{stage}", torch.norm(model.logvar), epoch)
         elif training_step == "P4":
             writer.add_scalar(f"variational_loss/{stage}", total_loss_meter.avg, epoch)
             writer.add_scalar(f"elbo_loss/{stage}", e_loss_meter.avg, epoch)
