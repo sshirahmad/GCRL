@@ -125,5 +125,4 @@ def get_training_parser():
     parser.add_argument("--complexdecoder", default=True, type=bool, help='')
     parser.add_argument("--unbiased", default=True, type=bool, help='')
 
-
     return parser

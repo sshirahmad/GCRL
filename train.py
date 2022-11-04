@@ -152,13 +152,14 @@ def main(args):
             freeze(False, (model.variant_encoder, model.theta_to_s, model.thetax_to_s, model.past_decoder, model.future_decoder), (model.theta, model.sigma))
 
         elif training_step == 'P5':
-            freeze(True, (model.invariant_encoder, model.theta_to_s, model.thetax_to_s, model.past_decoder, model.future_decoder),
+            freeze(True, (model.invariant_encoder, model.variant_encoder, model.theta_to_s, model.thetax_to_s, model.past_decoder, model.future_decoder),
                    (model.theta, model.sigma, model.mean, model.logvar))
             freeze(False, (model.mapping,))
 
         if args.finetune:
-            freeze(True, (model.invariant_encoder, model.variant_encoder))
-            freeze(False, (model.variational_mapping, model.theta_to_c, model.theta_to_u, model.past_decoder, model.future_decoder))
+            freeze(True, (model.invariant_encoder, model.variant_encoder, model.past_decoder, model.future_decoder, model.mapping),
+                   (model.theta, model.sigma, model.mean, model.logvar))
+            freeze(False, (model.theta_to_s, model.thetax_to_s))
 
         train_all(args, model, optimizers, train_dataset, epoch, training_step, train_envs_name, writer, stage='training')
 
