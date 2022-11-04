@@ -64,7 +64,7 @@ def get_training_parser():
             want to change the styleinteg. Set the --styleinteg param to the value of the checkpoint \
             (to avoid state_dict problems) one you want to load, and then set the new styleinteg value in this parameter ')
     # computation
-    parser.add_argument("--loader_num_workers", default=2, type=int)
+    parser.add_argument("--loader_num_workers", default=4, type=int)
     parser.add_argument("--gpu_num", default="1", type=str)
     # training
     parser.add_argument("--best_k", default=20, type=int)
@@ -83,7 +83,7 @@ def get_training_parser():
 
     # general training
     parser.add_argument("--finetune", default="", type=str)
-    parser.add_argument("--num_epochs", default='150-100-300-400', type=lambda x: int_tuple(x, '-'))  # '150-100-150',
+    parser.add_argument("--num_epochs", default='150-100-300-400-50', type=lambda x: int_tuple(x, '-'))  # '150-100-150',
     parser.add_argument("--resume", default="",
                         type=str, metavar="PATH", help="path to latest checkpoint (default: none)")
     parser.add_argument("--tfdir", default='runs', type=str)
@@ -104,6 +104,8 @@ def get_training_parser():
                         help="initial learning rate for the future decoder optimizer")
     parser.add_argument('--lrpast', default=1e-3, type=float,
                         help="initial learning rate for the past decoder optimizer")
+    parser.add_argument('--lrmap', default=1e-3, type=float,
+                        help="initial learning rate for the regressor optimizer")
 
     # other parameters to test after
     parser.add_argument('--addloss', default=0, type=float)

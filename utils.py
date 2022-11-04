@@ -173,8 +173,11 @@ def l2_loss(pred_fut_traj, fut_traj, mode="average"):
     Output:
     - loss: l2 loss depending on mode
     """
+    if len(fut_traj.size()) == 3:
+        loss = (fut_traj[:, :, :2].permute(1, 0, 2) - pred_fut_traj.permute(1, 0, 2)) ** 2
+    else:
+        loss = (fut_traj - pred_fut_traj) ** 2
 
-    loss = (fut_traj[:, :, :2].permute(1, 0, 2) - pred_fut_traj.permute(1, 0, 2)) ** 2
     if mode == "sum":
         return torch.sum(loss)
     elif mode == "average":
@@ -437,14 +440,16 @@ def save_all_model(args, model, model_name, optimizers, metric, epoch, training_
         'epoch': epoch + 1,
         'state_dicts': {
             'variant_encoder': model.variant_encoder.state_dict(),
-            'variational_mapping': model.variational_mapping.state_dict(),
             'theta_to_s': model.theta_to_s.state_dict(),
             'thetax_to_s': model.thetax_to_s.state_dict(),
-            'theta': model.theta,
             'invariant_encoder': model.invariant_encoder.state_dict(),
             'future_decoder': model.future_decoder.state_dict(),
             'past_decoder': model.past_decoder.state_dict(),
+            'mapping': model.mapping.state_dict(),
+            'theta': model.theta,
             'sigma': model.sigma,
+            'mean': model.mean,
+            'logvar': model.logvar,
         },
         'optimizers': {
             key: val.state_dict() for key, val in optimizers.items()
@@ -507,12 +512,20 @@ def load_all_model(args, model, optimizers):
             optimizers['var'].load_state_dict(checkpoint['optimizers']['var'])
             update_lr(optimizers['var'], args.lrvar)
 
+        # Regressor
+        model.mapping.load_state_dict(models_checkpoint['mapping'])
+        if optimizers != None:
+            optimizers['var'].load_state_dict(checkpoint['optimizers']['map'])
+            update_lr(optimizers['map'], args.lrmap)
+
         # variational models
         model.variational_mapping.load_state_dict(models_checkpoint['variational_mapping'])
         model.theta_to_s.load_state_dict(models_checkpoint['theta_to_s'])
         model.thetax_to_s.load_state_dict(models_checkpoint['thetax_to_s'])
         model.theta = models_checkpoint['theta']
         model.sigma = models_checkpoint['sigma']
+        model.mean = models_checkpoint['mean']
+        model.logvar = models_checkpoint['logvar']
         if optimizers != None:
             optimizers['variational'].load_state_dict(checkpoint['optimizers']['variational'])
             update_lr(optimizers['variational'], args.lrvariation)
