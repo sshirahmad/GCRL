@@ -665,8 +665,9 @@ class CRMF(nn.Module):
 
         self.sigma = torch.nn.Parameter(torch.tensor([-2.0, 0.0]))
         self.theta = nn.Parameter(torch.randn(args.num_envs, args.latent_dim))
-        self.ptheta = MultivariateNormal(torch.zeros(self.latent_dim).cuda(), torch.diag(
-            torch.ones(self.latent_dim)).cuda())  # TODO add learnable mean and variance?
+        self.mean = nn.Parameter(torch.zeros(args.latent_dim, device="cuda"))
+        self.logvar = nn.Parameter(torch.ones(args.latent_dim, device="cuda"))
+        self.ptheta = MultivariateNormal(self.mean, torch.diag(torch.exp(self.logvar)))  # TODO add learnable mean and variance?
         self.pz = MultivariateNormal(torch.zeros(self.z_dim).cuda(),
                                      torch.diag(torch.ones(self.z_dim)).cuda())  # TODO add learnable mean and variance?
         self.invariant_encoder = STGAT_encoder_inv(args.obs_len, args.fut_len, args.n_coordinates,

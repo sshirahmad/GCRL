@@ -64,7 +64,6 @@ def main(args):
 
     # create the model
     model = CRMF(args).cuda()
-    # sigma = torch.nn.Parameter(torch.tensor([0.0, 0.0, 2.0, 0.0], device="cuda"))
 
     # style related optimizer
     optimizers = {
@@ -75,6 +74,8 @@ def main(args):
                 {"params": model.thetax_to_s.parameters(), 'lr': args.lrvariation},
                 {"params": model.theta, 'lr': args.lrvariation},
                 {"params": model.sigma, 'lr': args.lrvariation},
+                {"params": model.mean, 'lr': args.lrvariation},
+                {"params": model.logvar, 'lr': args.lrvariation},
 
             ]
         ),
@@ -157,16 +158,16 @@ def main(args):
         train_all(args, model, optimizers, train_dataset, epoch, training_step, train_envs_name,
                   writer, stage='training')
 
-        if training_step not in ["P1", "P2"]:
-            with torch.no_grad():
-                metric = validate_ade(model, valido_dataset, epoch, training_step, writer, stage='validation o')
-                validate_ade(model, valid_dataset, epoch, training_step, writer, stage='validation')
-                validate_ade(model, train_dataset, epoch, training_step, writer, stage='training')
-
-                #### EVALUATE ALSO THE TRAINING ADE and the validation loss
-                # if epoch % 2 == 0:
-                #     train_all(args, model, optimizers, valid_dataset, epoch, training_step, val_envs_name,
-                #               writer, sigma_pred, sigma_elbo, stage='validation')
+        # if training_step not in ["P1", "P2"]:
+        #     with torch.no_grad():
+        #         metric = validate_ade(model, valido_dataset, epoch, training_step, writer, stage='validation o')
+        #         validate_ade(model, valid_dataset, epoch, training_step, writer, stage='validation')
+        #         validate_ade(model, train_dataset, epoch, training_step, writer, stage='training')
+        #
+        #         #### EVALUATE ALSO THE TRAINING ADE and the validation loss
+        #         # if epoch % 2 == 0:
+        #         #     train_all(args, model, optimizers, valid_dataset, epoch, training_step, val_envs_name,
+        #         #               writer, sigma_pred, sigma_elbo, stage='validation')
 
         if args.finetune:
             if metric < min_metric:
@@ -293,7 +294,7 @@ def train_all(args, model, optimizers, train_dataset, epoch, training_step, trai
 
             # backpropagate if needed
             if stage == 'training' and update:
-                loss.backward()
+                loss.backward(retain_graph=True)
 
                 # choose which optimizer to use depending on the training step
                 if training_step in ['P1', 'P2', 'P3']: optimizers['inv'].step()
