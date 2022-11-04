@@ -2,8 +2,15 @@
 <project version="4">
   <component name="ChangeListManager">
     <list default="true" id="80c1dfbd-0610-4b22-a92f-a3e79101e880" name="Changes" comment="Added P5 and solved unstability in P4">
-      <change beforePath="$PROJECT_DIR$/models/eth/CRMF_risk_irm_5.0_batch_het_data_eth_ds_0_bk_20_ep_(150, 100, 300, 400)_shuffle_true_seed_72/pretrain/P4/CRMF_epoch_677.pth.tar" beforeDir="false" afterPath="$PROJECT_DIR$/models/eth/CRMF_risk_irm_5.0_batch_het_data_eth_ds_0_bk_20_ep_(150, 100, 300, 400)_shuffle_true_seed_72/pretrain/P4/CRMF_epoch_677.pth.tar" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/models/eth/CRMF_risk_irm_5.0_batch_het_data_eth_ds_0_bk_20_ep_(150, 100, 300, 400)_shuffle_true_seed_72/pretrain/P4/CRMF_epoch_678.pth.tar" beforeDir="false" afterPath="$PROJECT_DIR$/models/eth/CRMF_risk_irm_5.0_batch_het_data_eth_ds_0_bk_20_ep_(150, 100, 300, 400)_shuffle_true_seed_72/pretrain/P4/CRMF_epoch_678.pth.tar" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/models.py" beforeDir="false" afterPath="$PROJECT_DIR$/models.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/models/eth/CRMF_risk_irm_5.0_batch_het_data_eth_ds_0_bk_20_ep_(150, 100, 300, 400)_shuffle_true_seed_72/pretrain/P1/CRMF_epoch_150.pth.tar" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/models/eth/CRMF_risk_irm_5.0_batch_het_data_eth_ds_0_bk_20_ep_(150, 100, 300, 400)_shuffle_true_seed_72/pretrain/P2/CRMF_epoch_250.pth.tar" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/models/eth/CRMF_risk_irm_5.0_batch_het_data_eth_ds_0_bk_20_ep_(150, 100, 300, 400)_shuffle_true_seed_72/pretrain/P3/CRMF_epoch_550.pth.tar" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/models/eth/CRMF_risk_irm_5.0_batch_het_data_eth_ds_0_bk_20_ep_(150, 100, 300, 400)_shuffle_true_seed_72/pretrain/P4/CRMF_epoch_677.pth.tar" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/models/eth/CRMF_risk_irm_5.0_batch_het_data_eth_ds_0_bk_20_ep_(150, 100, 300, 400)_shuffle_true_seed_72/pretrain/P4/CRMF_epoch_678.pth.tar" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/parser_file.py" beforeDir="false" afterPath="$PROJECT_DIR$/parser_file.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/train.py" beforeDir="false" afterPath="$PROJECT_DIR$/train.py" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -68,7 +75,7 @@
       <updated>1667528541821</updated>
       <workItem from="1667528543599" duration="13641000" />
       <workItem from="1667583960352" duration="2084000" />
-      <workItem from="1667586657150" duration="5023000" />
+      <workItem from="1667586657150" duration="5597000" />
     </task>
     <task id="LOCAL-00001" summary="Added P5 and solved unstability in P4">
       <created>1667592112650</created>
@@ -77,7 +84,14 @@
       <option name="project" value="LOCAL" />
       <updated>1667592112650</updated>
     </task>
-    <option name="localTasksCounter" value="2" />
+    <task id="LOCAL-00002" summary="Added P5 and solved unstability in P4">
+      <created>1667592687535</created>
+      <option name="number" value="00002" />
+      <option name="presentableId" value="LOCAL-00002" />
+      <option name="project" value="LOCAL" />
+      <updated>1667592687535</updated>
+    </task>
+    <option name="localTasksCounter" value="3" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
