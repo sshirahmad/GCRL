@@ -141,9 +141,8 @@ def main(args):
             freeze(False, (model.invariant_encoder, model.variant_encoder))
 
         elif training_step == 'P3':
-            freeze(True, (model.variant_encoder, model.theta_to_s, model.thetax_to_s, model.mapping),
-                   (model.theta, model.sigma))
-            freeze(False, (model.invariant_encoder, model.future_decoder, model.past_decoder), (model.mean, model.logvar))
+            freeze(True, (model.variant_encoder, model.theta_to_s, model.thetax_to_s, model.mapping), (model.theta))
+            freeze(False, (model.invariant_encoder, model.future_decoder, model.past_decoder), (model.mean, model.logvar, model.sigma))
 
         elif training_step == 'P4':
             freeze(True, (model.invariant_encoder, model.mapping), (model.mean, model.logvar))
