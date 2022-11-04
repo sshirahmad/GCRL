@@ -7,6 +7,9 @@ from parser_file import get_training_parser
 from utils import *
 from models import CRMF
 from losses import erm_loss, irm_loss
+from torch.nn.utils import clip_grad_norm_
+import matplotlib.pyplot as plt
+from matplotlib.lines import Line2D
 from visualize import draw_image, draw_solo, draw_solo_all
 
 
@@ -34,9 +37,9 @@ def main(args):
 
     logging.info("Initializing Validation O Set")
     valo_envs_path, valo_envs_name = get_envs_path(args.dataset_name, "test",
-                                                 args.filter_envs)  # +'-'+args.filter_envs_pretrain)
+                                                   args.filter_envs)  # +'-'+args.filter_envs_pretrain)
     valo_loaders = [data_loader(args, valo_env_path, valo_env_name) for valo_env_path, valo_env_name in
-                   zip(valo_envs_path, valo_envs_name)]
+                    zip(valo_envs_path, valo_envs_name)]
 
     # training routine length
     num_batches_train = min([len(train_loader) for train_loader in train_loaders])
@@ -48,7 +51,8 @@ def main(args):
     valid_dataset = {'loaders': val_loaders, 'names': val_envs_name, 'num_batches': num_batches_val}
     valido_dataset = {'loaders': valo_loaders, 'names': valo_envs_name, 'num_batches': num_batches_valo}
 
-    for dataset, ds_name in zip((train_dataset, valid_dataset, valido_dataset), ('Train', 'Validation', 'Validation O')):
+    for dataset, ds_name in zip((train_dataset, valid_dataset, valido_dataset),
+                                ('Train', 'Validation', 'Validation O')):
         print(ds_name + ' dataset: ', dataset)
 
     args.n_units = (
@@ -60,7 +64,7 @@ def main(args):
 
     # create the model
     model = CRMF(args).cuda()
-    sigma = torch.nn.Parameter(torch.tensor([0.0, 0.0, 2.0, 0.0], device="cuda"))
+    # sigma = torch.nn.Parameter(torch.tensor([0.0, 0.0, 2.0, 0.0], device="cuda"))
 
     # style related optimizer
     optimizers = {
@@ -70,7 +74,7 @@ def main(args):
                 {"params": model.theta_to_s.parameters(), 'lr': args.lrvariation},
                 {"params": model.thetax_to_s.parameters(), 'lr': args.lrvariation},
                 {"params": model.theta, 'lr': args.lrvariation},
-                {"params": sigma, 'lr': args.lrvariation},
+                {"params": model.sigma, 'lr': args.lrvariation},
 
             ]
         ),
@@ -93,11 +97,7 @@ def main(args):
     }
 
     if args.resume:
-        sigma_data = load_all_model(args, model, optimizers)
-        sigma.data = sigma_data
-        sigma.data = sigma.to('cuda')
-        if sigma.grad is not None:
-            sigma.grad.data = sigma.grad.to('cuda')
+        load_all_model(args, model, optimizers)
         model.cuda()
 
     # TRAINING HAPPENS IN 4 STEPS:
@@ -132,25 +132,29 @@ def main(args):
     for epoch in range(args.start_epoch, sum(args.num_epochs) + 1):
 
         training_step = get_training_step(epoch)
+        if training_step in ["P1", "P2", "P3"]:
+            continue
         logging.info(f"\n===> EPOCH: {epoch} ({training_step})")
 
         if training_step in ["P1", "P2"]:
-            freeze(True, (model.variational_mapping, model.theta_to_s, model.thetax_to_s,  model.past_decoder, model.future_decoder), (model.theta, sigma))
+            freeze(True, (
+            model.variational_mapping, model.theta_to_s, model.thetax_to_s, model.past_decoder, model.future_decoder),
+                   (model.theta, model.sigma))
             freeze(False, (model.invariant_encoder, model.variant_encoder))
         elif training_step == 'P3':
-            freeze(True, (model.variant_encoder, model.variational_mapping, model.theta_to_s, model.thetax_to_s), (model.theta, sigma))
+            freeze(True, (model.variant_encoder, model.variational_mapping, model.theta_to_s, model.thetax_to_s),
+                   (model.theta, model.sigma))
             freeze(False, (model.invariant_encoder, model.future_decoder, model.past_decoder))
         elif training_step == 'P4':
             freeze(True, (model.invariant_encoder,))
             freeze(False, (model.variant_encoder, model.variational_mapping, model.theta_to_s, model.thetax_to_s, model.past_decoder,
-                           model.future_decoder), (model.theta, sigma))
+            model.future_decoder), (model.theta, model.sigma))
 
         if args.finetune:
-            freeze(True, (model.invariant_encoder,))
-            freeze(False, (model.variant_encoder, model.variational_mapping, model.theta_to_c, model.theta_to_u, model.past_decoder,
-                           model.future_decoder))
+            freeze(True, (model.invariant_encoder, model.variant_encoder))
+            freeze(False, (model.variational_mapping, model.theta_to_c, model.theta_to_u, model.past_decoder, model.future_decoder))
 
-        train_all(args, model, optimizers, train_dataset, epoch, training_step, train_envs_name, sigma,
+        train_all(args, model, optimizers, train_dataset, epoch, training_step, train_envs_name,
                   writer, stage='training')
 
         if training_step not in ["P1", "P2"]:
@@ -167,15 +171,15 @@ def main(args):
         if args.finetune:
             if metric < min_metric:
                 min_metric = metric
-                save_all_model(args, model, model_name, sigma, optimizers, metric, epoch, training_step)
+                save_all_model(args, model, model_name, optimizers, metric, epoch, training_step)
                 print(f'\n{"_" * 150}\n')
         else:
-            save_all_model(args, model, model_name, sigma, optimizers, metric, epoch, training_step)
+            save_all_model(args, model, model_name, optimizers, metric, epoch, training_step)
 
     writer.close()
 
 
-def train_all(args, model, optimizers, train_dataset, epoch, training_step, train_envs_name, sigma, writer,
+def train_all(args, model, optimizers, train_dataset, epoch, training_step, train_envs_name, writer,
               stage,
               update=True):
     """
@@ -258,8 +262,9 @@ def train_all(args, model, optimizers, train_dataset, epoch, training_step, trai
 
                     # invariance constraint (IRM)
                     if args.irm and stage == 'training':
-                        single_env_loss += irm_loss(loss_sum_even_e + loss_sum_even_p, loss_sum_odd_e + loss_sum_odd_p, dummy_w,
-                                         args)
+                        single_env_loss += irm_loss(loss_sum_even_e + loss_sum_even_p, loss_sum_odd_e + loss_sum_odd_p,
+                                                    dummy_w,
+                                                    args)
 
                 else:
                     log_q_ygthetax, log_q_thetagx, E = model(batch, training_step, env_idx=train_idx)
@@ -270,12 +275,12 @@ def train_all(args, model, optimizers, train_dataset, epoch, training_step, trai
                     loss_sum_even_t, loss_sum_odd_t = erm_loss(log_q_thetagx, seq_start_end, fut_traj_rel.shape[0])
                     theta_loss = loss_sum_even_t + loss_sum_odd_t
 
-                    loss_sum_even_e, loss_sum_odd_e = erm_loss(torch.divide(E, torch.exp(log_q_ygthetax)),
+                    loss_sum_even_e, loss_sum_odd_e = erm_loss(torch.divide(E, torch.exp(log_q_ygthetax) + 1e-6),
                                                                seq_start_end, fut_traj_rel.shape[0])
                     elbo_loss = loss_sum_even_e + loss_sum_odd_e
 
                     theta_constraint = - model.ptheta.log_prob(model.theta[train_idx]).unsqueeze(0)
-                    stacked_loss = torch.cat((-predict_loss, -theta_loss, - elbo_loss, -theta_constraint))
+                    stacked_loss = torch.cat((-predict_loss, -theta_loss, -elbo_loss, -theta_constraint))
 
                     single_env_loss = torch.sum(stacked_loss)
 
@@ -308,23 +313,27 @@ def train_all(args, model, optimizers, train_dataset, epoch, training_step, trai
             total_loss_meter.update(loss.item(), ped_tot.item())
             progress.display(batch_idx + 1)
 
-        if training_step in "P1":
-            writer.add_scalar(f"STGAT_loss_p1/{stage}", total_loss_meter.avg, epoch)
-        elif training_step in "P2":
-            writer.add_scalar(f"STGAT_loss_p2/{stage}", total_loss_meter.avg, epoch)
-        elif training_step == "P3":
-            writer.add_scalar(f"pred_loss/{stage}", p_loss_meter.avg, epoch)
-            writer.add_scalar(f"elbo_loss/{stage}", e_loss_meter.avg, epoch)
-            writer.add_scalar(f"irm_loss/{stage}", total_loss_meter.avg, epoch)
-        elif training_step == "P4":
-            writer.add_scalar(f"variational_loss/{stage}", total_loss_meter.avg, epoch)
-            writer.add_scalar(f"elbo_loss/{stage}", e_loss_meter.avg, epoch)
-            writer.add_scalar(f"pred_loss/{stage}", p_loss_meter.avg, epoch)
-            writer.add_scalar(f"theta_loss/{stage}", t_loss_meter.avg, epoch)
-            writer.add_scalar(f"theta_hotel/{stage}", torch.norm(model.theta[0]), epoch)
-            writer.add_scalar(f"theta_univ/{stage}", torch.norm(model.theta[1]), epoch)
-            writer.add_scalar(f"theta_zara1/{stage}", torch.norm(model.theta[2]), epoch)
-            writer.add_scalar(f"theta_zara2/{stage}", torch.norm(model.theta[3]), epoch)
+            temp = (epoch - 551) * train_dataset['num_batches'] + (batch_idx + 1)
+
+            if training_step in "P1":
+                writer.add_scalar(f"STGAT_loss_p1/{stage}", total_loss_meter.avg, epoch)
+            elif training_step in "P2":
+                writer.add_scalar(f"STGAT_loss_p2/{stage}", total_loss_meter.avg, epoch)
+            elif training_step == "P3":
+                writer.add_scalar(f"pred_loss/{stage}", p_loss_meter.avg, epoch)
+                writer.add_scalar(f"elbo_loss/{stage}", e_loss_meter.avg, epoch)
+                writer.add_scalar(f"irm_loss/{stage}", total_loss_meter.avg, epoch)
+            elif training_step == "P4":
+                writer.add_scalar(f"variational_loss/{stage}", total_loss_meter.avg, temp)
+                writer.add_scalar(f"elbo_loss/{stage}", e_loss_meter.avg, temp)
+                writer.add_scalar(f"pred_loss/{stage}", p_loss_meter.avg, temp)
+                writer.add_scalar(f"theta_loss/{stage}", t_loss_meter.avg, temp)
+                writer.add_scalar(f"theta_hotel/{stage}", torch.norm(model.theta[0]), temp)
+                writer.add_scalar(f"theta_univ/{stage}", torch.norm(model.theta[1]), temp)
+                writer.add_scalar(f"theta_zara1/{stage}", torch.norm(model.theta[2]), temp)
+                writer.add_scalar(f"theta_zara2/{stage}", torch.norm(model.theta[3]), temp)
+                writer.add_scalar(f"sigma_pred/{stage}", model.sigma[0], temp)
+                writer.add_scalar(f"sigma_reconstruct/{stage}", model.sigma[1], temp)
 
     # Homogenous batches
     else:
@@ -356,7 +365,8 @@ def train_all(args, model, optimizers, train_dataset, epoch, training_step, trai
                     past_pred_rel_inv, past_pred_rel_var = model(batch, training_step)
 
                     # compute reconstruction loss between output and past
-                    l2_loss_rel_inv = torch.stack([l2_loss(past_pred_rel_inv * dummy_w, obs_traj_rel, mode="raw")], dim=1)
+                    l2_loss_rel_inv = torch.stack([l2_loss(past_pred_rel_inv * dummy_w, obs_traj_rel, mode="raw")],
+                                                  dim=1)
                     l2_loss_rel_var = torch.stack([l2_loss(past_pred_rel_var, obs_traj_rel, mode="raw")], dim=1)
 
                     # empirical risk (ERM classic loss)
@@ -378,14 +388,16 @@ def train_all(args, model, optimizers, train_dataset, epoch, training_step, trai
                     loss_sum_even_p, loss_sum_odd_p = erm_loss(log_q_ygx, seq_start_end, fut_traj_rel.shape[0])
                     predict_loss = loss_sum_even_p + loss_sum_odd_p
 
-                    loss_sum_even_e, loss_sum_odd_e = erm_loss(torch.divide(E, torch.exp(log_q_ygx)), seq_start_end, fut_traj_rel.shape[0])
+                    loss_sum_even_e, loss_sum_odd_e = erm_loss(torch.divide(E, torch.exp(log_q_ygx)), seq_start_end,
+                                                               fut_traj_rel.shape[0])
                     elbo_loss = loss_sum_even_e + loss_sum_odd_e
 
                     loss = (- predict_loss) + (- elbo_loss)
 
                     # invariance constraint (IRM)
                     if args.irm and stage == 'training':
-                        loss += irm_loss(loss_sum_even_e + loss_sum_even_p, loss_sum_odd_e + loss_sum_odd_p, dummy_w, args)
+                        loss += irm_loss(loss_sum_even_e + loss_sum_even_p, loss_sum_odd_e + loss_sum_odd_p, dummy_w,
+                                         args)
 
                     e_loss_meter.update(elbo_loss.item(), obs_traj.shape[1])
                     p_loss_meter.update(predict_loss.item(), obs_traj.shape[1])
@@ -399,12 +411,13 @@ def train_all(args, model, optimizers, train_dataset, epoch, training_step, trai
                     loss_sum_even_t, loss_sum_odd_t = erm_loss(log_q_thetagx, seq_start_end, fut_traj_rel.shape[0])
                     theta_loss = loss_sum_even_t + loss_sum_odd_t
 
-                    loss_sum_even_e, loss_sum_odd_e = erm_loss(torch.divide(E, torch.exp(log_q_ygthetax)), seq_start_end, fut_traj_rel.shape[0])
+                    loss_sum_even_e, loss_sum_odd_e = erm_loss(torch.divide(E, torch.exp(log_q_ygthetax)),
+                                                               seq_start_end, fut_traj_rel.shape[0])
                     elbo_loss = loss_sum_even_e + loss_sum_odd_e
 
                     theta_constraint = - model.ptheta.log_prob(model.theta[train_idx])
 
-                    loss = (- predict_loss) + torch.exp(sigma) * (- elbo_loss) + (- theta_loss) + (- theta_constraint)
+                    loss = (- predict_loss) +  (- elbo_loss) + (- theta_loss) + (- theta_constraint)
 
                     t_loss_meter.update(theta_loss.item(), obs_traj.shape[1])
                     e_loss_meter.update(elbo_loss.item(), obs_traj.shape[1])
@@ -442,9 +455,6 @@ def train_all(args, model, optimizers, train_dataset, epoch, training_step, trai
             writer.add_scalar(f"theta_univ/{stage}", torch.norm(model.theta[1]), epoch)
             writer.add_scalar(f"theta_zara1/{stage}", torch.norm(model.theta[2]), epoch)
             writer.add_scalar(f"theta_zara2/{stage}", torch.norm(model.theta[3]), epoch)
-            writer.add_scalar(f"sigma/{stage}", sigma, epoch)
-
-
 
 def validate_ade(model, valid_dataset, epoch, training_step, writer, stage, write=True):
     """
@@ -473,7 +483,8 @@ def validate_ade(model, valid_dataset, epoch, training_step, writer, stage, writ
                     pred_fut_traj_rel = model(batch, training_step, env_idx=val_idx)
 
                 # from relative path to absolute path
-                pred_fut_traj = [relative_to_abs(pred_fut_traj_rel[i], obs_traj[-1, :, :2]) for i in range(len(pred_fut_traj_rel))]
+                pred_fut_traj = [relative_to_abs(pred_fut_traj_rel[i], obs_traj[-1, :, :2]) for i in
+                                 range(len(pred_fut_traj_rel))]
 
                 # compute ADE and FDE metrics
                 ade_list = []
@@ -497,7 +508,6 @@ def validate_ade(model, valid_dataset, epoch, training_step, writer, stage, writ
     if write:
         writer.add_scalar(f"ade/{stage}", ade_tot_meter.avg, repoch)
         writer.add_scalar(f"fde/{stage}", fde_tot_meter.avg, repoch)
-
 
     ## SAVE VISUALIZATIONS
     # if epoch % 1 == 0 and stage == 'validation':
@@ -525,6 +535,41 @@ def compute_ade_single(pred_fut_traj_rel, obs_traj, fut_traj, wto):
     return compute_ade_(pred_fut_traj_rel[:, wto * NUMBER_PERSONS:NUMBER_PERSONS * (wto + 1)],
                         obs_traj[:, wto * NUMBER_PERSONS:NUMBER_PERSONS * (wto + 1)],
                         fut_traj[:, wto * NUMBER_PERSONS:NUMBER_PERSONS * (wto + 1)])
+
+
+def plot_grad_flow(named_parameters):
+    """
+    Plots the gradients flowing through different layers in the net during training.
+    Can be used for checking for possible gradient vanishing / exploding problems.
+
+    Usage: Plug this function in Trainer class after loss.backwards() as
+    "plot_grad_flow(self.model.named_parameters())" to visualize the gradient flow
+    """
+    ave_grads = []
+    max_grads = []
+    layers = []
+    for n, p in named_parameters:
+        if (p.requires_grad) and ("bias" not in n):
+            if p.grad is not None:
+                layers.append(n)
+                ave_grads.append(p.grad.abs().mean())
+                max_grads.append(p.grad.abs().max())
+
+    print("done")
+    # plt.bar(np.arange(len(max_grads)), max_grads, alpha=0.1, lw=1, color="c")
+    # plt.bar(np.arange(len(max_grads)), ave_grads, alpha=0.1, lw=1, color="b")
+    # plt.hlines(0, 0, len(ave_grads) + 1, lw=2, color="k")
+    # plt.xticks(range(0, len(ave_grads), 1), layers, rotation="vertical")
+    # plt.xlim(left=0, right=len(ave_grads))
+    # plt.ylim(bottom=-0.001, top=0.02)  # zoom in on the lower gradient regions
+    # plt.xlabel("Layers")
+    # plt.ylabel("average gradient")
+    # plt.title("Gradient flow")
+    # plt.grid(True)
+    # plt.legend([Line2D([0], [0], color="c", lw=4),
+    #             Line2D([0], [0], color="b", lw=4),
+    #             Line2D([0], [0], color="k", lw=4)], ['max-gradient', 'mean-gradient', 'zero-gradient'])
+    # plt.show()
 
 
 if __name__ == "__main__":

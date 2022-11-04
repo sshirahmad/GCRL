@@ -432,7 +432,7 @@ def set_name_finetune(finetune):
         return 'Update f + Refinement'
 
 
-def save_all_model(args, model, model_name, sigma, optimizers, metric, epoch, training_step):
+def save_all_model(args, model, model_name, optimizers, metric, epoch, training_step):
     checkpoint = {
         'epoch': epoch + 1,
         'state_dicts': {
@@ -444,7 +444,7 @@ def save_all_model(args, model, model_name, sigma, optimizers, metric, epoch, tr
             'invariant_encoder': model.invariant_encoder.state_dict(),
             'future_decoder': model.future_decoder.state_dict(),
             'past_decoder': model.past_decoder.state_dict(),
-            'sigma': sigma,
+            'sigma': model.sigma,
         },
         'optimizers': {
             key: val.state_dict() for key, val in optimizers.items()
@@ -512,13 +512,12 @@ def load_all_model(args, model, optimizers):
         model.theta_to_s.load_state_dict(models_checkpoint['theta_to_s'])
         model.thetax_to_s.load_state_dict(models_checkpoint['thetax_to_s'])
         model.theta = models_checkpoint['theta']
+        model.sigma = models_checkpoint['sigma']
         if optimizers != None:
             optimizers['variational'].load_state_dict(checkpoint['optimizers']['variational'])
             update_lr(optimizers['variational'], args.lrvariation)
 
         logging.info("=> loaded checkpoint '{}' (epoch {})".format(model_path, checkpoint["epoch"]))
-
-        return models_checkpoint['sigma'].data
 
     else:
         logging.info('model {} not found'.format(model_path))
