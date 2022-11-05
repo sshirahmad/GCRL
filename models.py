@@ -767,12 +767,12 @@ class CRMF(nn.Module):
                     qprob_z = q_zgx.log_prob(z_vec)
                     prob_z = self.pz.log_prob(z_vec)
                     pred_past_rel = self.past_decoder(batch, z_vec, False)
-                    reconstruction_loss = - torch.exp(-self.sigma[1]) * l2_loss(pred_past_rel, obs_traj_rel, mode="raw") - \
-                                          0.5 * 1 / obs_traj_rel.shape[0] * (torch.log(torch.tensor(2 * math.pi)) + self.sigma[1])
+                    reconstruction_loss = - l2_loss(pred_past_rel, obs_traj_rel, mode="raw") - \
+                                          0.5 * 1 / obs_traj_rel.shape[0] * torch.log(torch.tensor(2 * math.pi * 0.5))
 
                     pred_traj_rel_fut = self.future_decoder(batch, z_vec, training_step, False)
-                    predict_loss = - torch.exp(-self.sigma[0]) * l2_loss(pred_traj_rel_fut, fut_traj_rel, mode="raw") - \
-                                   0.5 * 1 / fut_traj_rel.shape[0] * (torch.log(torch.tensor(2 * math.pi)) + self.sigma[0])
+                    predict_loss = - l2_loss(pred_traj_rel_fut, fut_traj_rel, mode="raw") - \
+                                   0.5 * 1 / fut_traj_rel.shape[0] * torch.log(torch.tensor(2 * math.pi * 0.5))
 
                     p_ygz = torch.exp(predict_loss)
 

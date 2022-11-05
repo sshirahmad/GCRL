@@ -87,7 +87,7 @@ def main(args):
         'inv': torch.optim.Adam(
             [
                 {"params": model.invariant_encoder.parameters(), 'lr': args.lrinv},
-                {"params": [model.mean, model.logvar, model.sigma], 'lr': args.lrinv},
+                {"params": [model.mean, model.logvar], 'lr': args.lrinv},
             ]
 
         ),
