@@ -707,7 +707,7 @@ class CRMF(nn.Module):
         self.num_samples = args.num_samples
         self.n_coordinates = args.n_coordinates
 
-        self.sigma = torch.nn.Parameter(torch.tensor([0.0, 0.0])) # TODO add sigma to reconstruct and pred
+        self.sigma = torch.nn.Parameter(torch.tensor([0.0, 0.0]))
         self.theta = nn.Parameter(torch.randn(args.num_envs, args.latent_dim))
         self.mean = nn.Parameter(torch.zeros(args.latent_dim, device="cuda"))
         self.logvar = nn.Parameter(torch.ones(args.latent_dim, device="cuda"))

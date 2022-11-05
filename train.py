@@ -137,26 +137,23 @@ def main(args):
         logging.info(f"\n===> EPOCH: {epoch} ({training_step})")
 
         if training_step in ["P1", "P2"]:
-            freeze(True, (model.theta_to_s, model.thetax_to_s, model.past_decoder, model.future_decoder, model.mapping),
-                   (model.theta, model.sigma, model.mean, model.logvar))
+            freeze(True, (model.theta_to_s, model.thetax_to_s, model.past_decoder, model.future_decoder, model.mapping))
             freeze(False, (model.invariant_encoder, model.variant_encoder))
 
         elif training_step == 'P3':
-            freeze(True, (model.variant_encoder, model.theta_to_s, model.thetax_to_s, model.mapping), (model.theta))
-            freeze(False, (model.invariant_encoder, model.future_decoder, model.past_decoder), (model.mean, model.logvar, model.sigma))
+            freeze(True, (model.variant_encoder, model.theta_to_s, model.thetax_to_s, model.mapping))
+            freeze(False, (model.invariant_encoder, model.future_decoder, model.past_decoder))
 
         elif training_step == 'P4':
-            freeze(True, (model.invariant_encoder, model.mapping), (model.mean, model.logvar))
-            freeze(False, (model.variant_encoder, model.theta_to_s, model.thetax_to_s, model.past_decoder, model.future_decoder), (model.theta, model.sigma))
+            freeze(True, (model.invariant_encoder, model.mapping))
+            freeze(False, (model.variant_encoder, model.theta_to_s, model.thetax_to_s, model.past_decoder, model.future_decoder))
 
         elif training_step == 'P5':
-            freeze(True, (model.invariant_encoder, model.variant_encoder, model.theta_to_s, model.thetax_to_s, model.past_decoder, model.future_decoder),
-                   (model.theta, model.sigma, model.mean, model.logvar))
+            freeze(True, (model.invariant_encoder, model.variant_encoder, model.theta_to_s, model.thetax_to_s, model.past_decoder, model.future_decoder))
             freeze(False, (model.mapping,))
 
         if args.finetune:
-            freeze(True, (model.invariant_encoder, model.variant_encoder, model.past_decoder, model.future_decoder, model.mapping),
-                   (model.theta, model.sigma, model.mean, model.logvar))
+            freeze(True, (model.invariant_encoder, model.variant_encoder, model.past_decoder, model.future_decoder, model.mapping))
             freeze(False, (model.theta_to_s, model.thetax_to_s))
 
         train_all(args, model, optimizers, train_dataset, epoch, training_step, train_envs_name, writer, stage='training')
@@ -280,7 +277,6 @@ def train_all(args, model, optimizers, train_dataset, epoch, training_step, trai
                     elbo_loss = loss_sum_even_e + loss_sum_odd_e
 
                     stacked_loss = torch.cat((-predict_loss, -elbo_loss))
-
                     single_env_loss = torch.sum(stacked_loss)
 
                 else:

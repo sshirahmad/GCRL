@@ -541,15 +541,11 @@ def get_fake_optim():
     return torch.optim.Adam(l.parameters())
 
 
-def freeze(freez, models, parameters_list=None):
+def freeze(freez, models):
     for model in models:
         if model != None:
             for p in model.parameters():
                 p.requires_grad = not freez
-
-    if parameters_list != None:
-        for parameters in parameters_list:
-            parameters.requires_grad = not freez
 
 
 def update_lr(opt, lr):
