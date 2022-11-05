@@ -325,8 +325,6 @@ def train_all(args, model, optimizers, train_dataset, epoch, training_step, trai
             writer.add_scalar(f"irm_loss/{stage}", total_loss_meter.avg, epoch)
             writer.add_scalar(f"mean/{stage}", torch.norm(model.mean), epoch)
             writer.add_scalar(f"log_var/{stage}", torch.norm(model.logvar), epoch)
-            writer.add_scalar(f"sigma_pred/{stage}", model.sigma[0], epoch)
-            writer.add_scalar(f"sigma_reconstruct/{stage}", model.sigma[1], epoch)
         elif training_step == "P4":
             writer.add_scalar(f"variational_loss/{stage}", total_loss_meter.avg, epoch)
             writer.add_scalar(f"elbo_loss/{stage}", e_loss_meter.avg, epoch)
