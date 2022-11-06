@@ -6,7 +6,7 @@ def get_evaluation_parser():
     parser = get_training_parser()
     parser.add_argument("--dset_type", default="test", type=str)
     parser.add_argument("--noise_mix_type", default="global")
-    parser.add_argument('--metrics', type=str, default='accuracy', choices=['accuracy', 'collision', 'qualitative'],
+    parser.add_argument('--metrics', type=str, default='qualitative', choices=['accuracy', 'collision', 'qualitative'],
                         help='evaluate metrics')
     return parser
 
@@ -35,9 +35,8 @@ def get_training_parser():
     # randomness
     parser.add_argument("--seed", type=int, default=72, help="Random seed")
     parser.add_argument("--num_samples", type=int, default=5, help="Number of samples to calculate MC expectations")
-    parser.add_argument("--noise_dim", default=(16,), type=int_tuple)
-    parser.add_argument("--noise_type", default="gaussian")
     parser.add_argument("--original_seed", type=int, default=1, help="Seed of original training")
+
     # architecture (STGAT)
     parser.add_argument("--traj_lstm_hidden_size", default=32, type=int)
     parser.add_argument("--heads", type=str, default="4,1", help="Heads in each layer, splitted with comma")
@@ -48,21 +47,13 @@ def get_training_parser():
     parser.add_argument("--graph_lstm_hidden_size", default=32, type=int)
     parser.add_argument("--dropout", type=float, default=0, help="Dropout rate (1 - keep probability)")
     parser.add_argument("--alpha", type=float, default=0.2, help="Alpha for the leaky_relu")
-    parser.add_argument('--teachingratio', default=0, type=float,
+    parser.add_argument('--teachingratio', default=0.5, type=float,
                         help="The probability of using ground truth future trajectories instead of model predictions during training")
     # architecture (VE)
     parser.add_argument('--latent_dim', type=int, default=16, help="Dimension of latent selection variables")
     parser.add_argument("--z_dim", type=int, default=16, help="Dimension of z latent variable")
     parser.add_argument("--s_dim", type=int, default=16, help="Dimension of c latent variable")
-    parser.add_argument('--contrastive', default=0, type=float)
-    parser.add_argument("--aggrstyle", default='minpol-mean', type=str)
-    parser.add_argument("--classification", default=3, type=int)
-    # full pipeline arguments
-    parser.add_argument('--styleinteg', default='adain', type=str,
-                        help='Integrator type ("concat", "adain", "adainnew"')
-    parser.add_argument('--newstyleinteg', default='', type=str, help='Used when loading a pretrained model but you \
-            want to change the styleinteg. Set the --styleinteg param to the value of the checkpoint \
-            (to avoid state_dict problems) one you want to load, and then set the new styleinteg value in this parameter ')
+
     # computation
     parser.add_argument("--loader_num_workers", default=4, type=int)
     parser.add_argument("--gpu_num", default="1", type=str)
@@ -88,11 +79,6 @@ def get_training_parser():
                         type=str, metavar="PATH", help="path to latest checkpoint (default: none)")
     parser.add_argument("--tfdir", default='runs', type=str)
 
-    # arguments for training style encoder
-    parser.add_argument("--fut", default=True, type=bool, help='Use future or not to train style encoder')
-    parser.add_argument("--absolut", default=True, type=bool)
-    parser.add_argument('--backclassencoder', default=False, type=bool)
-
     # learning rates
     parser.add_argument("--lrvar", default=1e-3, type=float,
                         help="initial learning rate for variant encoder optimizer")
@@ -112,17 +98,11 @@ def get_training_parser():
 
     parser.add_argument('--ttr', default=0, type=int, help="Number of steps of refinement during test time")
     parser.add_argument('--ttrlr', default=0, type=float, help="initial learning rate for the refinement optimizer")
-    parser.add_argument('--wrongstyle', default=False, type=bool,
-                        help="True if we refine with the accurate style, False if we want to perturb the style with a false one")
-
-    parser.add_argument('--styleconsistency', default=0, type=float,
-                        help="Adding a loss of style prediction to the training")
 
     # method
     parser.add_argument("--irm", default=5.0, type=float, help='IRM parameter (lambda)')
     parser.add_argument("--vrex", default=0.0, type=float, help='v-REx parameter (beta)')
 
-    parser.add_argument("--complexdecoder", default=True, type=bool, help='')
     parser.add_argument("--unbiased", default=True, type=bool, help='')
 
     return parser

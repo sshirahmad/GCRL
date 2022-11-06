@@ -126,7 +126,7 @@ def sceneplot(obsv_scene, pred_scene, gt_scene, figname='scene.png', lim=9.0):
     plt.close()
 
 
-def visualize(args, loader, generator):
+def visualize(args, loader, generator, training_step):
     """
     Viasualize some scenes
     """
@@ -149,12 +149,7 @@ def visualize(args, loader, generator):
             ) = batch
 
             for k in range(args.best_k):
-                pred_fut_traj_rel = generator(
-                    obs_traj_rel,
-                    seq_start_end,
-                    0,  # No Teacher
-                    3
-                )
+                pred_fut_traj_rel = generator(batch, training_step)[0]
                 pred_fut_traj = relative_to_abs(pred_fut_traj_rel, obs_traj[-1, :, :2])
                 idx_sample = seq_start_end.shape[0]
                 for i in range(idx_sample):
@@ -165,7 +160,7 @@ def visualize(args, loader, generator):
                     pred_scene = pred_fut_traj[:, idx_start:idx_end, :]
                     gt_scene = fut_traj[:, idx_start:idx_end, :]
 
-                    figname = 'images/visualization/scene_{:02d}_{:02d}_sample_{:02d}_{}'.format(i, b, k, suffix)
+                    figname = './images/visualization/scene_{:02d}_{:02d}_sample_{:02d}_{}'.format(i, b, k, suffix)
                     sceneplot(obsv_scene.permute(1, 0, 2).cpu().detach().numpy(),
                               pred_scene.permute(1, 0, 2).cpu().detach().numpy(),
                               gt_scene.permute(1, 0, 2).cpu().detach().numpy(), figname)
@@ -211,12 +206,12 @@ def main(args):
     # qualitative
     if args.metrics == 'qualitative':
         for loader in loaders:
-            visualize(args, loader, generator)
+            visualize(args, loader, generator, training_step="P4")
 
     # collisions [to be implemented]
     if args.metrics == 'collision':
         for loader in loaders:
-            visualize(args, loader, generator)
+            visualize(args, loader, generator, training_step="P4")
 
 
 if __name__ == "__main__":
