@@ -3,10 +3,9 @@
   <component name="ChangeListManager">
     <list default="true" id="80c1dfbd-0610-4b22-a92f-a3e79101e880" name="Changes" comment="Added P5 and solved unstability in P4">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Tensorboard.ipynb" beforeDir="false" afterPath="$PROJECT_DIR$/Tensorboard.ipynb" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/log/train.log" beforeDir="false" afterPath="$PROJECT_DIR$/log/train.log" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/train.py" beforeDir="false" afterPath="$PROJECT_DIR$/train.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/train.sh" beforeDir="false" afterPath="$PROJECT_DIR$/train.sh" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/utils.py" beforeDir="false" afterPath="$PROJECT_DIR$/utils.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/parser_file.py" beforeDir="false" afterPath="$PROJECT_DIR$/parser_file.py" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -37,7 +36,7 @@
     "RunOnceActivity.OpenProjectViewOnStart": "true",
     "RunOnceActivity.ShowReadmeOnStart": "true",
     "WebServerToolWindowFactoryState": "false",
-    "last_opened_file_path": "C:/UWaterloo/PhD_thesis/motion_forecasting/codes/causalmotion-main/spurious/parser.py",
+    "last_opened_file_path": "C:/UWaterloo/PhD_thesis/motion_forecasting/codes/causalmotion-main/spurious/parser_file.py",
     "nodejs_package_manager_path": "npm",
     "settings.editor.selected.configurable": "com.jetbrains.python.configuration.PyActiveSdkModuleConfigurable"
   }
@@ -88,7 +87,9 @@
       <workItem from="1667779531324" duration="100000" />
       <workItem from="1667779640688" duration="278000" />
       <workItem from="1667779944503" duration="95000" />
-      <workItem from="1667780202864" duration="6040000" />
+      <workItem from="1667780202864" duration="8363000" />
+      <workItem from="1667843155125" duration="336000" />
+      <workItem from="1667844880378" duration="1093000" />
     </task>
     <task id="LOCAL-00001" summary="Added P5 and solved unstability in P4">
       <created>1667592112650</created>
@@ -167,7 +168,14 @@
       <option name="project" value="LOCAL" />
       <updated>1667782802795</updated>
     </task>
-    <option name="localTasksCounter" value="12" />
+    <task id="LOCAL-00012" summary="Added P5 and solved unstability in P4">
+      <created>1667786388061</created>
+      <option name="number" value="00012" />
+      <option name="presentableId" value="LOCAL-00012" />
+      <option name="project" value="LOCAL" />
+      <updated>1667786388061</updated>
+    </task>
+    <option name="localTasksCounter" value="13" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
@@ -200,7 +208,7 @@
     </breakpoint-manager>
   </component>
   <component name="com.intellij.coverage.CoverageDataManagerImpl">
-    <SUITE FILE_PATH="coverage/CRMF$train.coverage" NAME="train Coverage Results" MODIFIED="1667783819942" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
+    <SUITE FILE_PATH="coverage/CRMF$train.coverage" NAME="train Coverage Results" MODIFIED="1667845949717" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
     <SUITE FILE_PATH="coverage/CRMF$evaluate_model.coverage" NAME="evaluate_model Coverage Results" MODIFIED="1667345871287" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
   </component>
 </project>

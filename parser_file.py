@@ -35,7 +35,6 @@ def get_training_parser():
     # randomness
     parser.add_argument("--seed", type=int, default=72, help="Random seed")
     parser.add_argument("--num_samples", type=int, default=5, help="Number of samples to calculate MC expectations")
-    parser.add_argument("--original_seed", type=int, default=1, help="Seed of original training")
 
     # architecture (STGAT)
     parser.add_argument("--traj_lstm_hidden_size", default=32, type=int)
@@ -47,7 +46,7 @@ def get_training_parser():
     parser.add_argument("--graph_lstm_hidden_size", default=32, type=int)
     parser.add_argument("--dropout", type=float, default=0, help="Dropout rate (1 - keep probability)")
     parser.add_argument("--alpha", type=float, default=0.2, help="Alpha for the leaky_relu")
-    parser.add_argument('--teachingratio', default=0.5, type=float,
+    parser.add_argument('--teachingratio', default=0.0, type=float,
                         help="The probability of using ground truth future trajectories instead of model predictions during training")
     # architecture (VE)
     parser.add_argument('--latent_dim', type=int, default=16, help="Dimension of latent selection variables")
@@ -55,12 +54,13 @@ def get_training_parser():
     parser.add_argument("--s_dim", type=int, default=16, help="Dimension of c latent variable")
 
     # computation
-    parser.add_argument("--loader_num_workers", default=2, type=int)
+    parser.add_argument("--loader_num_workers", default=6, type=int)
     parser.add_argument("--gpu_num", default="1", type=str)
+
     # training
     parser.add_argument("--best_k", default=20, type=int)
-    parser.add_argument("--batch_size", default='', type=str)
-    parser.add_argument("--batch_method", default='het', type=str,
+    parser.add_argument("--batch_size", default='32', type=str)
+    parser.add_argument("--batch_method", default='hom', type=str,
                         help='Use Homogeneous (hom), Heterogeneous (het) or alternated homogeneous (alt) batches during training')
     parser.add_argument("--shuffle", default=True, type=bool)
     # spurious feature
@@ -74,8 +74,8 @@ def get_training_parser():
 
     # general training
     parser.add_argument("--finetune", default="", type=str)
-    parser.add_argument("--num_epochs", default='150-100-400-300-100', type=lambda x: int_tuple(x, '-'))  # '150-100-150',
-    parser.add_argument("--resume", default="./models/eth/E1/CRMF_risk_irm_5.0_batch_het_data_eth_ds_0_bk_20_ep_(150, 100, 300, 300, 100)_shuffle_true_seed_72/pretrain/P3/CRMF_epoch_550.pth.tar",
+    parser.add_argument("--num_epochs", default='150-100-150-300-100', type=lambda x: int_tuple(x, '-'))  # '150-100-150',
+    parser.add_argument("--resume", default="",
                         type=str, metavar="PATH", help="path to latest checkpoint (default: none)")
     parser.add_argument("--tfdir", default='runs', type=str)
 
@@ -100,7 +100,7 @@ def get_training_parser():
     parser.add_argument('--ttrlr', default=0, type=float, help="initial learning rate for the refinement optimizer")
 
     # method
-    parser.add_argument("--irm", default=5.0, type=float, help='IRM parameter (lambda)')
+    parser.add_argument("--irm", default=0.0, type=float, help='IRM parameter (lambda)')
     parser.add_argument("--vrex", default=0.0, type=float, help='v-REx parameter (beta)')
 
     parser.add_argument("--unbiased", default=True, type=bool, help='')
