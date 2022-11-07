@@ -522,11 +522,10 @@ def load_all_model(args, model, optimizers):
         # variational models
         model.theta_to_s.load_state_dict(models_checkpoint['theta_to_s'])
         model.thetax_to_s.load_state_dict(models_checkpoint['thetax_to_s'])
-        model.theta = models_checkpoint['theta']
-        model.sigma = models_checkpoint['sigma']
-        model.mean = models_checkpoint['mean']
-        model.logvar = models_checkpoint['logvar']
-        model.pz = MultivariateNormal(model.mean.cuda(), torch.diag(torch.exp(model.logvar.cuda())))
+        model.theta.data = models_checkpoint['theta'].data
+        model.sigma.data = models_checkpoint['sigma'].data
+        model.mean.data = models_checkpoint['mean'].data
+        model.logvar.data = models_checkpoint['logvar'].data
         if optimizers != None:
             optimizers['variational'].load_state_dict(checkpoint['optimizers']['variational'])
             update_lr(optimizers['variational'], args.lrvariation)

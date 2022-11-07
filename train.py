@@ -439,7 +439,7 @@ def train_all(args, model, optimizers, train_dataset, epoch, training_step, trai
 
                 # backpropagate if needed
                 if stage == 'training' and update:
-                    loss.backward()
+                    loss.backward(retain_graph=True)
 
                     # choose which optimizer to use depending on the training step
                     if training_step in ['P1', 'P2', 'P3']: optimizers['inv'].step()
