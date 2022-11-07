@@ -707,7 +707,8 @@ class CRMF(nn.Module):
         self.theta = nn.Parameter(torch.randn(args.num_envs, args.latent_dim))
         self.mean = nn.Parameter(torch.zeros(args.z_dim, device="cuda"))
         self.logvar = nn.Parameter(torch.ones(args.z_dim, device="cuda"))
-        self.pz = MultivariateNormal(self.mean, torch.diag(torch.exp(self.logvar)))
+        # self.pz = MultivariateNormal(self.mean, torch.diag(torch.exp(self.logvar)))
+        self.pz = MultivariateNormal(torch.zeros(self.z_dim).cuda(), torch.diag(torch.ones(self.z_dim).cuda()))
 
         self.invariant_encoder = STGAT_encoder_inv(args.obs_len, args.fut_len, args.n_coordinates,
                                                    args.traj_lstm_hidden_size, args.n_units, args.n_heads,
