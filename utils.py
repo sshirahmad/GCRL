@@ -4,6 +4,7 @@ import random
 from re import L
 import torch
 import numpy as np
+from torch.distributions import MultivariateNormal, Gamma, Poisson
 
 NUMBER_PERSONS = 2
 NUMBER_COUPLES = 2
@@ -525,6 +526,7 @@ def load_all_model(args, model, optimizers):
         model.sigma = models_checkpoint['sigma']
         model.mean = models_checkpoint['mean']
         model.logvar = models_checkpoint['logvar']
+        model.pz = MultivariateNormal(model.mean.cuda(), torch.diag(torch.exp(model.logvar.cuda())))
         if optimizers != None:
             optimizers['variational'].load_state_dict(checkpoint['optimizers']['variational'])
             update_lr(optimizers['variational'], args.lrvariation)

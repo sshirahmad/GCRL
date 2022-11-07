@@ -55,7 +55,7 @@ def get_training_parser():
     parser.add_argument("--s_dim", type=int, default=16, help="Dimension of c latent variable")
 
     # computation
-    parser.add_argument("--loader_num_workers", default=4, type=int)
+    parser.add_argument("--loader_num_workers", default=2, type=int)
     parser.add_argument("--gpu_num", default="1", type=str)
     # training
     parser.add_argument("--best_k", default=20, type=int)
@@ -74,8 +74,8 @@ def get_training_parser():
 
     # general training
     parser.add_argument("--finetune", default="", type=str)
-    parser.add_argument("--num_epochs", default='150-100-300-300-100', type=lambda x: int_tuple(x, '-'))  # '150-100-150',
-    parser.add_argument("--resume", default="",
+    parser.add_argument("--num_epochs", default='150-100-400-300-100', type=lambda x: int_tuple(x, '-'))  # '150-100-150',
+    parser.add_argument("--resume", default="./models/eth/E1/CRMF_risk_irm_5.0_batch_het_data_eth_ds_0_bk_20_ep_(150, 100, 300, 300, 100)_shuffle_true_seed_72/pretrain/P3/CRMF_epoch_550.pth.tar",
                         type=str, metavar="PATH", help="path to latest checkpoint (default: none)")
     parser.add_argument("--tfdir", default='runs', type=str)
 
