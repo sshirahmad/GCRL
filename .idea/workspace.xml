@@ -1,14 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project version="4">
   <component name="ChangeListManager">
-    <list default="true" id="80c1dfbd-0610-4b22-a92f-a3e79101e880" name="Changes" comment="Added P5 and solved unstability in P4">
-      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/evaluate_model.py" beforeDir="false" afterPath="$PROJECT_DIR$/evaluate_model.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/log/train.log" beforeDir="false" afterPath="$PROJECT_DIR$/log/train.log" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/models.py" beforeDir="false" afterPath="$PROJECT_DIR$/models.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/parser_file.py" beforeDir="false" afterPath="$PROJECT_DIR$/parser_file.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/train.py" beforeDir="false" afterPath="$PROJECT_DIR$/train.py" afterDir="false" />
-    </list>
+    <list default="true" id="80c1dfbd-0610-4b22-a92f-a3e79101e880" name="Changes" comment="Added P5 and solved unstability in P4" />
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
     <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
@@ -137,7 +130,7 @@
       <workItem from="1667779944503" duration="95000" />
       <workItem from="1667780202864" duration="8363000" />
       <workItem from="1667843155125" duration="336000" />
-      <workItem from="1667844880378" duration="18441000" />
+      <workItem from="1667844880378" duration="18781000" />
     </task>
     <task id="LOCAL-00001" summary="Added P5 and solved unstability in P4">
       <created>1667592112650</created>
@@ -244,7 +237,14 @@
       <option name="project" value="LOCAL" />
       <updated>1667860413432</updated>
     </task>
-    <option name="localTasksCounter" value="16" />
+    <task id="LOCAL-00016" summary="Added P5 and solved unstability in P4">
+      <created>1667876653232</created>
+      <option name="number" value="00016" />
+      <option name="presentableId" value="LOCAL-00016" />
+      <option name="project" value="LOCAL" />
+      <updated>1667876653232</updated>
+    </task>
+    <option name="localTasksCounter" value="17" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
