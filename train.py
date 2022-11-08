@@ -504,16 +504,12 @@ def validate_ade(model, valid_dataset, epoch, training_step, writer, stage, writ
                     pred_fut_traj_rel = model(batch, training_step, env_idx=val_idx)
 
                 # from relative path to absolute path
-                pred_fut_traj = [relative_to_abs(pred_fut_traj_rel[i], obs_traj[-1, :, :2]) for i in
-                                 range(len(pred_fut_traj_rel))]
+                pred_fut_traj = relative_to_abs(pred_fut_traj_rel, obs_traj[-1, :, :2])
+
 
                 # compute ADE and FDE metrics
-                ade_list = []
-                fde_list = []
-                for i in range(len(pred_fut_traj)):
-                    a, f = cal_ade_fde(fut_traj, pred_fut_traj[i])
-                    ade_list += [a]
-                    fde_list += [f]
+                ade_, fde_ = cal_ade_fde(fut_traj, pred_fut_traj[i])
+
 
                 ade_, fde_ = torch.mean(torch.stack(ade_list), dim=0), torch.mean(torch.stack(fde_list), dim=0)
                 ade_, fde_ = ade_ / (obs_traj.shape[1] * fut_traj.shape[0]), fde_ / (obs_traj.shape[1])

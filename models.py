@@ -707,8 +707,8 @@ class CRMF(nn.Module):
         self.theta = nn.Parameter(torch.randn(args.num_envs, args.latent_dim))
         self.mean = nn.Parameter(torch.zeros(args.z_dim, device="cuda"))
         self.logvar = nn.Parameter(torch.ones(args.z_dim, device="cuda"))
-        # self.pz = MultivariateNormal(self.mean, torch.diag(torch.exp(self.logvar)))
-        self.pz = MultivariateNormal(torch.zeros(self.z_dim).cuda(), torch.diag(torch.ones(self.z_dim).cuda()))
+        self.pz = MultivariateNormal(self.mean, torch.diag(torch.exp(self.logvar)))
+        # self.pz = MultivariateNormal(torch.zeros(self.z_dim).cuda(), torch.diag(torch.ones(self.z_dim).cuda()))
 
         self.invariant_encoder = STGAT_encoder_inv(args.obs_len, args.fut_len, args.n_coordinates,
                                                    args.traj_lstm_hidden_size, args.n_units, args.n_heads,
@@ -840,13 +840,12 @@ class CRMF(nn.Module):
         else:
             if training_step == "P3":
                 q_zgx = self.invariant_encoder(batch, training_step)
-                pred_traj_rel = []
-                for _ in range(self.num_samples):
-                    # P(z|x)
-                    z_vec = q_zgx.rsample()
 
-                    # p(y|z,c)
-                    pred_traj_rel += [self.future_decoder(batch, z_vec, training_step, False)]
+                # P(z|x)
+                z_vec = q_zgx.sample()
+
+                # p(y|z,c)
+                pred_traj_rel = self.future_decoder(batch, z_vec, training_step, False)
 
             else:
                 env_idx = kwargs.get("env_idx")
@@ -855,33 +854,29 @@ class CRMF(nn.Module):
 
                     ps = self.thetax_to_s(self.theta[env_idx], concat_hidden_states)
                     p_zgx = self.invariant_encoder(batch, training_step)
-                    pred_traj_rel = []
-                    for _ in range(self.num_samples):
-                        # p(s|theta,x)
-                        s_vec = ps.sample()
 
-                        # P(z|x)
-                        z_vec = p_zgx.sample()
+                    # p(s|theta,x)
+                    s_vec = ps.sample()
 
-                        # p(y|z,c)
-                        pred_traj_rel += [
-                            self.future_decoder(batch, torch.cat((z_vec, s_vec), dim=1), training_step, True)]
+                    # P(z|x)
+                    z_vec = p_zgx.sample()
+
+                    # p(y|z,c)
+                    pred_traj_rel = self.future_decoder(batch, torch.cat((z_vec, s_vec), dim=1), training_step, True)
 
                 else:
                     concat_hidden_states = self.variant_encoder(batch, training_step)
                     theta = self.mapping(obs_traj_rel)
                     ps = self.thetax_to_s(theta, concat_hidden_states)
                     p_zgx = self.invariant_encoder(batch, training_step)
-                    pred_traj_rel = []
-                    for _ in range(self.num_samples):
-                        # p(s|theta,x)
-                        s_vec = ps.sample()
 
-                        # P(z|x)
-                        z_vec = p_zgx.sample()
+                    # p(s|theta,x)
+                    s_vec = ps.sample()
 
-                        # p(y|z,c)
-                        pred_traj_rel += [
-                            self.future_decoder(batch, torch.cat((z_vec, s_vec), dim=1), training_step, True)]
+                    # P(z|x)
+                    z_vec = p_zgx.sample()
+
+                    # p(y|z,c)
+                    pred_traj_rel = self.future_decoder(batch, torch.cat((z_vec, s_vec), dim=1), training_step, True)
 
             return pred_traj_rel

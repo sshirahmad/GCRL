@@ -6,7 +6,7 @@ def get_evaluation_parser():
     parser = get_training_parser()
     parser.add_argument("--dset_type", default="test", type=str)
     parser.add_argument("--noise_mix_type", default="global")
-    parser.add_argument('--metrics', type=str, default='qualitative', choices=['accuracy', 'collision', 'qualitative'],
+    parser.add_argument('--metrics', type=str, default='accuracy', choices=['accuracy', 'collision', 'qualitative'],
                         help='evaluate metrics')
     return parser
 
@@ -34,7 +34,7 @@ def get_training_parser():
                         help='Only test model. 0 -> training, 1 -> testing, 3 -> testing with refinement')  # 0 is normal train, 1 is test, 2 is test with k, 3 is ttr
     # randomness
     parser.add_argument("--seed", type=int, default=72, help="Random seed")
-    parser.add_argument("--num_samples", type=int, default=5, help="Number of samples to calculate MC expectations")
+    parser.add_argument("--num_samples", type=int, default=20, help="Number of samples to calculate MC expectations")
 
     # architecture (STGAT)
     parser.add_argument("--traj_lstm_hidden_size", default=32, type=int)
@@ -74,8 +74,8 @@ def get_training_parser():
 
     # general training
     parser.add_argument("--finetune", default="", type=str)
-    parser.add_argument("--num_epochs", default='2-2-2-300-100', type=lambda x: int_tuple(x, '-'))  # '150-100-150',
-    parser.add_argument("--resume", default="./models/eth/CRMF_risk_erm_0.0_batch_hom_data_eth_ds_0_bk_20_ep_(150, 100, 150, 300, 100)_shuffle_true_seed_72/pretrain/P2/CRMF_epoch_250.pth.tar",
+    parser.add_argument("--num_epochs", default='150-100-150-300-100', type=lambda x: int_tuple(x, '-'))  # '150-100-150',
+    parser.add_argument("--resume", default="./models/eth/CRMF_risk_erm_0.0_batch_hom_data_eth_ds_0_bk_20_ep_(150, 100, 150, 300, 100)_shuffle_true_seed_72/pretrain/P3/CRMF_epoch_339.pth.tar",
                         type=str, metavar="PATH", help="path to latest checkpoint (default: none)")
     parser.add_argument("--tfdir", default='runs', type=str)
 
