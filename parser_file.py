@@ -74,8 +74,8 @@ def get_training_parser():
 
     # general training
     parser.add_argument("--finetune", default="", type=str)
-    parser.add_argument("--num_epochs", default='150-100-150-300-100', type=lambda x: int_tuple(x, '-'))  # '150-100-150',
-    parser.add_argument("--resume", default="./models/eth/CRMF_risk_erm_0.0_batch_hom_data_eth_ds_0_bk_20_ep_(150, 100, 150, 300, 100)_shuffle_true_seed_72/pretrain/P3/CRMF_epoch_339.pth.tar",
+    parser.add_argument("--num_epochs", default='150-100-400-300-200', type=lambda x: int_tuple(x, '-'))  # '150-100-150',
+    parser.add_argument("--resume", default="",
                         type=str, metavar="PATH", help="path to latest checkpoint (default: none)")
     parser.add_argument("--tfdir", default='runs', type=str)
 
@@ -100,9 +100,9 @@ def get_training_parser():
     parser.add_argument('--ttrlr', default=0, type=float, help="initial learning rate for the refinement optimizer")
 
     # method
-    parser.add_argument("--irm", default=0.0, type=float, help='IRM parameter (lambda)')
+    parser.add_argument("--irm", default=5.0, type=float, help='IRM parameter (lambda)')
     parser.add_argument("--vrex", default=0.0, type=float, help='v-REx parameter (beta)')
 
-    parser.add_argument("--unbiased", default=True, type=bool, help='')
+    parser.add_argument("--unbiased", default=False, type=bool, help='')
 
     return parser

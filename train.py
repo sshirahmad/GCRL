@@ -120,10 +120,10 @@ def main(args):
     # SOME TEST
     if args.testonly == 1:
         print('SIMPLY VALIDATE MODEL:')
-        validate_ade(model, valid_dataset, 300, 'P3', writer, 'validation', write=False)
+        validate_ade(args, model, valid_dataset, 300, 'P3', writer, 'validation', write=False)
     elif args.testonly == 2:
         print('TEST TIME MODIF:')
-        validate_ade(model, valid_dataset, 500, 'P4', writer, 'training', write=False)
+        validate_ade(args, model, valid_dataset, 500, 'P4', writer, 'training', write=False)
 
     if args.testonly != 0:
         writer.close()
@@ -134,6 +134,8 @@ def main(args):
     for epoch in range(args.start_epoch, sum(args.num_epochs) + 1):
 
         training_step = get_training_step(epoch)
+        if training_step in ["P1", "P2"]:
+            continue
         logging.info(f"\n===> EPOCH: {epoch} ({training_step})")
 
         if training_step in ["P1", "P2"]:
@@ -163,16 +165,18 @@ def main(args):
         train_all(args, model, optimizers, train_dataset, epoch, training_step, train_envs_name, writer,
                   stage='training')
 
-        if training_step not in ["P1", "P2", "P5"]:
+        if training_step not in ["P1", "P2"]:
             with torch.no_grad():
-                metric = validate_ade(model, valido_dataset, epoch, training_step, writer, stage='validation o')
-                validate_ade(model, valid_dataset, epoch, training_step, writer, stage='validation')
-                validate_ade(model, train_dataset, epoch, training_step, writer, stage='training')
+                if training_step == "P4":
+                    validate_ade(args, model, valid_dataset, epoch, training_step, writer, stage='validation')
+                    validate_ade(args, model, train_dataset, epoch, training_step, writer, stage='training')
+                elif training_step == "P3":
+                    metric = validate_ade(args, model, valido_dataset, epoch, training_step, writer, stage='validation o')
+                    validate_ade(args, model, valid_dataset, epoch, training_step, writer, stage='validation')
+                    validate_ade(args, model, train_dataset, epoch, training_step, writer, stage='training')
 
-                #### EVALUATE ALSO THE TRAINING ADE and the validation loss
-                # if epoch % 2 == 0:
-                #     train_all(args, model, optimizers, valid_dataset, epoch, training_step, val_envs_name,
-                #               writer, sigma_pred, sigma_elbo, stage='validation')
+                if training_step == "P5":
+                    train_all(args, model, optimizers, valid_dataset, epoch, training_step, val_envs_name, writer, stage='validation')
 
         if args.finetune:
             if metric < min_metric:
@@ -390,12 +394,12 @@ def train_all(args, model, optimizers, train_dataset, epoch, training_step, trai
                     loss = loss_var + loss_inv
 
                 elif training_step == "P3":
-                    log_q_ygx, E = model(batch, training_step, dummy_w=dummy_w)
+                    q_ygx, E = model(batch, training_step, dummy_w=dummy_w)
 
-                    loss_sum_even_p, loss_sum_odd_p = erm_loss(log_q_ygx, seq_start_end, fut_traj_rel.shape[0])
+                    loss_sum_even_p, loss_sum_odd_p = erm_loss(torch.log(q_ygx), seq_start_end, fut_traj_rel.shape[0])
                     predict_loss = loss_sum_even_p + loss_sum_odd_p
 
-                    loss_sum_even_e, loss_sum_odd_e = erm_loss(torch.divide(E, torch.exp(log_q_ygx)), seq_start_end,
+                    loss_sum_even_e, loss_sum_odd_e = erm_loss(torch.divide(E, q_ygx), seq_start_end,
                                                                fut_traj_rel.shape[0])
                     elbo_loss = loss_sum_even_e + loss_sum_odd_e
 
@@ -410,7 +414,6 @@ def train_all(args, model, optimizers, train_dataset, epoch, training_step, trai
                     p_loss_meter.update(predict_loss.item(), obs_traj.shape[1])
 
                 elif training_step == "P4":
-
                     log_q_ygthetax, E = model(batch, training_step, env_idx=train_idx)
 
                     loss_sum_even_p, loss_sum_odd_p = erm_loss(log_q_ygthetax, seq_start_end, fut_traj_rel.shape[0])
@@ -477,7 +480,7 @@ def train_all(args, model, optimizers, train_dataset, epoch, training_step, trai
             writer.add_scalar(f"theta_loss/{stage}", total_loss_meter.avg, epoch)
 
 
-def validate_ade(model, valid_dataset, epoch, training_step, writer, stage, write=True):
+def validate_ade(args, model, valid_dataset, epoch, training_step, writer, stage, write=True):
     """
     Evaluate the performances on the validation set
 

@@ -431,6 +431,7 @@ class future_STGAT_decoder(nn.Module):
             pred_lstm_hidden,
             training_step,
             variant_feats,
+            dummy_w=None,
     ):
 
         (_, _, obs_traj_rel, fut_traj_rel, seq_start_end) = batch
@@ -458,11 +459,14 @@ class future_STGAT_decoder(nn.Module):
                     pred_lstm_hidden, pred_lstm_c_t = self.pred_lstm_model[1](input_t,
                                                                               (pred_lstm_hidden, pred_lstm_c_t))
                     output = self.pred_hidden2pos[1](pred_lstm_hidden)
-                pred_traj_rel += [output]
-                p += [MultivariateNormal(output,
-                                         torch.diag_embed(self.var_p * torch.ones(fut_traj_rel.size(1), 2).cuda()))]
 
-            return torch.stack(pred_traj_rel)
+                pred_traj_rel += [output]
+                if training_step == "P3":
+                    p += [MultivariateNormal(output * dummy_w, torch.diag_embed(self.var_p * torch.ones(fut_traj_rel.size(1), 2).cuda()))]
+                else:
+                    p += [MultivariateNormal(output, torch.diag_embed(self.var_p * torch.ones(fut_traj_rel.size(1), 2).cuda()))]
+
+            return p
 
         # during test
         else:
@@ -549,7 +553,7 @@ class regressor(nn.Module):
         super(regressor, self).__init__()
 
         if hidden_dims is None:
-            hidden_dims = [16, 32]
+            hidden_dims = [32, 64]
 
         modules = []
         in_channels = n_coordinates * obs_len
@@ -750,27 +754,24 @@ class CRMF(nn.Module):
                 q_zgx = self.invariant_encoder(batch, training_step)
                 for _ in range(self.num_samples):
                     z_vec = q_zgx.rsample()
-                    pred_traj_rel_fut = self.future_decoder(batch, z_vec, training_step, False)
-                    predict_loss = - l2_loss(pred_traj_rel_fut * dummy_w, fut_traj_rel, mode="raw") - \
-                                   0.5 * 1 / fut_traj_rel.shape[0] * torch.log(torch.tensor(2 * math.pi * 0.5))
-                    first_E.append(predict_loss)
+                    p_ygz = self.future_decoder(batch, z_vec, training_step, False, dummy_w)
+                    proby_mat = torch.stack([torch.exp(p_ygz[i].log_prob(fut_traj_rel[i])) for i in range(fut_traj.shape[0])])
+                    first_E.append(torch.prod(proby_mat, dim=0))
 
-                log_q_ygx = torch.mean(torch.stack(first_E), dim=0)
-
+                q_ygx = torch.mean(torch.stack(first_E), dim=0)
                 first_E = []
                 for _ in range(self.num_samples):
                     z_vec = q_zgx.rsample()
                     qprob_z = q_zgx.log_prob(z_vec)
                     prob_z = self.pz.log_prob(z_vec)
                     pred_past_rel = self.past_decoder(batch, z_vec, False)
-                    reconstruction_loss = - l2_loss(pred_past_rel, obs_traj_rel, mode="raw") - \
+                    reconstruction_loss = - l2_loss(pred_past_rel * dummy_w, obs_traj_rel, mode="raw") - \
                                           0.5 * 1 / obs_traj_rel.shape[0] * torch.log(torch.tensor(2 * math.pi * 0.5))
 
-                    pred_traj_rel_fut = self.future_decoder(batch, z_vec, training_step, False)
-                    predict_loss = - l2_loss(pred_traj_rel_fut, fut_traj_rel, mode="raw") - \
-                                   0.5 * 1 / fut_traj_rel.shape[0] * torch.log(torch.tensor(2 * math.pi * 0.5))
+                    p_ygz = self.future_decoder(batch, z_vec, training_step, False, dummy_w)
+                    proby_mat = torch.stack([torch.exp(p_ygz[i].log_prob(fut_traj_rel[i])) for i in range(fut_traj.shape[0])])
 
-                    p_ygz = torch.exp(predict_loss)
+                    p_ygz = torch.prod(proby_mat, dim=0)
 
                     A1 = torch.multiply(p_ygz, reconstruction_loss)
                     A2 = torch.multiply(p_ygz, prob_z - qprob_z)
@@ -779,7 +780,7 @@ class CRMF(nn.Module):
 
                 E = torch.mean(torch.stack(first_E), dim=0)
 
-                return log_q_ygx, E
+                return q_ygx, E
 
             elif training_step == "P4":
                 env_idx = kwargs.get("env_idx")
@@ -847,36 +848,36 @@ class CRMF(nn.Module):
                 # p(y|z,c)
                 pred_traj_rel = self.future_decoder(batch, z_vec, training_step, False)
 
-            else:
+            elif training_step == "P4":
                 env_idx = kwargs.get("env_idx")
-                if env_idx is not None:
-                    concat_hidden_states = self.variant_encoder(batch, training_step)
 
-                    ps = self.thetax_to_s(self.theta[env_idx], concat_hidden_states)
-                    p_zgx = self.invariant_encoder(batch, training_step)
+                concat_hidden_states = self.variant_encoder(batch, training_step)
 
-                    # p(s|theta,x)
-                    s_vec = ps.sample()
+                ps = self.thetax_to_s(self.theta[env_idx], concat_hidden_states)
+                p_zgx = self.invariant_encoder(batch, training_step)
 
-                    # P(z|x)
-                    z_vec = p_zgx.sample()
+                # p(s|theta,x)
+                s_vec = ps.sample()
 
-                    # p(y|z,c)
-                    pred_traj_rel = self.future_decoder(batch, torch.cat((z_vec, s_vec), dim=1), training_step, True)
+                # P(z|x)
+                z_vec = p_zgx.sample()
 
-                else:
-                    concat_hidden_states = self.variant_encoder(batch, training_step)
-                    theta = self.mapping(obs_traj_rel)
-                    ps = self.thetax_to_s(theta, concat_hidden_states)
-                    p_zgx = self.invariant_encoder(batch, training_step)
+                # p(y|z,c)
+                pred_traj_rel = self.future_decoder(batch, torch.cat((z_vec, s_vec), dim=1), training_step, True)
 
-                    # p(s|theta,x)
-                    s_vec = ps.sample()
+            else:
+                concat_hidden_states = self.variant_encoder(batch, training_step)
+                theta = self.mapping(obs_traj_rel)
+                ps = self.thetax_to_s(theta, concat_hidden_states)
+                p_zgx = self.invariant_encoder(batch, training_step)
 
-                    # P(z|x)
-                    z_vec = p_zgx.sample()
+                # p(s|theta,x)
+                s_vec = ps.sample()
 
-                    # p(y|z,c)
-                    pred_traj_rel = self.future_decoder(batch, torch.cat((z_vec, s_vec), dim=1), training_step, True)
+                # P(z|x)
+                z_vec = p_zgx.sample()
+
+                # p(y|z,c)
+                pred_traj_rel = self.future_decoder(batch, torch.cat((z_vec, s_vec), dim=1), training_step, True)
 
             return pred_traj_rel
