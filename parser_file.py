@@ -14,7 +14,8 @@ def get_evaluation_parser():
 def get_training_parser():
     parser = argparse.ArgumentParser()
     parser.add_argument("--log_dir", default="./log/", help="Directory containing logging file")
-    parser.add_argument("--model_dir", default="", help="Directory containing logging file")
+    parser.add_argument("--model_dir", default="./models/E4/", help="Directory containing logging file")
+    parser.add_argument("--tfdir", default='./runs/E4/', type=str)
 
     # dataset
     parser.add_argument("--dataset_name", default="eth", type=str)
@@ -51,7 +52,7 @@ def get_training_parser():
                         help="The probability of using ground truth future trajectories instead of model predictions during training")
     # architecture (VE)
     parser.add_argument('--latent_dim', type=int, default=16, help="Dimension of latent selection variables")
-    parser.add_argument("--z_dim", type=int, default=64, help="Dimension of z latent variable")
+    parser.add_argument("--z_dim", type=int, default=16, help="Dimension of z latent variable")
     parser.add_argument("--s_dim", type=int, default=16, help="Dimension of c latent variable")
 
     # computation
@@ -60,7 +61,7 @@ def get_training_parser():
 
     # training
     parser.add_argument("--best_k", default=20, type=int)
-    parser.add_argument("--batch_size", default='32', type=str)
+    parser.add_argument("--batch_size", default='64', type=str)
     parser.add_argument("--batch_method", default='hom', type=str,
                         help='Use Homogeneous (hom), Heterogeneous (het) or alternated homogeneous (alt) batches during training')
     parser.add_argument("--shuffle", default=True, type=bool)
@@ -75,10 +76,9 @@ def get_training_parser():
 
     # general training
     parser.add_argument("--finetune", default="", type=str)
-    parser.add_argument("--num_epochs", default='2-2-2-2-2-2', type=lambda x: int_tuple(x, '-'))  # '150-100-150',
+    parser.add_argument("--num_epochs", default='150-100-300-300-300-50', type=lambda x: int_tuple(x, '-'))  # '150-100-150',
     parser.add_argument("--resume", default="",
                         type=str, metavar="PATH", help="path to latest checkpoint (default: none)")
-    parser.add_argument("--tfdir", default='runs', type=str)
 
     # learning rates
     parser.add_argument("--lrvar", default=1e-3, type=float,

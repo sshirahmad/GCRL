@@ -451,6 +451,7 @@ def save_all_model(args, model, model_name, optimizers, metric, epoch, training_
             'sigma': model.sigma,
             'mean': model.mean,
             'logvar': model.logvar,
+            'cov': model.cov,
         },
         'optimizers': {
             key: val.state_dict() for key, val in optimizers.items()
@@ -526,6 +527,7 @@ def load_all_model(args, model, optimizers):
         model.sigma.data = models_checkpoint['sigma'].data
         model.mean.data = models_checkpoint['mean'].data
         model.logvar.data = models_checkpoint['logvar'].data
+        model.cov.data = models_checkpoint['cov'].data
         if optimizers != None:
             optimizers['variational'].load_state_dict(checkpoint['optimizers']['variational'])
             update_lr(optimizers['variational'], args.lrvariation)

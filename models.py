@@ -131,6 +131,7 @@ class STGAT_encoder_inv(nn.Module):
             alpha,
             graph_lstm_hidden_size,
             z_dim,
+            hidden_dims=None,
             add_confidence=True,
     ):
         super(STGAT_encoder_inv, self).__init__()
@@ -142,13 +143,29 @@ class STGAT_encoder_inv(nn.Module):
             n_units=n_units, n_heads=n_heads, dropout=dropout, alpha=alpha
         )
 
+        if hidden_dims is None:
+            hidden_dims = [32, 64]
+
+        modules = []
+        in_channels = traj_lstm_hidden_size + graph_lstm_hidden_size
+        for h_dim in hidden_dims:
+            modules.append(
+                nn.Sequential(
+                    nn.Linear(in_channels, h_dim),
+                    nn.LeakyReLU())
+            )
+            in_channels = h_dim
+
+        self.z_dim = z_dim
+        self.mapping = nn.Sequential(*modules)
+        self.fc_mu = nn.Linear(hidden_dims[-1], z_dim)
+        self.fc_var = nn.Linear(hidden_dims[-1], z_dim)
+        self.fc_cov = nn.Linear(hidden_dims[-1], (z_dim * z_dim - z_dim) // 2)
+
         self.graph_lstm_hidden_size = graph_lstm_hidden_size
         self.traj_lstm_hidden_size = traj_lstm_hidden_size
         self.n_coordinates = n_coordinates
         self.add_confidence = add_confidence
-
-        self.fc_mu = nn.Linear(traj_lstm_hidden_size + graph_lstm_hidden_size, z_dim)
-        self.fc_var = nn.Linear(traj_lstm_hidden_size + graph_lstm_hidden_size, z_dim)
 
         self.traj_lstm_model = nn.LSTMCell(
             n_coordinates + add_confidence,
@@ -240,10 +257,17 @@ class STGAT_encoder_inv(nn.Module):
         else:
 
             encoded_before_noise_hidden = torch.cat((traj_lstm_hidden_states[-1], graph_lstm_hidden_states[-1]), dim=1)
-            mu = self.fc_mu(encoded_before_noise_hidden)
-            logvar = self.fc_var(encoded_before_noise_hidden)
+            mu = self.fc_mu(self.mapping(encoded_before_noise_hidden))
+            logvar = self.fc_var(self.mapping(encoded_before_noise_hidden))
+            cov = self.fc_cov(self.mapping(encoded_before_noise_hidden))
+            covmat = torch.diag_embed(torch.exp(logvar))
+            start = 0
+            for j in range(covmat.shape[1]):
+                length = self.z_dim - j - 1
+                covmat[:, j + 1:, j] = cov[:, start: start + length]
+                start += length
 
-            z = MultivariateNormal(mu, torch.diag_embed(torch.exp(logvar)))
+            z = MultivariateNormal(mu, scale_tril=covmat)
 
             return z
 
@@ -261,7 +285,6 @@ class STGAT_encoder_var(nn.Module):
             dropout,
             alpha,
             graph_lstm_hidden_size,
-            z_dim,
             add_confidence=True,
     ):
         super(STGAT_encoder_var, self).__init__()
@@ -649,7 +672,7 @@ class simple_mapping(nn.Module):
         super(simple_mapping, self).__init__()
 
         if hidden_dims is None:
-            hidden_dims = [8, 16]
+            hidden_dims = [32, 64]
 
         modules = []
         in_channels = latent_dim + traj_lstm_hidden_size + graph_lstm_hidden_size
@@ -710,21 +733,27 @@ class CRMF(nn.Module):
         self.sigma = torch.nn.Parameter(torch.tensor([0.0, 0.0]))
         self.theta = nn.Parameter(torch.randn(args.num_envs, args.latent_dim))
         self.mean = nn.Parameter(torch.zeros(args.z_dim, device="cuda"))
-        self.logvar = nn.Parameter(torch.ones(args.z_dim, device="cuda"))
-        self.pz = MultivariateNormal(self.mean, torch.diag(torch.exp(self.logvar)))
+        self.logvar = nn.Parameter(torch.zeros(args.z_dim, device="cuda"))
+        self.cov = nn.Parameter(torch.ones((args.z_dim * args.z_dim - args.z_dim) // 2, device="cuda"))
+        self.covmat = torch.diag(torch.exp(self.logvar))
+        start = 0
+        for j in range(self.covmat.shape[1]):
+            length = args.z_dim - j - 1
+            self.covmat[j + 1:, j] = self.cov[start: start + length]
+            start += length
+        self.pz = MultivariateNormal(self.mean, scale_tril=self.covmat)
         # self.pz = MultivariateNormal(torch.zeros(self.z_dim).cuda(), torch.diag(torch.ones(self.z_dim).cuda()))
 
         self.invariant_encoder = STGAT_encoder_inv(args.obs_len, args.fut_len, args.n_coordinates,
                                                    args.traj_lstm_hidden_size, args.n_units, args.n_heads,
                                                    args.graph_network_out_dims, args.dropout, args.alpha,
                                                    args.graph_lstm_hidden_size,
-                                                   args.z_dim, args.add_confidence)
+                                                   args.z_dim, None, args.add_confidence)
 
         self.variant_encoder = STGAT_encoder_var(args.obs_len, args.fut_len, args.n_coordinates,
                                                  args.traj_lstm_hidden_size, args.n_units, args.n_heads,
                                                  args.graph_network_out_dims, args.dropout, args.alpha,
-                                                 args.graph_lstm_hidden_size,
-                                                 args.z_dim, args.add_confidence)
+                                                 args.graph_lstm_hidden_size, args.add_confidence)
 
         self.theta_to_s = simple_mapping(0, 0, args.latent_dim, args.s_dim)
         self.thetax_to_s = simple_mapping(args.traj_lstm_hidden_size, args.graph_lstm_hidden_size, args.latent_dim, args.s_dim)

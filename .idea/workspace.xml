@@ -1,21 +1,19 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project version="4">
   <component name="ChangeListManager">
-    <list default="true" id="80c1dfbd-0610-4b22-a92f-a3e79101e880" name="Changes" comment="Working on finetune">
+    <list default="true" id="8147b731-440c-4981-a21f-e4c8b1f0cd9a" name="Changes" comment="Finetune completed">
+      <change beforePath="$PROJECT_DIR$/.idea/misc.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/misc.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Tensorboard.ipynb" beforeDir="false" afterPath="$PROJECT_DIR$/Tensorboard.ipynb" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/log/train.log" beforeDir="false" afterPath="$PROJECT_DIR$/log/train.log" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/models.py" beforeDir="false" afterPath="$PROJECT_DIR$/models.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/parser_file.py" beforeDir="false" afterPath="$PROJECT_DIR$/parser_file.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/train.py" beforeDir="false" afterPath="$PROJECT_DIR$/train.py" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
     <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
     <option name="LAST_RESOLUTION" value="IGNORE" />
-  </component>
-  <component name="FileTemplateManagerImpl">
-    <option name="RECENT_TEMPLATES">
-      <list>
-        <option value="Python Script" />
-      </list>
-    </option>
   </component>
   <component name="Git.Settings">
     <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$" />
@@ -23,8 +21,7 @@
   <component name="MarkdownSettingsMigration">
     <option name="stateVersion" value="1" />
   </component>
-  <component name="ProjectId" id="2H3zQtyvJRc2zUHaoUEV709BYik" />
-  <component name="ProjectLevelVcsManager" settingsEditedManually="true" />
+  <component name="ProjectId" id="2HIAGvCj0b6BkQ5ayMuWDeDrSYY" />
   <component name="ProjectViewState">
     <option name="hideEmptyMiddlePackages" value="true" />
     <option name="showLibraryContents" value="true" />
@@ -34,56 +31,11 @@
     "RunOnceActivity.OpenProjectViewOnStart": "true",
     "RunOnceActivity.ShowReadmeOnStart": "true",
     "WebServerToolWindowFactoryState": "false",
-    "last_opened_file_path": "C:/UWaterloo/PhD_thesis/motion_forecasting/codes/CRMF_old_causal_model/models.py",
-    "nodejs_package_manager_path": "npm",
-    "settings.editor.selected.configurable": "com.jetbrains.python.configuration.PyActiveSdkModuleConfigurable"
+    "last_opened_file_path": "/home/zahra/Desktop/motionforcasting/CRMF",
+    "nodejs_package_manager_path": "npm"
   }
 }]]></component>
-  <component name="RunManager" selected="Python.distributions">
-    <configuration name="a5" type="PythonConfigurationType" factoryName="Python" temporary="true" nameIsGenerated="true">
-      <module name="CRMF" />
-      <option name="INTERPRETER_OPTIONS" value="" />
-      <option name="PARENT_ENVS" value="true" />
-      <envs>
-        <env name="PYTHONUNBUFFERED" value="1" />
-      </envs>
-      <option name="SDK_HOME" value="" />
-      <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$" />
-      <option name="IS_MODULE_SDK" value="true" />
-      <option name="ADD_CONTENT_ROOTS" value="true" />
-      <option name="ADD_SOURCE_ROOTS" value="true" />
-      <EXTENSION ID="PythonCoverageRunConfigurationExtension" runner="coverage.py" />
-      <option name="SCRIPT_NAME" value="$PROJECT_DIR$/a5.py" />
-      <option name="PARAMETERS" value="" />
-      <option name="SHOW_COMMAND_LINE" value="false" />
-      <option name="EMULATE_TERMINAL" value="false" />
-      <option name="MODULE_MODE" value="false" />
-      <option name="REDIRECT_INPUT" value="false" />
-      <option name="INPUT_FILE" value="" />
-      <method v="2" />
-    </configuration>
-    <configuration name="distributions" type="PythonConfigurationType" factoryName="Python" temporary="true" nameIsGenerated="true">
-      <module name="CRMF" />
-      <option name="INTERPRETER_OPTIONS" value="" />
-      <option name="PARENT_ENVS" value="true" />
-      <envs>
-        <env name="PYTHONUNBUFFERED" value="1" />
-      </envs>
-      <option name="SDK_HOME" value="" />
-      <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$" />
-      <option name="IS_MODULE_SDK" value="true" />
-      <option name="ADD_CONTENT_ROOTS" value="true" />
-      <option name="ADD_SOURCE_ROOTS" value="true" />
-      <EXTENSION ID="PythonCoverageRunConfigurationExtension" runner="coverage.py" />
-      <option name="SCRIPT_NAME" value="$PROJECT_DIR$/distributions.py" />
-      <option name="PARAMETERS" value="" />
-      <option name="SHOW_COMMAND_LINE" value="false" />
-      <option name="EMULATE_TERMINAL" value="false" />
-      <option name="MODULE_MODE" value="false" />
-      <option name="REDIRECT_INPUT" value="false" />
-      <option name="INPUT_FILE" value="" />
-      <method v="2" />
-    </configuration>
+  <component name="RunManager" selected="Python.train">
     <configuration name="evaluate_model" type="PythonConfigurationType" factoryName="Python" temporary="true" nameIsGenerated="true">
       <module name="CRMF" />
       <option name="INTERPRETER_OPTIONS" value="" />
@@ -130,176 +82,30 @@
     </configuration>
     <recent_temporary>
       <list>
-        <item itemvalue="Python.distributions" />
         <item itemvalue="Python.train" />
         <item itemvalue="Python.evaluate_model" />
-        <item itemvalue="Python.a5" />
       </list>
     </recent_temporary>
   </component>
   <component name="SpellCheckerSettings" RuntimeDictionaries="0" Folders="0" CustomDictionaries="0" DefaultDictionary="application-level" UseSingleDictionary="true" transferred="true" />
   <component name="TaskManager">
     <task active="true" id="Default" summary="Default task">
-      <changelist id="80c1dfbd-0610-4b22-a92f-a3e79101e880" name="Changes" comment="" />
-      <created>1667528541821</created>
+      <changelist id="8147b731-440c-4981-a21f-e4c8b1f0cd9a" name="Changes" comment="" />
+      <created>1667962131599</created>
       <option name="number" value="Default" />
       <option name="presentableId" value="Default" />
-      <updated>1667528541821</updated>
-      <workItem from="1667528543599" duration="13641000" />
-      <workItem from="1667583960352" duration="2084000" />
-      <workItem from="1667586657150" duration="17473000" />
-      <workItem from="1667685611891" duration="14396000" />
-      <workItem from="1667778629967" duration="318000" />
-      <workItem from="1667779484802" duration="38000" />
-      <workItem from="1667779531324" duration="100000" />
-      <workItem from="1667779640688" duration="278000" />
-      <workItem from="1667779944503" duration="95000" />
-      <workItem from="1667780202864" duration="8363000" />
-      <workItem from="1667843155125" duration="336000" />
-      <workItem from="1667844880378" duration="23592000" />
-      <workItem from="1667927663898" duration="27780000" />
+      <updated>1667962131599</updated>
+      <workItem from="1667962133126" duration="3158000" />
+      <workItem from="1667965423442" duration="14042000" />
     </task>
-    <task id="LOCAL-00001" summary="Added P5 and solved unstability in P4">
-      <created>1667592112650</created>
+    <task id="LOCAL-00001" summary="Finetune completed">
+      <created>1667968720588</created>
       <option name="number" value="00001" />
       <option name="presentableId" value="LOCAL-00001" />
       <option name="project" value="LOCAL" />
-      <updated>1667592112650</updated>
+      <updated>1667968720588</updated>
     </task>
-    <task id="LOCAL-00002" summary="Added P5 and solved unstability in P4">
-      <created>1667592687535</created>
-      <option name="number" value="00002" />
-      <option name="presentableId" value="LOCAL-00002" />
-      <option name="project" value="LOCAL" />
-      <updated>1667592687535</updated>
-    </task>
-    <task id="LOCAL-00003" summary="Added P5 and solved unstability in P4">
-      <created>1667592805775</created>
-      <option name="number" value="00003" />
-      <option name="presentableId" value="LOCAL-00003" />
-      <option name="project" value="LOCAL" />
-      <updated>1667592805775</updated>
-    </task>
-    <task id="LOCAL-00004" summary="Added P5 and solved unstability in P4">
-      <created>1667592890142</created>
-      <option name="number" value="00004" />
-      <option name="presentableId" value="LOCAL-00004" />
-      <option name="project" value="LOCAL" />
-      <updated>1667592890142</updated>
-    </task>
-    <task id="LOCAL-00005" summary="Added P5 and solved unstability in P4">
-      <created>1667599024614</created>
-      <option name="number" value="00005" />
-      <option name="presentableId" value="LOCAL-00005" />
-      <option name="project" value="LOCAL" />
-      <updated>1667599024614</updated>
-    </task>
-    <task id="LOCAL-00006" summary="Added P5 and solved unstability in P4">
-      <created>1667604725113</created>
-      <option name="number" value="00006" />
-      <option name="presentableId" value="LOCAL-00006" />
-      <option name="project" value="LOCAL" />
-      <updated>1667604725113</updated>
-    </task>
-    <task id="LOCAL-00007" summary="Added P5 and solved unstability in P4">
-      <created>1667691089137</created>
-      <option name="number" value="00007" />
-      <option name="presentableId" value="LOCAL-00007" />
-      <option name="project" value="LOCAL" />
-      <updated>1667691089137</updated>
-    </task>
-    <task id="LOCAL-00008" summary="Added P5 and solved unstability in P4">
-      <created>1667692306680</created>
-      <option name="number" value="00008" />
-      <option name="presentableId" value="LOCAL-00008" />
-      <option name="project" value="LOCAL" />
-      <updated>1667692306680</updated>
-    </task>
-    <task id="LOCAL-00009" summary="Added P5 and solved unstability in P4">
-      <created>1667692356604</created>
-      <option name="number" value="00009" />
-      <option name="presentableId" value="LOCAL-00009" />
-      <option name="project" value="LOCAL" />
-      <updated>1667692356604</updated>
-    </task>
-    <task id="LOCAL-00010" summary="Added P5 and solved unstability in P4">
-      <created>1667782504293</created>
-      <option name="number" value="00010" />
-      <option name="presentableId" value="LOCAL-00010" />
-      <option name="project" value="LOCAL" />
-      <updated>1667782504293</updated>
-    </task>
-    <task id="LOCAL-00011" summary="Added P5 and solved unstability in P4">
-      <created>1667782802795</created>
-      <option name="number" value="00011" />
-      <option name="presentableId" value="LOCAL-00011" />
-      <option name="project" value="LOCAL" />
-      <updated>1667782802795</updated>
-    </task>
-    <task id="LOCAL-00012" summary="Added P5 and solved unstability in P4">
-      <created>1667786388061</created>
-      <option name="number" value="00012" />
-      <option name="presentableId" value="LOCAL-00012" />
-      <option name="project" value="LOCAL" />
-      <updated>1667786388061</updated>
-    </task>
-    <task id="LOCAL-00013" summary="Added P5 and solved unstability in P4">
-      <created>1667846042106</created>
-      <option name="number" value="00013" />
-      <option name="presentableId" value="LOCAL-00013" />
-      <option name="project" value="LOCAL" />
-      <updated>1667846042106</updated>
-    </task>
-    <task id="LOCAL-00014" summary="Added P5 and solved unstability in P4">
-      <created>1667850694220</created>
-      <option name="number" value="00014" />
-      <option name="presentableId" value="LOCAL-00014" />
-      <option name="project" value="LOCAL" />
-      <updated>1667850694220</updated>
-    </task>
-    <task id="LOCAL-00015" summary="Added P5 and solved unstability in P4">
-      <created>1667860413432</created>
-      <option name="number" value="00015" />
-      <option name="presentableId" value="LOCAL-00015" />
-      <option name="project" value="LOCAL" />
-      <updated>1667860413432</updated>
-    </task>
-    <task id="LOCAL-00016" summary="Added P5 and solved unstability in P4">
-      <created>1667876653232</created>
-      <option name="number" value="00016" />
-      <option name="presentableId" value="LOCAL-00016" />
-      <option name="project" value="LOCAL" />
-      <updated>1667876653232</updated>
-    </task>
-    <task id="LOCAL-00017" summary="Removed expectation during inference">
-      <created>1667876861530</created>
-      <option name="number" value="00017" />
-      <option name="presentableId" value="LOCAL-00017" />
-      <option name="project" value="LOCAL" />
-      <updated>1667876861530</updated>
-    </task>
-    <task id="LOCAL-00018" summary="Removed expectation during inference">
-      <created>1667943914915</created>
-      <option name="number" value="00018" />
-      <option name="presentableId" value="LOCAL-00018" />
-      <option name="project" value="LOCAL" />
-      <updated>1667943914915</updated>
-    </task>
-    <task id="LOCAL-00019" summary="Removed expectation during inference.&#10;Corrected log approximation in expectation">
-      <created>1667954442374</created>
-      <option name="number" value="00019" />
-      <option name="presentableId" value="LOCAL-00019" />
-      <option name="project" value="LOCAL" />
-      <updated>1667954442374</updated>
-    </task>
-    <task id="LOCAL-00020" summary="Working on finetune">
-      <created>1667958419705</created>
-      <option name="number" value="00020" />
-      <option name="presentableId" value="LOCAL-00020" />
-      <option name="project" value="LOCAL" />
-      <updated>1667958419705</updated>
-    </task>
-    <option name="localTasksCounter" value="21" />
+    <option name="localTasksCounter" value="2" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
@@ -317,37 +123,37 @@
     </option>
   </component>
   <component name="VcsManagerConfiguration">
-    <MESSAGE value="Added P5 and solved unstability in P4" />
-    <MESSAGE value="Removed expectation during inference" />
-    <MESSAGE value="Removed expectation during inference.&#10;Corrected log approximation in expectation" />
-    <MESSAGE value="Working on finetune" />
-    <option name="LAST_COMMIT_MESSAGE" value="Working on finetune" />
+    <MESSAGE value="Finetune completed" />
+    <option name="LAST_COMMIT_MESSAGE" value="Finetune completed" />
   </component>
   <component name="XDebuggerManager">
     <breakpoint-manager>
       <breakpoints>
         <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
-          <url>file://$PROJECT_DIR$/evaluate_model.py</url>
-          <line>68</line>
+          <url>file://$PROJECT_DIR$/models.py</url>
+          <line>890</line>
+          <option name="timeStamp" value="2" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
+          <url>file://$PROJECT_DIR$/models.py</url>
+          <line>815</line>
+          <option name="timeStamp" value="3" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
+          <url>file://$PROJECT_DIR$/train.py</url>
+          <line>479</line>
           <option name="timeStamp" value="11" />
         </line-breakpoint>
         <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
-          <url>file://$PROJECT_DIR$/loader.py</url>
-          <line>12</line>
-          <option name="timeStamp" value="23" />
-        </line-breakpoint>
-        <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
-          <url>file://$PROJECT_DIR$/distributions.py</url>
-          <line>36</line>
-          <option name="timeStamp" value="25" />
+          <url>file://$PROJECT_DIR$/utils.py</url>
+          <line>528</line>
+          <option name="timeStamp" value="12" />
         </line-breakpoint>
       </breakpoints>
     </breakpoint-manager>
   </component>
   <component name="com.intellij.coverage.CoverageDataManagerImpl">
-    <SUITE FILE_PATH="coverage/CRMF$train.coverage" NAME="train Coverage Results" MODIFIED="1667958078009" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
-    <SUITE FILE_PATH="coverage/CRMF$evaluate_model.coverage" NAME="evaluate_model Coverage Results" MODIFIED="1667946399037" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
-    <SUITE FILE_PATH="coverage/CRMF$a5.coverage" NAME="a5 Coverage Results" MODIFIED="1667872384207" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
-    <SUITE FILE_PATH="coverage/CRMF$distributions.coverage" NAME="distributions Coverage Results" MODIFIED="1667958311916" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
+    <SUITE FILE_PATH="coverage/CRMF$evaluate_model.coverage" NAME="evaluate_model Coverage Results" MODIFIED="1668029947581" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
+    <SUITE FILE_PATH="coverage/CRMF$train.coverage" NAME="train Coverage Results" MODIFIED="1668031030212" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
   </component>
 </project>

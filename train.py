@@ -73,17 +73,12 @@ def main(args):
             [
                 {"params": model.theta_to_s.parameters(), 'lr': args.lrvariation},
                 {"params": model.thetax_to_s.parameters(), 'lr': args.lrvariation},
-                {"params": model.theta, 'lr': args.lrvariation},
-                {"params": model.sigma, 'lr': args.lrvariation},
-
             ]
         ),
         'par': torch.optim.Adam(
                 [
                     {"params": model.theta, 'lr': args.lrpar},
                     {"params": model.sigma, 'lr': args.lrpar},
-                    {"params": model.mean, 'lr': args.lrpar},
-                    {"params": model.logvar, 'lr': args.lrpar},
                 ]
             ),
         'var': torch.optim.Adam(
@@ -95,8 +90,10 @@ def main(args):
             lr=args.lrmap,
         ),
         'inv': torch.optim.Adam(
-            model.invariant_encoder.parameters(),
-            lr=args.lrinv
+            [
+                {"params": model.invariant_encoder.parameters(), 'lr': args.lrinv},
+                {"params": [model.logvar, model.mean, model.cov], 'lr': args.lrinv},
+            ]
         ),
         'future_decoder': torch.optim.Adam(
             model.future_decoder.parameters(),
@@ -476,7 +473,7 @@ def train_all(args, model, optimizers, train_dataset, epoch, training_step, trai
                     if training_step in ['P1', 'P2', 'P4']: optimizers['var'].step()
                     if training_step in ['P4', 'P6']: optimizers['variational'].step()
                     if training_step in ['P5']: optimizers['map'].step()
-                    if training_step in ['P3', 'P4']: optimizers['par'].step()
+                    if training_step in ['P4']: optimizers['par'].step()
 
                 total_loss_meter.update(loss.item(), obs_traj.shape[1])
                 loss_meter.update(loss.item(), obs_traj.shape[1])
