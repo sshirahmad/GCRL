@@ -134,6 +134,8 @@ def main(args):
     for epoch in range(args.start_epoch, sum(args.num_epochs) + 1):
 
         training_step = get_training_step(epoch)
+        if training_step in ["P1", "P2", "P3"]:
+            continue
         logging.info(f"\n===> EPOCH: {epoch} ({training_step})")
 
         if training_step in ["P1", "P2"]:
@@ -175,6 +177,7 @@ def main(args):
 
                 if training_step == "P5":
                     train_all(args, model, optimizers, valid_dataset, epoch, training_step, val_envs_name, writer, stage='validation')
+                    metric = validate_ade(args, model, valido_dataset, epoch, training_step, writer, stage='validation o')
 
         if args.finetune:
             if metric < min_metric:
@@ -412,14 +415,13 @@ def train_all(args, model, optimizers, train_dataset, epoch, training_step, trai
                     p_loss_meter.update(predict_loss.item(), obs_traj.shape[1])
 
                 elif training_step == "P4":
-                    log_q_ygthetax, E = model(batch, training_step, env_idx=train_idx)
+                    q_ygthetax, E = model(batch, training_step, env_idx=train_idx)
 
-                    loss_sum_even_p, loss_sum_odd_p = erm_loss(log_q_ygthetax, seq_start_end, fut_traj_rel.shape[0])
+                    loss_sum_even_p, loss_sum_odd_p = erm_loss(torch.log(q_ygthetax), seq_start_end, fut_traj_rel.shape[0])
 
                     predict_loss = loss_sum_even_p + loss_sum_odd_p
 
-                    loss_sum_even_e, loss_sum_odd_e = erm_loss(torch.divide(E, torch.exp(log_q_ygthetax)),
-                                                               seq_start_end, fut_traj_rel.shape[0])
+                    loss_sum_even_e, loss_sum_odd_e = erm_loss(torch.divide(E, q_ygthetax), seq_start_end, fut_traj_rel.shape[0])
 
                     elbo_loss = loss_sum_even_e + loss_sum_odd_e
 

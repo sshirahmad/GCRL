@@ -5,6 +5,8 @@ from utils import *
 from parser_file import get_training_parser
 import seaborn as sns
 import matplotlib.pyplot as plt
+from torch.utils.data import DataLoader, ConcatDataset
+
 
 def main(args):
     train_envs_path, train_envs_name = get_envs_path(args.dataset_name, "train", args.filter_envs)
@@ -18,16 +20,19 @@ def main(args):
     for i, (train_env_path, train_env_name) in enumerate(zip(train_envs_path, train_envs_name)):
         alpha_e = set_domain_shift(args.domain_shifts, train_env_name)
 
-        dset = TrajectoryDataset(
-            train_env_path[0],
-            alpha_e=alpha_e,
-            obs_len=args.obs_len,
-            fut_len=args.fut_len,
-            skip=args.skip,
-            delim=args.delim,
-            n_coordinates=args.n_coordinates,
-            add_confidence=args.add_confidence,
-        )
+        dsets = []
+        for path in train_env_path:
+            dsets.append(TrajectoryDataset(
+                path,
+                alpha_e=alpha_e,
+                obs_len=args.obs_len,
+                fut_len=args.fut_len,
+                skip=args.skip,
+                delim=args.delim,
+                n_coordinates=args.n_coordinates,
+                add_confidence=args.add_confidence,
+            ))
+        dset = ConcatDataset(dsets).datasets[0]
 
         obs_traj.append(dset.obs_traj)
         fut_traj.append(dset.fut_traj)

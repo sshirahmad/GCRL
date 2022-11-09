@@ -19,6 +19,7 @@ def get_training_parser():
     # dataset
     parser.add_argument("--dataset_name", default="eth", type=str)
     parser.add_argument("--num_envs", default=4, type=int, help="Number of environments in the dataset")
+    parser.add_argument("--num_batch_finetune", default=4, type=int, help="Number of batches to be used in finetuning")
     parser.add_argument("--delim", default="\t")
     parser.add_argument("--obs_len", default=8, type=int)
     parser.add_argument("--fut_len", default=12, type=int)
@@ -75,7 +76,7 @@ def get_training_parser():
     # general training
     parser.add_argument("--finetune", default="", type=str)
     parser.add_argument("--num_epochs", default='150-100-400-300-200', type=lambda x: int_tuple(x, '-'))  # '150-100-150',
-    parser.add_argument("--resume", default="./models/eth/E3/CRMF_risk_irm_5.0_batch_hom_data_eth_ds_0_bk_20_ep_(150, 100, 400, 300, 100)_shuffle_true_seed_72/pretrain/P5/CRMF_epoch_1050.pth.tar",
+    parser.add_argument("--resume", default="",
                         type=str, metavar="PATH", help="path to latest checkpoint (default: none)")
     parser.add_argument("--tfdir", default='runs', type=str)
 

@@ -795,13 +795,12 @@ class CRMF(nn.Module):
                 for _ in range(self.num_samples):
                     z_vec = q_zgx.rsample()
                     s_vec = q_sgthetax.rsample()
-                    pred_traj_rel_fut = self.future_decoder(batch, torch.cat((z_vec, s_vec), dim=1), training_step,
-                                                            True)
-                    predict_loss = - torch.exp(-self.sigma[0]) * l2_loss(pred_traj_rel_fut, fut_traj_rel, mode="raw") - \
-                                   0.5 * 1 / fut_traj_rel.shape[0] * (torch.log(torch.tensor(2 * math.pi)) + self.sigma[0])
-                    first_E.append(predict_loss)
+                    p_ygz = self.future_decoder(batch, torch.cat((z_vec, s_vec), dim=1), training_step, True)
+                    proby_mat = torch.stack([torch.exp(p_ygz[i].log_prob(fut_traj_rel[i])) for i in range(fut_traj.shape[0])])
 
-                log_qygthetax = torch.mean(torch.stack(first_E), dim=0)
+                    first_E.append(torch.prod(proby_mat, dim=0))
+
+                qygthetax = torch.mean(torch.stack(first_E), dim=0)
 
                 first_E = []
                 for _ in range(self.num_samples):
@@ -813,16 +812,14 @@ class CRMF(nn.Module):
                     log_psgtheta = p_sgtheta.log_prob(s_vec)
                     log_qsgthetax = q_sgthetax.log_prob(s_vec)
 
-                    pred_traj_rel_fut = self.future_decoder(batch, torch.cat((z_vec, s_vec), dim=1), training_step,
-                                                            True)
-                    predict_loss = - torch.exp(-self.sigma[0]) * l2_loss(pred_traj_rel_fut, fut_traj_rel, mode="raw") - \
-                                   0.5 * 1 / fut_traj_rel.shape[0] * (torch.log(torch.tensor(2 * math.pi)) + self.sigma[0])
+                    p_ygz = self.future_decoder(batch, torch.cat((z_vec, s_vec), dim=1), training_step, True)
+                    proby_mat = torch.stack([torch.exp(p_ygz[i].log_prob(fut_traj_rel[i])) for i in range(fut_traj.shape[0])])
 
-                    p_ygzs = torch.exp(predict_loss)
+                    p_ygzs = torch.prod(proby_mat, dim=0)
 
                     pred_past_rel = self.past_decoder(batch, torch.cat((z_vec, s_vec), dim=1), True)
-                    reconstruction_loss = - torch.exp(-self.sigma[1]) * l2_loss(pred_past_rel, obs_traj_rel, mode="raw") - \
-                                          0.5 * 1 / obs_traj_rel.shape[0] * (torch.log(torch.tensor(2 * math.pi)) + self.sigma[1])
+                    reconstruction_loss = - l2_loss(pred_past_rel, obs_traj_rel, mode="raw") - \
+                                          0.5 * 1 / obs_traj_rel.shape[0] * torch.log(torch.tensor(2 * math.pi * 0.5))
 
                     A1 = torch.multiply(p_ygzs, reconstruction_loss)
                     A2 = torch.multiply(p_ygzs, log_pz + log_psgtheta - log_qzgx - log_qsgthetax)
@@ -831,7 +828,7 @@ class CRMF(nn.Module):
 
                 E = torch.mean(torch.stack(first_E), dim=0)
 
-                return log_qygthetax, E
+                return qygthetax, E
 
             else:
                 pred_theta = self.mapping(obs_traj_rel)
