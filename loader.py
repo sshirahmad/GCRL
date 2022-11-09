@@ -4,7 +4,7 @@ from trajectories import TrajectoryDataset, seq_collate
 from utils import set_domain_shift, set_batch_size
 
 
-def data_loader(args, paths, name, pt=False):
+def data_loader(args, paths, name, finetune=False, test=False):
     alpha_e = set_domain_shift(args.domain_shifts, name)
 
     # ETH-UCY Dataset
@@ -19,7 +19,10 @@ def data_loader(args, paths, name, pt=False):
                 skip=args.skip,
                 delim=args.delim,
                 n_coordinates=args.n_coordinates,
+                finetune_ratio=args.finetune_ratio,
                 add_confidence=args.add_confidence,
+                finetune=finetune,
+                test=test
             ))
         dset = ConcatDataset(dsets)
 
@@ -27,6 +30,7 @@ def data_loader(args, paths, name, pt=False):
         raise ValueError('Unrecognized dataset name "%s"' % args.dataset_name)
 
     batch_size = set_batch_size(args.batch_method, args.batch_size, name)
+
     loader = DataLoader(
         dset,
         batch_size=batch_size,

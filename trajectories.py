@@ -26,7 +26,10 @@ class TrajectoryDataset(Dataset):
             min_ped=1,
             delim="\t",
             n_coordinates=2,
+            finetune_ratio=0.2,
             add_confidence=True,
+            finetune=False,
+            test=False
     ):
         """
         Args:
@@ -115,6 +118,18 @@ class TrajectoryDataset(Dataset):
                 num_peds_in_seq.append(num_peds_considered)  # list number of pedestrians per seq
                 seq_list.append(curr_seq[:num_peds_considered])  # list of 3d array: ped X coord X frame
                 seq_list_rel.append(curr_seq_rel[:num_peds_considered])  # list of 3d array: ped X rel_coord X frame
+
+        if finetune:
+            seq_num = round(finetune_ratio * len(seq_list))
+            seq_list = seq_list[:seq_num]
+            seq_list_rel = seq_list_rel[:seq_num]
+            num_peds_in_seq = num_peds_in_seq[:seq_num]
+
+        if test:
+            seq_num = round(finetune_ratio * len(seq_list))
+            seq_list = seq_list[seq_num:]
+            seq_list_rel = seq_list_rel[seq_num:]
+            num_peds_in_seq = num_peds_in_seq[seq_num:]
 
         self.num_seq = len(seq_list)
         seq_list = np.concatenate(seq_list, axis=0)  # 3d array: (ped X coord X frame) seq by seq

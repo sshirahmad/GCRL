@@ -36,23 +36,25 @@ def main(args):
                    zip(val_envs_path, val_envs_name)]
 
     logging.info("Initializing Validation O Set")
-    valo_envs_path, valo_envs_name = get_envs_path(args.dataset_name, "test",
-                                                   args.filter_envs)  # +'-'+args.filter_envs_pretrain)
-    valo_loaders = [data_loader(args, valo_env_path, valo_env_name) for valo_env_path, valo_env_name in
-                    zip(valo_envs_path, valo_envs_name)]
+    valo_envs_path, valo_envs_name = get_envs_path(args.dataset_name, "test", args.filter_envs)
+
+    valo_loaders = [data_loader(args, valo_env_path, valo_env_name, test=True) for valo_env_path, valo_env_name in zip(valo_envs_path, valo_envs_name)]
+    finetune_loaders = [data_loader(args, valo_env_path, valo_env_name, finetune=True) for valo_env_path, valo_env_name in zip(valo_envs_path, valo_envs_name)]
 
     # training routine length
     num_batches_train = min([len(train_loader) for train_loader in train_loaders])
     num_batches_val = min([len(val_loader) for val_loader in val_loaders])
     num_batches_valo = min([len(valo_loader) for valo_loader in valo_loaders])
+    num_batches_finetune= min([len(finetune_loader) for finetune_loader in finetune_loaders])
 
     # bring different dataset all together for simplicity of the next functions
     train_dataset = {'loaders': train_loaders, 'names': train_envs_name, 'num_batches': num_batches_train}
     valid_dataset = {'loaders': val_loaders, 'names': val_envs_name, 'num_batches': num_batches_val}
     valido_dataset = {'loaders': valo_loaders, 'names': valo_envs_name, 'num_batches': num_batches_valo}
+    finetune_dataset = {'loaders': finetune_loaders, 'names': valo_envs_name, 'num_batches': num_batches_finetune}
 
-    for dataset, ds_name in zip((train_dataset, valid_dataset, valido_dataset),
-                                ('Train', 'Validation', 'Validation O')):
+    for dataset, ds_name in zip((train_dataset, valid_dataset, valido_dataset, finetune_dataset),
+                                ('Train', 'Validation', 'Validation O', 'Finetune')):
         print(ds_name + ' dataset: ', dataset)
 
     args.n_units = (
@@ -76,6 +78,14 @@ def main(args):
 
             ]
         ),
+        'par': torch.optim.Adam(
+                [
+                    {"params": model.theta, 'lr': args.lrpar},
+                    {"params": model.sigma, 'lr': args.lrpar},
+                    {"params": model.mean, 'lr': args.lrpar},
+                    {"params": model.logvar, 'lr': args.lrpar},
+                ]
+            ),
         'var': torch.optim.Adam(
             model.variant_encoder.parameters(),
             lr=args.lrvar,
@@ -85,11 +95,8 @@ def main(args):
             lr=args.lrmap,
         ),
         'inv': torch.optim.Adam(
-            [
-                {"params": model.invariant_encoder.parameters(), 'lr': args.lrinv},
-                {"params": [model.mean, model.logvar], 'lr': args.lrinv},
-            ]
-
+            model.invariant_encoder.parameters(),
+            lr=args.lrinv
         ),
         'future_decoder': torch.optim.Adam(
             model.future_decoder.parameters(),
@@ -106,10 +113,10 @@ def main(args):
         model.cuda()
 
     # TRAINING HAPPENS IN 4 STEPS:
-    assert (len(args.num_epochs) == 5)
+    assert (len(args.num_epochs) == 6)
     # 1. Train the invariant encoder along with the future decoder to learn z
     # 2. Train everything except invariant encoder to learn the other variant latent variables
-    training_steps = {f'P{i}': [sum(args.num_epochs[:i - 1]), sum(args.num_epochs[:i])] for i in range(1, 7)}
+    training_steps = {f'P{i}': [sum(args.num_epochs[:i - 1]), sum(args.num_epochs[:i])] for i in range(1, 8)}
     print(training_steps)
 
     def get_training_step(epoch):
@@ -134,8 +141,6 @@ def main(args):
     for epoch in range(args.start_epoch, sum(args.num_epochs) + 1):
 
         training_step = get_training_step(epoch)
-        if training_step in ["P1", "P2", "P3"]:
-            continue
         logging.info(f"\n===> EPOCH: {epoch} ({training_step})")
 
         if training_step in ["P1", "P2"]:
@@ -157,29 +162,34 @@ def main(args):
             model.future_decoder))
             freeze(False, (model.mapping,))
 
-        if args.finetune:
-            freeze(True, (
-            model.invariant_encoder, model.variant_encoder, model.past_decoder, model.future_decoder, model.mapping))
+        elif training_step == 'P6':
+            freeze(True, (model.invariant_encoder, model.variant_encoder, model.past_decoder, model.future_decoder, model.mapping))
             freeze(False, (model.theta_to_s, model.thetax_to_s))
 
-        train_all(args, model, optimizers, train_dataset, epoch, training_step, train_envs_name, writer,
-                  stage='training')
+        if training_step == "P6":
+            train_all(args, model, optimizers, finetune_dataset, epoch, training_step, valo_envs_name, writer, stage='training')
+        else:
+            train_all(args, model, optimizers, train_dataset, epoch, training_step, train_envs_name, writer, stage='training')
 
         if training_step not in ["P1", "P2"]:
             with torch.no_grad():
-                if training_step == "P4":
-                    validate_ade(args, model, valid_dataset, epoch, training_step, writer, stage='validation')
-                    validate_ade(args, model, train_dataset, epoch, training_step, writer, stage='training')
-                elif training_step == "P3":
+                if training_step == "P3":
                     metric = validate_ade(args, model, valido_dataset, epoch, training_step, writer, stage='validation o')
                     validate_ade(args, model, valid_dataset, epoch, training_step, writer, stage='validation')
                     validate_ade(args, model, train_dataset, epoch, training_step, writer, stage='training')
 
-                if training_step == "P5":
+                elif training_step == "P4":
+                    validate_ade(args, model, valid_dataset, epoch, training_step, writer, stage='validation')
+                    validate_ade(args, model, train_dataset, epoch, training_step, writer, stage='training')
+
+                elif training_step == "P5":
                     train_all(args, model, optimizers, valid_dataset, epoch, training_step, val_envs_name, writer, stage='validation')
                     metric = validate_ade(args, model, valido_dataset, epoch, training_step, writer, stage='validation o')
 
-        if args.finetune:
+                else:
+                    metric = validate_ade(args, model, valido_dataset, epoch, training_step, writer, stage='validation o')
+
+        if training_step == "P6":
             if metric < min_metric:
                 min_metric = metric
                 save_all_model(args, model, model_name, optimizers, metric, epoch, training_step)
@@ -432,12 +442,28 @@ def train_all(args, model, optimizers, train_dataset, epoch, training_step, trai
                     e_loss_meter.update(elbo_loss.item(), obs_traj.shape[1])
                     p_loss_meter.update(predict_loss.item(), obs_traj.shape[1])
 
-                else:
+                elif training_step == "P5":
                     pred_theta = model(batch, training_step)
 
                     l2_loss_pred = l2_loss(pred_theta, model.theta[train_idx], mode="sum") / pred_theta.shape[0]
 
                     loss = l2_loss_pred
+
+                else:
+                    q_ygthetax, E = model(batch, training_step)
+
+                    loss_sum_even_p, loss_sum_odd_p = erm_loss(torch.log(q_ygthetax), seq_start_end, fut_traj_rel.shape[0])
+                    predict_loss = loss_sum_even_p + loss_sum_odd_p
+
+                    loss_sum_even_e, loss_sum_odd_e = erm_loss(torch.divide(E, q_ygthetax), seq_start_end, fut_traj_rel.shape[0])
+                    elbo_loss = loss_sum_even_e + loss_sum_odd_e
+
+                    stacked_loss = torch.cat((-predict_loss, -elbo_loss))
+
+                    loss = torch.sum(stacked_loss)
+
+                    e_loss_meter.update(elbo_loss.item(), obs_traj.shape[1])
+                    p_loss_meter.update(predict_loss.item(), obs_traj.shape[1])
 
                 # backpropagate if needed
                 if stage == 'training' and update:
@@ -448,8 +474,9 @@ def train_all(args, model, optimizers, train_dataset, epoch, training_step, trai
                     if training_step in ['P3', 'P4']: optimizers['future_decoder'].step()
                     if training_step in ['P3', 'P4']: optimizers['past_decoder'].step()
                     if training_step in ['P1', 'P2', 'P4']: optimizers['var'].step()
-                    if training_step in ['P4']: optimizers['variational'].step()
+                    if training_step in ['P4', 'P6']: optimizers['variational'].step()
                     if training_step in ['P5']: optimizers['map'].step()
+                    if training_step in ['P3', 'P4']: optimizers['par'].step()
 
                 total_loss_meter.update(loss.item(), obs_traj.shape[1])
                 loss_meter.update(loss.item(), obs_traj.shape[1])
@@ -475,8 +502,13 @@ def train_all(args, model, optimizers, train_dataset, epoch, training_step, trai
             writer.add_scalar(f"theta_zara2/{stage}", torch.norm(model.theta[3]), epoch)
             writer.add_scalar(f"sigma_pred/{stage}", model.sigma[0], epoch)
             writer.add_scalar(f"sigma_reconstruct/{stage}", model.sigma[1], epoch)
-        else:
+        elif training_step == "P5":
             writer.add_scalar(f"theta_loss/{stage}", total_loss_meter.avg, epoch)
+
+        else:
+            writer.add_scalar(f"variational_loss/{stage}", total_loss_meter.avg, epoch)
+            writer.add_scalar(f"elbo_loss/{stage}", e_loss_meter.avg, epoch)
+            writer.add_scalar(f"pred_loss/{stage}", p_loss_meter.avg, epoch)
 
 
 def validate_ade(args, model, valid_dataset, epoch, training_step, writer, stage, write=True):

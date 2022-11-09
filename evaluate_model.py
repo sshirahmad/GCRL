@@ -175,8 +175,7 @@ def main(args):
     os.environ["CUDA_VISIBLE_DEVICES"] = args.gpu_num
     generator = get_generator(args)
     valo_envs_path, valo_envs_name = get_envs_path(args.dataset_name, "test", args.filter_envs)  # +'-'+args.filter_envs_pretrain)
-    loaders = [data_loader(args, valo_env_path, valo_env_name) for valo_env_path, valo_env_name in
-                   zip(valo_envs_path, valo_envs_name)]
+    loaders = [data_loader(args, valo_env_path, valo_env_name, test=True) for valo_env_path, valo_env_name in zip(valo_envs_path, valo_envs_name)]
     logging.info('Model: {}'.format(args.resume))
     logging.info('Dataset: {}'.format(args.dataset_name))
     logging.info('Eval shift: {}'.format(args.domain_shifts))

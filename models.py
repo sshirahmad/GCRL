@@ -830,10 +830,58 @@ class CRMF(nn.Module):
 
                 return qygthetax, E
 
-            else:
+            elif training_step == "P5":
                 pred_theta = self.mapping(obs_traj_rel)
 
                 return pred_theta
+
+            else:
+                pred_theta = self.mapping(obs_traj_rel)
+                concat_hidden_states = self.variant_encoder(batch, training_step)
+
+                first_E = []
+                q_zgx = self.invariant_encoder(batch, training_step)
+                p_sgtheta = self.theta_to_s(pred_theta, None)
+                q_sgthetax = self.thetax_to_s(pred_theta, concat_hidden_states)
+
+                # calculate q(y|theta, x)
+                for _ in range(self.num_samples):
+                    z_vec = q_zgx.rsample()
+                    s_vec = q_sgthetax.rsample()
+                    p_ygz = self.future_decoder(batch, torch.cat((z_vec, s_vec), dim=1), training_step, True)
+                    proby_mat = torch.stack([torch.exp(p_ygz[i].log_prob(fut_traj_rel[i])) for i in range(fut_traj.shape[0])])
+
+                    first_E.append(torch.prod(proby_mat, dim=0))
+
+                qygthetax = torch.mean(torch.stack(first_E), dim=0)
+
+                first_E = []
+                for _ in range(self.num_samples):
+                    z_vec = q_zgx.rsample()
+                    s_vec = q_sgthetax.rsample()
+
+                    log_pz = self.pz.log_prob(z_vec)
+                    log_qzgx = q_zgx.log_prob(z_vec)
+                    log_psgtheta = p_sgtheta.log_prob(s_vec)
+                    log_qsgthetax = q_sgthetax.log_prob(s_vec)
+
+                    p_ygz = self.future_decoder(batch, torch.cat((z_vec, s_vec), dim=1), training_step, True)
+                    proby_mat = torch.stack([torch.exp(p_ygz[i].log_prob(fut_traj_rel[i])) for i in range(fut_traj.shape[0])])
+
+                    p_ygzs = torch.prod(proby_mat, dim=0)
+
+                    pred_past_rel = self.past_decoder(batch, torch.cat((z_vec, s_vec), dim=1), True)
+                    reconstruction_loss = - l2_loss(pred_past_rel, obs_traj_rel, mode="raw") - \
+                                          0.5 * 1 / obs_traj_rel.shape[0] * torch.log(torch.tensor(2 * math.pi * 0.5))
+
+                    A1 = torch.multiply(p_ygzs, reconstruction_loss)
+                    A2 = torch.multiply(p_ygzs, log_pz + log_psgtheta - log_qzgx - log_qsgthetax)
+
+                    first_E.append(A1 + A2)
+
+                E = torch.mean(torch.stack(first_E), dim=0)
+
+                return qygthetax, E
 
         else:
             if training_step == "P3":

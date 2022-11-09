@@ -530,6 +530,10 @@ def load_all_model(args, model, optimizers):
             optimizers['variational'].load_state_dict(checkpoint['optimizers']['variational'])
             update_lr(optimizers['variational'], args.lrvariation)
 
+        if optimizers != None:
+            optimizers['par'].load_state_dict(checkpoint['optimizers']['par'])
+            update_lr(optimizers['par'], args.lrpar)
+
         logging.info("=> loaded checkpoint '{}' (epoch {})".format(model_path, checkpoint["epoch"]))
 
     else:
