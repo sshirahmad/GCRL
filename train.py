@@ -134,8 +134,6 @@ def main(args):
     for epoch in range(args.start_epoch, sum(args.num_epochs) + 1):
 
         training_step = get_training_step(epoch)
-        if training_step in ["P1", "P2"]:
-            continue
         logging.info(f"\n===> EPOCH: {epoch} ({training_step})")
 
         if training_step in ["P1", "P2"]:
@@ -433,7 +431,6 @@ def train_all(args, model, optimizers, train_dataset, epoch, training_step, trai
                     p_loss_meter.update(predict_loss.item(), obs_traj.shape[1])
 
                 else:
-
                     pred_theta = model(batch, training_step)
 
                     l2_loss_pred = l2_loss(pred_theta, model.theta[train_idx], mode="sum") / pred_theta.shape[0]
