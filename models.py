@@ -553,7 +553,7 @@ class regressor(nn.Module):
         super(regressor, self).__init__()
 
         if hidden_dims is None:
-            hidden_dims = [16, 32]
+            hidden_dims = [32, 64]
 
         modules = []
         in_channels = n_coordinates * obs_len

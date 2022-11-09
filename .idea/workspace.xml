@@ -1,13 +1,9 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project version="4">
   <component name="ChangeListManager">
-    <list default="true" id="80c1dfbd-0610-4b22-a92f-a3e79101e880" name="Changes" comment="Removed expectation during inference.&#10;Corrected log approximation in expectation">
+    <list default="true" id="80c1dfbd-0610-4b22-a92f-a3e79101e880" name="Changes" comment="Working on finetune">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/distributions.py" beforeDir="false" afterPath="$PROJECT_DIR$/distributions.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/log/train.log" beforeDir="false" afterPath="$PROJECT_DIR$/log/train.log" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/models.py" beforeDir="false" afterPath="$PROJECT_DIR$/models.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/parser_file.py" beforeDir="false" afterPath="$PROJECT_DIR$/parser_file.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/train.py" beforeDir="false" afterPath="$PROJECT_DIR$/train.py" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -161,7 +157,7 @@
       <workItem from="1667780202864" duration="8363000" />
       <workItem from="1667843155125" duration="336000" />
       <workItem from="1667844880378" duration="23592000" />
-      <workItem from="1667927663898" duration="27170000" />
+      <workItem from="1667927663898" duration="27780000" />
     </task>
     <task id="LOCAL-00001" summary="Added P5 and solved unstability in P4">
       <created>1667592112650</created>
@@ -296,7 +292,14 @@
       <option name="project" value="LOCAL" />
       <updated>1667954442374</updated>
     </task>
-    <option name="localTasksCounter" value="20" />
+    <task id="LOCAL-00020" summary="Working on finetune">
+      <created>1667958419705</created>
+      <option name="number" value="00020" />
+      <option name="presentableId" value="LOCAL-00020" />
+      <option name="project" value="LOCAL" />
+      <updated>1667958419705</updated>
+    </task>
+    <option name="localTasksCounter" value="21" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
@@ -317,7 +320,8 @@
     <MESSAGE value="Added P5 and solved unstability in P4" />
     <MESSAGE value="Removed expectation during inference" />
     <MESSAGE value="Removed expectation during inference.&#10;Corrected log approximation in expectation" />
-    <option name="LAST_COMMIT_MESSAGE" value="Removed expectation during inference.&#10;Corrected log approximation in expectation" />
+    <MESSAGE value="Working on finetune" />
+    <option name="LAST_COMMIT_MESSAGE" value="Working on finetune" />
   </component>
   <component name="XDebuggerManager">
     <breakpoint-manager>
@@ -328,19 +332,9 @@
           <option name="timeStamp" value="11" />
         </line-breakpoint>
         <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
-          <url>file://$PROJECT_DIR$/train.py</url>
-          <line>44</line>
-          <option name="timeStamp" value="22" />
-        </line-breakpoint>
-        <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
           <url>file://$PROJECT_DIR$/loader.py</url>
           <line>12</line>
           <option name="timeStamp" value="23" />
-        </line-breakpoint>
-        <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
-          <url>file://$PROJECT_DIR$/train.py</url>
-          <line>28</line>
-          <option name="timeStamp" value="24" />
         </line-breakpoint>
         <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
           <url>file://$PROJECT_DIR$/distributions.py</url>
