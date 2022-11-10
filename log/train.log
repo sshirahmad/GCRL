@@ -1,15 +1,19 @@
-2022-11-10 15:58:14,032:INFO: Initializing Training Set
-2022-11-10 15:58:17,956:INFO: Initializing Validation Set
-2022-11-10 15:58:18,389:INFO: Initializing Validation O Set
-2022-11-10 15:58:20,734:INFO: => loaded checkpoint './models/E4/P3/CRMF_epoch_550.pth.tar' (epoch 551)
-2022-11-10 15:58:20,735:INFO: 
-===> EPOCH: 551 (P4)
-2022-11-10 15:58:20,735:INFO: - Computing loss (training)
-2022-11-10 15:58:32,076:INFO: Dataset: hotel               Batch: 1/8	Loss 52.3551 (52.3551)
-2022-11-10 15:58:33,855:INFO: Dataset: hotel               Batch: 2/8	Loss 52.6260 (52.4878)
-2022-11-10 15:58:35,666:INFO: Dataset: hotel               Batch: 3/8	Loss 52.6515 (52.5435)
-2022-11-10 15:58:37,357:INFO: Dataset: hotel               Batch: 4/8	Loss 50.4099 (51.9718)
-2022-11-10 15:58:39,014:INFO: Dataset: hotel               Batch: 5/8	Loss 51.9046 (51.9587)
-2022-11-10 15:58:40,679:INFO: Dataset: hotel               Batch: 6/8	Loss 49.5427 (51.5394)
-2022-11-10 15:58:42,387:INFO: Dataset: hotel               Batch: 7/8	Loss 47.4183 (50.9587)
-2022-11-10 15:58:44,032:INFO: Dataset: hotel               Batch: 8/8	Loss 10.4016 (49.5140)
+2022-11-10 16:19:38,597:INFO: Initializing Training Set
+2022-11-10 16:19:42,411:INFO: Initializing Validation Set
+2022-11-10 16:19:42,877:INFO: Initializing Validation O Set
+2022-11-10 16:19:45,381:INFO: => loaded checkpoint './models/E4/P5/CRMF_epoch_554.pth.tar' (epoch 555)
+2022-11-10 16:19:45,382:INFO: 
+===> EPOCH: 555 (P6)
+2022-11-10 16:19:45,383:INFO: - Computing loss (training)
+2022-11-10 16:19:54,799:INFO: Dataset: eth                 Batch: 1/1	Loss 20.6995 (20.6995)
+2022-11-10 16:19:55,690:INFO: - Computing ADE (validation o)
+2022-11-10 16:20:03,742:INFO: 		 ADE on eth                       dataset:	 3.5596587657928467
+2022-11-10 16:20:03,742:INFO: Average validation o:	ADE  3.5597	FDE  6.0826
+2022-11-10 16:20:03,774:INFO:  --> Model Saved in ./models/E4//P6/CRMF_epoch_555.pth.tar
+2022-11-10 16:20:03,774:INFO: 
+===> EPOCH: 556 (P6)
+2022-11-10 16:20:03,775:INFO: - Computing loss (training)
+2022-11-10 16:20:12,430:INFO: Dataset: eth                 Batch: 1/1	Loss 21.1351 (21.1351)
+2022-11-10 16:20:13,345:INFO: - Computing ADE (validation o)
+2022-11-10 16:20:21,788:INFO: 		 ADE on eth                       dataset:	 3.5682411193847656
+2022-11-10 16:20:21,789:INFO: Average validation o:	ADE  3.5682	FDE  6.1425
