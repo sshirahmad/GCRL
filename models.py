@@ -714,7 +714,7 @@ class simple_mapping(nn.Module):
             start = 0
             for j in range(covmat.shape[1]):
                 length = self.s_dim - j - 1
-                covmat[:, j + 1:, j] = cov[:, start: start + length]
+                covmat[j + 1:, j] = cov[start: start + length]
                 start += length
 
             ps = MultivariateNormal(mu, scale_tril=covmat)

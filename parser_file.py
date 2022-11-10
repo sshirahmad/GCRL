@@ -76,8 +76,8 @@ def get_training_parser():
 
     # general training
     parser.add_argument("--finetune", default="", type=str)
-    parser.add_argument("--num_epochs", default='150-100-400-300-300-50', type=lambda x: int_tuple(x, '-'))  # '150-100-150',
-    parser.add_argument("--resume", default="./models/E4/P3/CRMF_epoch_550I'.pth.tar",
+    parser.add_argument("--num_epochs", default='150-100-300-2-2-2', type=lambda x: int_tuple(x, '-'))  # '150-100-150',
+    parser.add_argument("--resume", default="./models/E4/P3/CRMF_epoch_550.pth.tar",
                         type=str, metavar="PATH", help="path to latest checkpoint (default: none)")
 
     # learning rates

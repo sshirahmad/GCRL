@@ -484,7 +484,7 @@ def load_all_model(args, model, optimizers):
     model_path = args.resume
 
     if os.path.isfile(model_path):
-        checkpoint = torch.load(model_path, map_location='cpu')
+        checkpoint = torch.load(model_path)
         args.start_epoch = checkpoint['epoch']
 
         models_checkpoint = checkpoint['state_dicts']

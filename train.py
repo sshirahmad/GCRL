@@ -45,7 +45,7 @@ def main(args):
     num_batches_train = min([len(train_loader) for train_loader in train_loaders])
     num_batches_val = min([len(val_loader) for val_loader in val_loaders])
     num_batches_valo = min([len(valo_loader) for valo_loader in valo_loaders])
-    num_batches_finetune= min([len(finetune_loader) for finetune_loader in finetune_loaders])
+    num_batches_finetune = min([len(finetune_loader) for finetune_loader in finetune_loaders])
 
     # bring different dataset all together for simplicity of the next functions
     train_dataset = {'loaders': train_loaders, 'names': train_envs_name, 'num_batches': num_batches_train}
@@ -415,6 +415,7 @@ def train_all(args, model, optimizers, train_dataset, epoch, training_step, trai
 
                     # invariance constraint (IRM)
                     if args.irm and stage == 'training':
+
                         loss += irm_loss(loss_sum_even_e + loss_sum_even_p, loss_sum_odd_e + loss_sum_odd_p, dummy_w,
                                          args)
 
