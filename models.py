@@ -687,6 +687,7 @@ class simple_mapping(nn.Module):
         self.mapping = nn.Sequential(*modules)
         self.fc_mu = nn.Linear(hidden_dims[-1], s_dim)
         self.fc_logvar = nn.Linear(hidden_dims[-1], s_dim)
+        self.fc_cov = nn.Linear(hidden_dims[-1], (s_dim * s_dim - s_dim) // 2)
 
         self._initialize_weights()
 
@@ -705,7 +706,16 @@ class simple_mapping(nn.Module):
         if hidden_states is None:
             mu = self.fc_mu(self.mapping(theta))
             logvar = self.fc_logvar(self.mapping(theta))
-            ps = MultivariateNormal(mu, torch.diag_embed(torch.exp(logvar)))
+            cov = self.fc_cov(self.mapping(theta))
+            covmat = torch.diag_embed(torch.exp(logvar))
+
+            start = 0
+            for j in range(covmat.shape[1]):
+                length = self.z_dim - j - 1
+                covmat[:, j + 1:, j] = cov[:, start: start + length]
+                start += length
+
+            ps = MultivariateNormal(mu, scale_tril=covmat)
         else:
             if len(theta.size()) == 1:
                 theta_rep = theta.repeat(hidden_states.shape[0], 1)
@@ -714,7 +724,16 @@ class simple_mapping(nn.Module):
             vec = torch.cat((theta_rep, hidden_states), dim=1)
             mu = self.fc_mu(self.mapping(vec))
             logvar = self.fc_logvar(self.mapping(vec))
-            ps = MultivariateNormal(mu, torch.diag_embed(torch.exp(logvar)))
+            cov = self.fc_cov(self.mapping(theta))
+            covmat = torch.diag_embed(torch.exp(logvar))
+
+            start = 0
+            for j in range(covmat.shape[1]):
+                length = self.z_dim - j - 1
+                covmat[:, j + 1:, j] = cov[:, start: start + length]
+                start += length
+
+            ps = MultivariateNormal(mu, scale_tril=covmat)
 
         return ps
 
