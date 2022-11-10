@@ -260,6 +260,7 @@ class STGAT_encoder_inv(nn.Module):
             mu = self.fc_mu(self.mapping(encoded_before_noise_hidden))
             logvar = self.fc_var(self.mapping(encoded_before_noise_hidden))
             cov = self.fc_cov(self.mapping(encoded_before_noise_hidden))
+
             covmat = torch.diag_embed(torch.exp(logvar))
             start = 0
             for j in range(covmat.shape[1]):
@@ -684,6 +685,7 @@ class simple_mapping(nn.Module):
             )
             in_channels = h_dim
 
+        self.s_dim = s_dim
         self.mapping = nn.Sequential(*modules)
         self.fc_mu = nn.Linear(hidden_dims[-1], s_dim)
         self.fc_logvar = nn.Linear(hidden_dims[-1], s_dim)
@@ -707,11 +709,11 @@ class simple_mapping(nn.Module):
             mu = self.fc_mu(self.mapping(theta))
             logvar = self.fc_logvar(self.mapping(theta))
             cov = self.fc_cov(self.mapping(theta))
-            covmat = torch.diag_embed(torch.exp(logvar))
 
+            covmat = torch.diag_embed(torch.exp(logvar))
             start = 0
             for j in range(covmat.shape[1]):
-                length = self.z_dim - j - 1
+                length = self.s_dim - j - 1
                 covmat[:, j + 1:, j] = cov[:, start: start + length]
                 start += length
 
@@ -724,12 +726,12 @@ class simple_mapping(nn.Module):
             vec = torch.cat((theta_rep, hidden_states), dim=1)
             mu = self.fc_mu(self.mapping(vec))
             logvar = self.fc_logvar(self.mapping(vec))
-            cov = self.fc_cov(self.mapping(theta))
-            covmat = torch.diag_embed(torch.exp(logvar))
+            cov = self.fc_cov(self.mapping(vec))
 
+            covmat = torch.diag_embed(torch.exp(logvar))
             start = 0
             for j in range(covmat.shape[1]):
-                length = self.z_dim - j - 1
+                length = self.s_dim - j - 1
                 covmat[:, j + 1:, j] = cov[:, start: start + length]
                 start += length
 
