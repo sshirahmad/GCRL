@@ -132,7 +132,7 @@ def main(args):
 
     min_metric = 1e10
     metric = min_metric
-    prior = False
+    prior = True
     for epoch in range(args.start_epoch, sum(args.num_epochs) + 1):
 
         training_step = get_training_step(epoch)
@@ -148,7 +148,7 @@ def main(args):
                 prior = not prior
             if prior:
                 freeze(True, (model.encoder, model.thetax_to_s, model.thetax_to_z, model.future_decoder, model.past_decoder, model.mapping))
-                freeze(False, (model.theta_to_s))
+                freeze(False, (model.theta_to_s,))
                 train_all(args, model, optimizers, train_dataset, epoch, training_step, train_envs_name, writer, prior, stage='training')
             else:
                 freeze(True, (model.theta_to_s, model.mapping))
@@ -162,7 +162,7 @@ def main(args):
 
         elif training_step == 'P5':
             freeze(True, (model.invariant_encoder, model.variant_encoder, model.past_decoder, model.future_decoder, model.mapping))
-            freeze(False, (model.thetax_to_s))
+            freeze(False, (model.thetax_to_s,))
             train_all(args, model, optimizers, finetune_dataset, epoch, training_step, valo_envs_name, writer, prior, stage='training')
 
         if training_step not in ["P1", "P2"]:
