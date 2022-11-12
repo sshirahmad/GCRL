@@ -147,8 +147,8 @@ def main(args):
             if epoch % 20 == 0:
                 prior = not prior
             if prior:
-                freeze(True, (model.encoder, model.thetax_to_s, model.thetax_to_z, model.future_decoder, model.past_decoder, model.mapping))
-                freeze(False, (model.theta_to_s,))
+                freeze(True, (model.encoder, model.thetax_to_s, model.thetax_to_z, model.mapping))
+                freeze(False, (model.theta_to_s, model.future_decoder, model.past_decoder))
                 train_all(args, model, optimizers, train_dataset, epoch, training_step, train_envs_name, writer, prior, stage='training')
             else:
                 freeze(True, (model.theta_to_s, model.mapping))
