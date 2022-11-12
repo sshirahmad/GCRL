@@ -341,10 +341,7 @@ def validate_ade(args, model, valid_dataset, epoch, training_step, writer, stage
                 batch = [tensor.cuda() for tensor in batch]
                 (obs_traj, fut_traj, _, _, _) = batch
 
-                if training_step == "P3":
-                    pred_fut_traj_rel = model(batch, training_step)
-                else:
-                    pred_fut_traj_rel = model(batch, training_step, env_idx=val_idx)
+                pred_fut_traj_rel = model(batch, training_step, env_idx=val_idx)
 
                 # from relative path to absolute path
                 pred_fut_traj = relative_to_abs(pred_fut_traj_rel, obs_traj[-1, :, :2])
