@@ -161,7 +161,7 @@ def main(args):
             train_all(args, model, optimizers, train_dataset, epoch, training_step, train_envs_name, writer, prior, stage='training')
 
         elif training_step == 'P5':
-            freeze(True, (model.invariant_encoder, model.variant_encoder, model.past_decoder, model.future_decoder, model.mapping))
+            freeze(True, (model.encoder, model.theta_to_s, model.thetax_to_z, model.past_decoder, model.future_decoder, model.mapping))
             freeze(False, (model.thetax_to_s,))
             train_all(args, model, optimizers, finetune_dataset, epoch, training_step, valo_envs_name, writer, prior, stage='training')
 
