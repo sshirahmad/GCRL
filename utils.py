@@ -440,18 +440,16 @@ def save_all_model(args, model, model_name, optimizers, metric, epoch, training_
     checkpoint = {
         'epoch': epoch + 1,
         'state_dicts': {
-            'variant_encoder': model.variant_encoder.state_dict(),
+            'encoder': model.encoder.state_dict(),
             'theta_to_s': model.theta_to_s.state_dict(),
             'thetax_to_s': model.thetax_to_s.state_dict(),
-            'invariant_encoder': model.invariant_encoder.state_dict(),
+            'thetax_to_z': model.thetax_to_s.state_dict(),
             'future_decoder': model.future_decoder.state_dict(),
             'past_decoder': model.past_decoder.state_dict(),
             'mapping': model.mapping.state_dict(),
             'theta': model.theta,
-            'sigma': model.sigma,
             'mean': model.mean,
             'logvar': model.logvar,
-            'cov': model.cov,
         },
         'optimizers': {
             key: val.state_dict() for key, val in optimizers.items()
@@ -489,13 +487,6 @@ def load_all_model(args, model, optimizers):
 
         models_checkpoint = checkpoint['state_dicts']
 
-        # invariant encoder
-        model.invariant_encoder.load_state_dict(models_checkpoint['invariant_encoder'])
-        if optimizers != None:
-            optimizers['inv'].load_state_dict(checkpoint['optimizers']['inv'])
-            update_lr(optimizers['inv'], args.lrinv)
-           # if args.start_epoch >= args.num_epochs[0] + args.num_epochs[1]: update_lr(optimizers['inv'], 5e-3)
-
         # future decoder
         model.future_decoder.load_state_dict(models_checkpoint['future_decoder'])
         if optimizers != None:
@@ -508,11 +499,11 @@ def load_all_model(args, model, optimizers):
             optimizers['past_decoder'].load_state_dict(checkpoint['optimizers']['past_decoder'])
             update_lr(optimizers['past_decoder'], args.lrpast)
 
-        # variant encoder
-        model.variant_encoder.load_state_dict(models_checkpoint['variant_encoder'])
+        # encoder
+        model.encoder.load_state_dict(models_checkpoint['encoder'])
         if optimizers != None:
-            optimizers['var'].load_state_dict(checkpoint['optimizers']['var'])
-            update_lr(optimizers['var'], args.lrvar)
+            optimizers['encoder'].load_state_dict(checkpoint['optimizers']['encoder'])
+            update_lr(optimizers['encoder'], args.lrvar)
 
         # Regressor
         model.mapping.load_state_dict(models_checkpoint['mapping'])
@@ -523,11 +514,10 @@ def load_all_model(args, model, optimizers):
         # variational models
         model.theta_to_s.load_state_dict(models_checkpoint['theta_to_s'])
         model.thetax_to_s.load_state_dict(models_checkpoint['thetax_to_s'])
+        model.thetax_to_z.load_state_dict(models_checkpoint['thetax_to_z'])
         model.theta.data = models_checkpoint['theta'].data
-        model.sigma.data = models_checkpoint['sigma'].data
         model.mean.data = models_checkpoint['mean'].data
         model.logvar.data = models_checkpoint['logvar'].data
-        model.cov.data = models_checkpoint['cov'].data
         if optimizers != None:
             optimizers['variational'].load_state_dict(checkpoint['optimizers']['variational'])
             update_lr(optimizers['variational'], args.lrvariation)
