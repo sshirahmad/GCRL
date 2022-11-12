@@ -148,7 +148,7 @@ def main(args):
                 prior = not prior
             if prior:
                 freeze(True, (model.encoder, model.thetax_to_s, model.thetax_to_z, model.mapping))
-                freeze(False, (model.theta_to_s, model.future_decoder, model.past_decoder))
+                freeze(False, (model.theta_to_s, model.future_decoder, model.past_decoder))  # ToDO freeze decoders?
                 train_all(args, model, optimizers, train_dataset, epoch, training_step, train_envs_name, writer, prior, stage='training')
             else:
                 freeze(True, (model.theta_to_s, model.mapping))
@@ -312,6 +312,8 @@ def train_all(args, model, optimizers, train_dataset, epoch, training_step, trai
         writer.add_scalar(f"theta_univ/{stage}", torch.norm(model.theta[1]), epoch)
         writer.add_scalar(f"theta_zara1/{stage}", torch.norm(model.theta[2]), epoch)
         writer.add_scalar(f"theta_zara2/{stage}", torch.norm(model.theta[3]), epoch)
+        writer.add_scalar(f"mean/{stage}", torch.norm(model.mean), epoch)
+        writer.add_scalar(f"log_var/{stage}", torch.norm(model.logvar), epoch)
     elif training_step == "P4":
         writer.add_scalar(f"theta_loss/{stage}", total_loss_meter.avg, epoch)
     else:
