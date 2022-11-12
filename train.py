@@ -172,7 +172,7 @@ def main(args):
                     validate_ade(args, model, train_dataset, epoch, training_step, writer, stage='training')
 
                 elif training_step == "P4":
-                    train_all(args, model, optimizers, valid_dataset, epoch, training_step, val_envs_name, writer, stage='validation')
+                    train_all(args, model, optimizers, valid_dataset, epoch, training_step, val_envs_name, writer, prior, stage='validation')
                     metric = validate_ade(args, model, valido_dataset, epoch, training_step, writer, stage='validation o')
 
                 else:
