@@ -51,9 +51,9 @@ def get_training_parser():
     parser.add_argument('--teachingratio', default=0.0, type=float,
                         help="The probability of using ground truth future trajectories instead of model predictions during training")
     # architecture (VE)
-    parser.add_argument('--latent_dim', type=int, default=16, help="Dimension of latent selection variables")
-    parser.add_argument("--z_dim", type=int, default=16, help="Dimension of z latent variable")
-    parser.add_argument("--s_dim", type=int, default=16, help="Dimension of c latent variable")
+    parser.add_argument('--latent_dim', type=int, default=64, help="Dimension of latent selection variables")
+    parser.add_argument("--z_dim", type=int, default=64, help="Dimension of z latent variable")
+    parser.add_argument("--s_dim", type=int, default=64, help="Dimension of c latent variable")
 
     # computation
     parser.add_argument("--loader_num_workers", default=6, type=int)
@@ -76,7 +76,7 @@ def get_training_parser():
 
     # general training
     parser.add_argument("--finetune", default="", type=str)
-    parser.add_argument("--num_epochs", default='150-100-100-100-100-50', type=lambda x: int_tuple(x, '-'))  # '150-100-150',
+    parser.add_argument("--num_epochs", default='150-100-150-100-50', type=lambda x: int_tuple(x, '-'))  # '150-100-150',
     parser.add_argument("--resume", default="",
                         type=str, metavar="PATH", help="path to latest checkpoint (default: none)")
 
