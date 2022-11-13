@@ -750,7 +750,7 @@ class CRMF(nn.Module):
         ])
         self.pw = MultivariateNormal(torch.zeros(args.z_dim).cuda(), torch.diag(torch.ones(args.z_dim).cuda()))
         self.pwe = MultivariateNormal(torch.zeros(args.latent_dim + args.s_dim).cuda(), torch.diag(torch.ones(args.latent_dim + args.s_dim).cuda()))
-        self.ptheta = MultivariateNormal(torch.zeros(args.latent_dim).cuda(), torch.diag(torch.ones(args.latent_dim).cuda()))
+        self.pe = MultivariateNormal(torch.zeros(args.latent_dim).cuda(), torch.diag(torch.ones(args.latent_dim).cuda()))
 
         self.invariant_encoder = STGAT_encoder_inv(args.obs_len, args.fut_len, args.n_coordinates,
                                                    args.traj_lstm_hidden_size, args.n_units, args.n_heads,
@@ -875,7 +875,7 @@ class CRMF(nn.Module):
                     for coupling in self.coupling_layers_theta:
                         t_vec_c, sldj_t = coupling(t_vec_c, sldj_t)
 
-                    log_psgtheta = self.pwe.log_prob(torch.cat((s_vec_c, t_vec_c), dim=1)) + sldj_s + sldj_t - self.ptheta.log_prob(self.theta[env_idx])
+                    log_psgtheta = self.pwe.log_prob(torch.cat((s_vec_c, t_vec_c), dim=1)) + sldj_s - self.pe.log_prob(t_vec_c)
 
                     # calculate p(y|z,s,x)
                     p_ygz = self.future_decoder(batch, torch.cat((z_vec, s_vec), dim=1), training_step, True)
@@ -950,7 +950,7 @@ class CRMF(nn.Module):
                     for coupling in self.coupling_layers_theta:
                         t_vec_c, sldj_t = coupling(t_vec_c, sldj_t)
 
-                    log_psgtheta = self.pwe.log_prob(torch.cat((s_vec_c, t_vec_c), dim=1)) + sldj_s + sldj_t - self.ptheta.log_prob(pred_theta)
+                    log_psgtheta = self.pwe.log_prob(torch.cat((s_vec_c, t_vec_c), dim=1)) + sldj_s - self.pe.log_prob(t_vec_c)
 
                     # calculate p(y|x, s, z)
                     p_ygz = self.future_decoder(batch, torch.cat((z_vec, s_vec), dim=1), training_step, True)
