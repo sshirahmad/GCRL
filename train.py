@@ -142,26 +142,26 @@ def main(args):
         logging.info(f"\n===> EPOCH: {epoch} ({training_step})")
 
         if training_step in ["P1", "P2"]:
-            freeze(True, (model.theta_to_s, model.thetax_to_s, model.past_decoder, model.future_decoder, model.mapping))
+            freeze(True, (model.theta_to_s, model.thetax_to_s, model.past_decoder, model.future_decoder, model.coupling_layers_z, model.mapping))
             freeze(False, (model.invariant_encoder, model.variant_encoder))
 
         elif training_step == 'P3':
             freeze(True, (model.variant_encoder, model.theta_to_s, model.thetax_to_s, model.mapping))
-            freeze(False, (model.invariant_encoder, model.future_decoder, model.past_decoder))
+            freeze(False, (model.invariant_encoder, model.future_decoder, model.coupling_layers_z, model.past_decoder))
 
         elif training_step == 'P4':
-            freeze(True, (model.invariant_encoder, model.mapping))
+            freeze(True, (model.invariant_encoder, model.mapping, model.coupling_layers_z))
             freeze(False, (
             model.variant_encoder, model.theta_to_s, model.thetax_to_s, model.past_decoder, model.future_decoder))
 
         elif training_step == 'P5':
             freeze(True, (
             model.invariant_encoder, model.variant_encoder, model.theta_to_s, model.thetax_to_s, model.past_decoder,
-            model.future_decoder))
+            model.future_decoder, model.coupling_layers_z))
             freeze(False, (model.mapping,))
 
         elif training_step == 'P6':
-            freeze(True, (model.invariant_encoder, model.variant_encoder, model.past_decoder, model.future_decoder, model.mapping))
+            freeze(True, (model.invariant_encoder, model.variant_encoder, model.past_decoder, model.future_decoder, model.mapping, model.coupling_layers_z))
             freeze(False, (model.thetax_to_s,))
 
         if training_step == "P6":
