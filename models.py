@@ -31,7 +31,7 @@ class CouplingLayer(nn.Module):
 
         # Build scale and translate network
         if hidden_dims is None:
-            hidden_dims = [8, 16]
+            hidden_dims = [16, 32]
 
         modules = []
         in_channels = latent_dim // 2
@@ -739,7 +739,7 @@ class CRMF(nn.Module):
         self.n_coordinates = args.n_coordinates
 
         self.theta = nn.Parameter(torch.randn(args.num_envs, args.latent_dim))
-        self.coupling_layers = nn.ModuleList([
+        self.coupling_layers_z = nn.ModuleList([
             CouplingLayer(args.z_dim, reverse_mask=False),
             CouplingLayer(args.z_dim, reverse_mask=True),
             CouplingLayer(args.z_dim, reverse_mask=False)
@@ -794,7 +794,7 @@ class CRMF(nn.Module):
                     z_vec = q_zgx.rsample()
                     qprob_z = q_zgx.log_prob(z_vec)
                     sldj = torch.zeros(z_vec.shape[0], device=z_vec.device)
-                    for coupling in self.coupling_layers:
+                    for coupling in self.coupling_layers_z:
                         z_vec, sldj = coupling(z_vec, sldj)
 
                     prob_z = self.pw.log_prob(z_vec) + sldj

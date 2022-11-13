@@ -14,8 +14,8 @@ def get_evaluation_parser():
 def get_training_parser():
     parser = argparse.ArgumentParser()
     parser.add_argument("--log_dir", default="./log/", help="Directory containing logging file")
-    parser.add_argument("--model_dir", default="./models/E6/", help="Directory containing logging file")
-    parser.add_argument("--tfdir", default='./runs/E6/', type=str)
+    parser.add_argument("--model_dir", default="./models/E1/", help="Directory containing logging file")
+    parser.add_argument("--tfdir", default='./runs/E1/', type=str)
 
     # dataset
     parser.add_argument("--dataset_name", default="eth", type=str)

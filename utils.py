@@ -442,6 +442,7 @@ def save_all_model(args, model, model_name, optimizers, metric, epoch, training_
         'state_dicts': {
             'variant_encoder': model.variant_encoder.state_dict(),
             'invariant_encoder': model.invariant_encoder.state_dict(),
+            'coupling_layers_z': model.coupling_layers_z.state_dict(),
             'theta_to_s': model.theta_to_s.state_dict(),
             'thetax_to_s': model.thetax_to_s.state_dict(),
             'future_decoder': model.future_decoder.state_dict(),
@@ -499,6 +500,7 @@ def load_all_model(args, model, optimizers):
 
         # invariant encoder
         model.invariant_encoder.load_state_dict(models_checkpoint['invariant_encoder'])
+        model.coupling_layers_z.load_state_dict(models_checkpoint['coupling_layers_z'])
         if optimizers != None:
             optimizers['inv'].load_state_dict(checkpoint['optimizers']['inv'])
             update_lr(optimizers['inv'], args.lrinv)

@@ -91,6 +91,7 @@ def main(args):
         'inv': torch.optim.Adam(
             [
                 {"params": model.invariant_encoder.parameters(), 'lr': args.lrinv},
+                {"params": model.coupling_layers_z.parameters(), 'lr': args.lrinv},
             ]
         ),
         'future_decoder': torch.optim.Adam(
