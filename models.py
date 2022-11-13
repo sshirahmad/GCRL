@@ -708,21 +708,15 @@ class simple_mapping(nn.Module):
                 m.bias.data.zero_()
 
     def forward(self, theta, hidden_states):
-        if hidden_states is None:
-            mu = self.fc_mu(self.mapping(theta))
-            logvar = self.fc_logvar(self.mapping(theta))
-
-            ps = MultivariateNormal(mu, torch.diag_embed(torch.exp(logvar)))
+        if len(theta.size()) == 1:
+            theta_rep = theta.repeat(hidden_states.shape[0], 1)
         else:
-            if len(theta.size()) == 1:
-                theta_rep = theta.repeat(hidden_states.shape[0], 1)
-            else:
-                theta_rep = theta
-            vec = torch.cat((theta_rep, hidden_states), dim=1)
-            mu = self.fc_mu(self.mapping(vec))
-            logvar = self.fc_logvar(self.mapping(vec))
+            theta_rep = theta
+        vec = torch.cat((theta_rep, hidden_states), dim=1)
+        mu = self.fc_mu(self.mapping(vec))
+        logvar = self.fc_logvar(self.mapping(vec))
 
-            ps = MultivariateNormal(mu, torch.diag_embed(torch.exp(logvar)))
+        ps = MultivariateNormal(mu, torch.diag_embed(torch.exp(logvar)))
 
         return ps
 
@@ -744,7 +738,19 @@ class CRMF(nn.Module):
             CouplingLayer(args.z_dim, reverse_mask=True),
             CouplingLayer(args.z_dim, reverse_mask=False)
         ])
-        self.pw = MultivariateNormal(torch.zeros(self.z_dim).cuda(), torch.diag(torch.ones(self.z_dim).cuda()))
+        self.coupling_layers_s = nn.ModuleList([
+            CouplingLayer(args.s_dim, reverse_mask=False),
+            CouplingLayer(args.s_dim, reverse_mask=True),
+            CouplingLayer(args.s_dim, reverse_mask=False)
+        ])
+        self.coupling_layers_theta = nn.ModuleList([
+            CouplingLayer(args.latent_dim, reverse_mask=False),
+            CouplingLayer(args.latent_dim, reverse_mask=True),
+            CouplingLayer(args.latent_dim, reverse_mask=False)
+        ])
+        self.pw = MultivariateNormal(torch.zeros(args.z_dim).cuda(), torch.diag(torch.ones(args.z_dim).cuda()))
+        self.pwe = MultivariateNormal(torch.zeros(args.latent_dim + args.s_dim).cuda(), torch.diag(torch.ones(args.latent_dim + args.s_dim).cuda()))
+        self.ptheta = MultivariateNormal(torch.zeros(args.latent_dim).cuda(), torch.diag(torch.ones(args.latent_dim).cuda()))
 
         self.invariant_encoder = STGAT_encoder_inv(args.obs_len, args.fut_len, args.n_coordinates,
                                                    args.traj_lstm_hidden_size, args.n_units, args.n_heads,
@@ -757,7 +763,6 @@ class CRMF(nn.Module):
                                                  args.graph_network_out_dims, args.dropout, args.alpha,
                                                  args.graph_lstm_hidden_size, args.add_confidence)
 
-        self.theta_to_s = simple_mapping(0, 0, args.latent_dim, args.s_dim)
         self.thetax_to_s = simple_mapping(args.traj_lstm_hidden_size, args.graph_lstm_hidden_size, args.latent_dim, args.s_dim)
 
         self.mapping = regressor(args.obs_len, args.n_coordinates, args.latent_dim)
@@ -793,18 +798,23 @@ class CRMF(nn.Module):
                 for _ in range(self.num_samples):
                     z_vec = q_zgx.rsample()
                     qprob_z = q_zgx.log_prob(z_vec)
-                    sldj = torch.zeros(z_vec.shape[0], device=z_vec.device)
-                    for coupling in self.coupling_layers_z:
-                        z_vec, sldj = coupling(z_vec, sldj)
 
-                    prob_z = self.pw.log_prob(z_vec) + sldj
+                    # calculate log(p(z))
+                    sldj = torch.zeros(z_vec.shape[0], device=z_vec.device)
+                    z_vec_c = z_vec
+                    for coupling in self.coupling_layers_z:
+                        z_vec_c, sldj = coupling(z_vec_c, sldj)
+
+                    prob_z = self.pw.log_prob(z_vec_c) + sldj
+
+                    # calculate log(p(x|z))
                     pred_past_rel = self.past_decoder(batch, z_vec, False)
                     reconstruction_loss = - l2_loss(pred_past_rel, obs_traj_rel, mode="raw") - \
                                           0.5 * 1 / obs_traj_rel.shape[0] * torch.log(torch.tensor(2 * math.pi * 0.5))
 
+                    # calculate p(y|z,x)
                     p_ygz = self.future_decoder(batch, z_vec, training_step, False)
                     proby_mat = torch.stack([torch.exp(p_ygz[i].log_prob(fut_traj_rel[i])) for i in range(fut_traj.shape[0])])
-
                     p_ygz = torch.prod(proby_mat, dim=0)
 
                     A1 = torch.multiply(p_ygz, reconstruction_loss)
@@ -822,7 +832,6 @@ class CRMF(nn.Module):
 
                 first_E = []
                 q_zgx = self.invariant_encoder(batch, training_step)
-                p_sgtheta = self.theta_to_s(self.theta[env_idx], None)
                 q_sgthetax = self.thetax_to_s(self.theta[env_idx], concat_hidden_states)
 
                 # calculate q(y|theta, x)
@@ -841,16 +850,39 @@ class CRMF(nn.Module):
                     z_vec = q_zgx.rsample()
                     s_vec = q_sgthetax.rsample()
 
-                    log_pz = self.pz.log_prob(z_vec)
+                    # calculate log(q(z|x))
                     log_qzgx = q_zgx.log_prob(z_vec)
-                    log_psgtheta = p_sgtheta.log_prob(s_vec)
+
+                    # calculate log(q(s|theta, x))
                     log_qsgthetax = q_sgthetax.log_prob(s_vec)
 
+                    # calculate log(p(z))
+                    sldj = torch.zeros(z_vec.shape[0], device=z_vec.device)
+                    z_vec_c = z_vec
+                    for coupling in self.coupling_layers_z:
+                        z_vec_c, sldj = coupling(z_vec_c, sldj)
+
+                    log_pz = self.pw.log_prob(z_vec_c) + sldj
+
+                    # calculate log(p(s|theta))
+                    sldj_s = torch.zeros(s_vec.shape[0], device=z_vec.device)
+                    s_vec_c = s_vec
+                    for coupling in self.coupling_layers_z:
+                        s_vec_c, sldj_s = coupling(s_vec_c, sldj_s)
+
+                    sldj_t = torch.zeros(s_vec.shape[0], device=z_vec.device)
+                    t_vec_c = self.theta[env_idx].repeat(s_vec.shape[0], 1)
+                    for coupling in self.coupling_layers_z:
+                        t_vec_c, sldj_t = coupling(t_vec_c, sldj_t)
+
+                    log_psgtheta = self.pwe.log_prob(torch.cat((s_vec_c, t_vec_c), dim=1)) + sldj_s + sldj_t - self.ptheta.log_prob(self.theta[env_idx])
+
+                    # calculate p(y|z,s,x)
                     p_ygz = self.future_decoder(batch, torch.cat((z_vec, s_vec), dim=1), training_step, True)
                     proby_mat = torch.stack([torch.exp(p_ygz[i].log_prob(fut_traj_rel[i])) for i in range(fut_traj.shape[0])])
-
                     p_ygzs = torch.prod(proby_mat, dim=0)
 
+                    # calculate log(p(x|z,s))
                     pred_past_rel = self.past_decoder(batch, torch.cat((z_vec, s_vec), dim=1), True)
                     reconstruction_loss = - l2_loss(pred_past_rel, obs_traj_rel, mode="raw") - \
                                           0.5 * 1 / obs_traj_rel.shape[0] * torch.log(torch.tensor(2 * math.pi * 0.5))

@@ -71,7 +71,8 @@ def main(args):
     optimizers = {
         'variational': torch.optim.Adam(
             [
-                {"params": model.theta_to_s.parameters(), 'lr': args.lrvariation},
+                {"params": model.coupling_layers_s.parameters(), 'lr': args.lrvariation},
+                {"params": model.coupling_layers_theta.parameters(), 'lr': args.lrvariation},
                 {"params": model.thetax_to_s.parameters(), 'lr': args.lrvariation},
             ]
         ),
@@ -137,31 +138,31 @@ def main(args):
     for epoch in range(args.start_epoch, sum(args.num_epochs) + 1):
 
         training_step = get_training_step(epoch)
-        if training_step in ["P1", "P2"]:
-            continue
         logging.info(f"\n===> EPOCH: {epoch} ({training_step})")
 
         if training_step in ["P1", "P2"]:
-            freeze(True, (model.theta_to_s, model.thetax_to_s, model.past_decoder, model.future_decoder, model.coupling_layers_z, model.mapping))
+            freeze(True, (model.coupling_layers_s, model.coupling_layers_theta, model.thetax_to_s,
+                          model.past_decoder, model.future_decoder, model.coupling_layers_z, model.mapping))
             freeze(False, (model.invariant_encoder, model.variant_encoder))
 
         elif training_step == 'P3':
-            freeze(True, (model.variant_encoder, model.theta_to_s, model.thetax_to_s, model.mapping))
+            freeze(True, (model.variant_encoder, model.coupling_layers_s,
+                          model.coupling_layers_theta, model.thetax_to_s, model.mapping))
             freeze(False, (model.invariant_encoder, model.future_decoder, model.coupling_layers_z, model.past_decoder))
 
         elif training_step == 'P4':
             freeze(True, (model.invariant_encoder, model.mapping, model.coupling_layers_z))
-            freeze(False, (
-            model.variant_encoder, model.theta_to_s, model.thetax_to_s, model.past_decoder, model.future_decoder))
+            freeze(False, (model.variant_encoder, model.coupling_layers_s, model.coupling_layers_theta,
+                           model.thetax_to_s, model.past_decoder, model.future_decoder))
 
         elif training_step == 'P5':
-            freeze(True, (
-            model.invariant_encoder, model.variant_encoder, model.theta_to_s, model.thetax_to_s, model.past_decoder,
-            model.future_decoder, model.coupling_layers_z))
+            freeze(True, (model.invariant_encoder, model.variant_encoder, model.coupling_layers_s, model.coupling_layers_theta,
+                          model.thetax_to_s, model.past_decoder, model.future_decoder, model.coupling_layers_z))
             freeze(False, (model.mapping,))
 
         elif training_step == 'P6':
-            freeze(True, (model.invariant_encoder, model.variant_encoder, model.past_decoder, model.future_decoder, model.mapping, model.coupling_layers_z))
+            freeze(True, (model.invariant_encoder, model.variant_encoder, model.past_decoder, model.future_decoder,
+                          model.mapping, model.coupling_layers_z, model.coupling_layers_s, model.coupling_layers_theta))
             freeze(False, (model.thetax_to_s,))
 
         if training_step == "P6":
