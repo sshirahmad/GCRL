@@ -867,12 +867,12 @@ class CRMF(nn.Module):
                     # calculate log(p(s|theta))
                     sldj_s = torch.zeros(s_vec.shape[0], device=z_vec.device)
                     s_vec_c = s_vec
-                    for coupling in self.coupling_layers_z:
+                    for coupling in self.coupling_layers_s:
                         s_vec_c, sldj_s = coupling(s_vec_c, sldj_s)
 
                     sldj_t = torch.zeros(s_vec.shape[0], device=z_vec.device)
                     t_vec_c = self.theta[env_idx].repeat(s_vec.shape[0], 1)
-                    for coupling in self.coupling_layers_z:
+                    for coupling in self.coupling_layers_theta:
                         t_vec_c, sldj_t = coupling(t_vec_c, sldj_t)
 
                     log_psgtheta = self.pwe.log_prob(torch.cat((s_vec_c, t_vec_c), dim=1)) + sldj_s + sldj_t - self.ptheta.log_prob(self.theta[env_idx])
@@ -942,12 +942,12 @@ class CRMF(nn.Module):
                     # calculate log(p(s|theta))
                     sldj_s = torch.zeros(s_vec.shape[0], device=z_vec.device)
                     s_vec_c = s_vec
-                    for coupling in self.coupling_layers_z:
+                    for coupling in self.coupling_layers_s:
                         s_vec_c, sldj_s = coupling(s_vec_c, sldj_s)
 
                     sldj_t = torch.zeros(s_vec.shape[0], device=z_vec.device)
                     t_vec_c = pred_theta
-                    for coupling in self.coupling_layers_z:
+                    for coupling in self.coupling_layers_theta:
                         t_vec_c, sldj_t = coupling(t_vec_c, sldj_t)
 
                     log_psgtheta = self.pwe.log_prob(torch.cat((s_vec_c, t_vec_c), dim=1)) + sldj_s + sldj_t - self.ptheta.log_prob(pred_theta)
