@@ -907,7 +907,6 @@ class CRMF(nn.Module):
 
                 first_E = []
                 q_zgx = self.invariant_encoder(batch, training_step)
-                p_sgtheta = self.theta_to_s(pred_theta, None)
                 q_sgthetax = self.thetax_to_s(pred_theta, concat_hidden_states)
 
                 # calculate q(y|theta, x)
@@ -926,16 +925,39 @@ class CRMF(nn.Module):
                     z_vec = q_zgx.rsample()
                     s_vec = q_sgthetax.rsample()
 
-                    log_pz = self.pz.log_prob(z_vec)
+                    # calculate log(q(z|x))
                     log_qzgx = q_zgx.log_prob(z_vec)
-                    log_psgtheta = p_sgtheta.log_prob(s_vec)
+
+                    # calculate log(q(s|theta, x))
                     log_qsgthetax = q_sgthetax.log_prob(s_vec)
 
+                    # calculate log(p(z))
+                    sldj = torch.zeros(z_vec.shape[0], device=z_vec.device)
+                    z_vec_c = z_vec
+                    for coupling in self.coupling_layers_z:
+                        z_vec_c, sldj = coupling(z_vec_c, sldj)
+
+                    log_pz = self.pw.log_prob(z_vec_c) + sldj
+
+                    # calculate log(p(s|theta))
+                    sldj_s = torch.zeros(s_vec.shape[0], device=z_vec.device)
+                    s_vec_c = s_vec
+                    for coupling in self.coupling_layers_z:
+                        s_vec_c, sldj_s = coupling(s_vec_c, sldj_s)
+
+                    sldj_t = torch.zeros(s_vec.shape[0], device=z_vec.device)
+                    t_vec_c = pred_theta
+                    for coupling in self.coupling_layers_z:
+                        t_vec_c, sldj_t = coupling(t_vec_c, sldj_t)
+
+                    log_psgtheta = self.pwe.log_prob(torch.cat((s_vec_c, t_vec_c), dim=1)) + sldj_s + sldj_t - self.ptheta.log_prob(pred_theta)
+
+                    # calculate p(y|x, s, z)
                     p_ygz = self.future_decoder(batch, torch.cat((z_vec, s_vec), dim=1), training_step, True)
                     proby_mat = torch.stack([torch.exp(p_ygz[i].log_prob(fut_traj_rel[i])) for i in range(fut_traj.shape[0])])
-
                     p_ygzs = torch.prod(proby_mat, dim=0)
 
+                    # calculate log(p(x|s,z))
                     pred_past_rel = self.past_decoder(batch, torch.cat((z_vec, s_vec), dim=1), True)
                     reconstruction_loss = - l2_loss(pred_past_rel, obs_traj_rel, mode="raw") - \
                                           0.5 * 1 / obs_traj_rel.shape[0] * torch.log(torch.tensor(2 * math.pi * 0.5))
