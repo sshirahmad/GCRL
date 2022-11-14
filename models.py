@@ -976,11 +976,9 @@ class CRMF(nn.Module):
                 pred_traj_rel = self.future_decoder(batch, z_vec, training_step, False)
 
             elif training_step == "P4":
-                env_idx = kwargs.get("env_idx")
-
                 concat_hidden_states = self.variant_encoder(batch, training_step)
 
-                ps = self.x_to_s(self.theta[env_idx], concat_hidden_states)
+                ps = self.x_to_s(concat_hidden_states)
                 p_zgx = self.invariant_encoder(batch, training_step)
 
                 # p(s|theta,x)
