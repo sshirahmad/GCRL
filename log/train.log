@@ -1,6 +1,6 @@
-2022-11-13 20:47:35,695:INFO: Initializing Training Set
-2022-11-13 20:47:40,532:INFO: Initializing Validation Set
-2022-11-13 20:47:41,043:INFO: Initializing Validation O Set
-2022-11-13 20:47:45,584:INFO: 
+2022-11-13 20:49:39,163:INFO: Initializing Training Set
+2022-11-13 20:49:42,997:INFO: Initializing Validation Set
+2022-11-13 20:49:43,421:INFO: Initializing Validation O Set
+2022-11-13 20:49:46,670:INFO: 
 ===> EPOCH: 7 (P4)
-2022-11-13 20:47:45,585:INFO: - Computing loss (training)
+2022-11-13 20:49:46,672:INFO: - Computing loss (training)
