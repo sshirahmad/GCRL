@@ -445,6 +445,7 @@ def save_all_model(args, model, model_name, optimizers, metric, epoch, training_
             'coupling_layers_z': model.coupling_layers_z.state_dict(),
             'coupling_layers_s': model.coupling_layers_s.state_dict(),
             'coupling_layers_theta': model.coupling_layers_theta.state_dict(),
+            'x_to_s': model.x_to_s.state_dict(),
             'future_decoder': model.future_decoder.state_dict(),
             'past_decoder': model.past_decoder.state_dict(),
             'mapping': model.mapping.state_dict(),
@@ -520,6 +521,7 @@ def load_all_model(args, model, optimizers):
         # variational models
         model.coupling_layers_s.load_state_dict(models_checkpoint['coupling_layers_s'])
         model.coupling_layers_theta.load_state_dict(models_checkpoint['coupling_layers_theta'])
+        model.x_to_s.load_state_dict(models_checkpoint['x_to_s'])
         model.theta.data = models_checkpoint['theta'].data
         if optimizers != None:
             optimizers['variational'].load_state_dict(checkpoint['optimizers']['variational'])
