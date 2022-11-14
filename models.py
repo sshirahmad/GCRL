@@ -744,11 +744,11 @@ class CRMF(nn.Module):
         ])
         self.pw = MultivariateNormal(torch.zeros(args.z_dim).cuda(), torch.diag(torch.ones(args.z_dim).cuda()))
 
-        self.covmat = torch.diag(torch.ones(args.latent_dim + args.s_dim).cuda())
-        for j in range(args.s_dim):
-            self.covmat[args.s_dim:, j] = 0.5
+        self.covee = torch.diag(torch.ones(args.latent_dim).cuda())
+        self.covww = torch.diag(torch.ones(args.latent_dim).cuda())
+        self.covwe = 0.5 * torch.diag(torch.ones(args.latent_dim).cuda())
 
-        self.pwe = MultivariateNormal(torch.zeros(args.latent_dim + args.s_dim).cuda(), scale_tril=self.covmat)
+       # self.pwe = MultivariateNormal(torch.zeros(args.latent_dim + args.s_dim).cuda(), scale_tril=self.covmat)
         self.pe = MultivariateNormal(torch.zeros(args.latent_dim).cuda(), torch.diag(torch.ones(args.latent_dim).cuda()))
 
         self.invariant_encoder = STGAT_encoder_inv(args.obs_len, args.fut_len, args.n_coordinates,
@@ -870,12 +870,15 @@ class CRMF(nn.Module):
                         s_vec_c, sldj_s = coupling(s_vec_c, sldj_s)
 
                     sldj_t = torch.zeros(s_vec.shape[0], device=z_vec.device)
-                    t_vec_c = self.theta[env_idx].repeat(s_vec.shape[0], 1)
+                    t_vec_c = self.theta[env_idx].unsqueeze(0)
                     for coupling in self.coupling_layers_theta:
                         t_vec_c, sldj_t = coupling(t_vec_c, sldj_t)
 
-                    temp = self.pe.log_prob(t_vec_c)
-                    log_psgtheta = self.pwe.log_prob(torch.cat((s_vec_c, t_vec_c), dim=1)) + sldj_s - self.pe.log_prob(t_vec_c)
+                    mean = torch.matmul(torch.matmul(self.covwe, torch.inverse(self.covee)), t_vec_c.squeeze())
+                    covmat = self.covww - torch.matmul(torch.matmul(self.covwe, torch.inverse(self.covee)), self.covwe)
+                    pwe = MultivariateNormal(mean, covmat)
+
+                    log_psgtheta = pwe.log_prob(s_vec_c) + sldj_s
 
                     # calculate p(y|z,s,x)
                     p_ygz = self.future_decoder(batch, torch.cat((z_vec, s_vec), dim=1), training_step, True)
