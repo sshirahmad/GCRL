@@ -743,7 +743,12 @@ class CRMF(nn.Module):
             CouplingLayer(args.latent_dim, reverse_mask=False)
         ])
         self.pw = MultivariateNormal(torch.zeros(args.z_dim).cuda(), torch.diag(torch.ones(args.z_dim).cuda()))
-        self.pwe = MultivariateNormal(torch.zeros(args.latent_dim + args.s_dim).cuda(), torch.diag(torch.ones(args.latent_dim + args.s_dim).cuda()))
+
+        self.covmat = torch.diag(torch.ones(args.latent_dim + args.s_dim).cuda())
+        for j in range(args.s_dim):
+            self.covmat[args.s_dim:, j] = 0.5
+
+        self.pwe = MultivariateNormal(torch.zeros(args.latent_dim + args.s_dim).cuda(), scale_tril=self.covmat)
         self.pe = MultivariateNormal(torch.zeros(args.latent_dim).cuda(), torch.diag(torch.ones(args.latent_dim).cuda()))
 
         self.invariant_encoder = STGAT_encoder_inv(args.obs_len, args.fut_len, args.n_coordinates,
@@ -869,6 +874,7 @@ class CRMF(nn.Module):
                     for coupling in self.coupling_layers_theta:
                         t_vec_c, sldj_t = coupling(t_vec_c, sldj_t)
 
+                    temp = self.pe.log_prob(t_vec_c)
                     log_psgtheta = self.pwe.log_prob(torch.cat((s_vec_c, t_vec_c), dim=1)) + sldj_s - self.pe.log_prob(t_vec_c)
 
                     # calculate p(y|z,s,x)
