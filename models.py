@@ -747,8 +747,11 @@ class CRMF(nn.Module):
         self.covee = torch.diag(torch.ones(args.latent_dim).cuda())
         self.covww = torch.diag(torch.ones(args.latent_dim).cuda())
         self.covwe = 0.5 * torch.diag(torch.ones(args.latent_dim).cuda())
+        temp1 = torch.cat((self.covww, self.covwe), dim=1)
+        temp2 = torch.cat((self.covwe, self.covee), dim=1)
+        covmat = torch.cat((temp1, temp2), dim=0)
 
-       # self.pwe = MultivariateNormal(torch.zeros(args.latent_dim + args.s_dim).cuda(), scale_tril=self.covmat)
+        self.pwe = MultivariateNormal(torch.zeros(args.latent_dim + args.s_dim).cuda(), covmat)
         self.pe = MultivariateNormal(torch.zeros(args.latent_dim).cuda(), torch.diag(torch.ones(args.latent_dim).cuda()))
 
         self.invariant_encoder = STGAT_encoder_inv(args.obs_len, args.fut_len, args.n_coordinates,
@@ -878,7 +881,8 @@ class CRMF(nn.Module):
                     covmat = self.covww - torch.matmul(torch.matmul(self.covwe, torch.inverse(self.covee)), self.covwe)
                     pwe = MultivariateNormal(mean, covmat)
 
-                    log_psgtheta = pwe.log_prob(s_vec_c) + sldj_s
+                    # log_psgtheta = pwe.log_prob(s_vec_c) + sldj_s
+                    log_psgtheta = self.pwe.log_prob(torch.cat((s_vec_c, t_vec_c.repeat(s_vec.shape[0], 1)), dim=1)) + sldj_s - self.pe.log_prob(t_vec_c)
 
                     # calculate p(y|z,s,x)
                     p_ygz = self.future_decoder(batch, torch.cat((z_vec, s_vec), dim=1), training_step, True)
