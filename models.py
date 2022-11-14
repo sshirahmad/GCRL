@@ -1008,8 +1008,7 @@ class CRMF(nn.Module):
 
             else:
                 concat_hidden_states = self.variant_encoder(batch, training_step)
-                theta = self.mapping(obs_traj_rel)
-                ps = self.thetax_to_s(theta, concat_hidden_states)
+                ps = self.x_to_s(concat_hidden_states)
                 p_zgx = self.invariant_encoder(batch, training_step)
 
                 # p(s|theta,x)
