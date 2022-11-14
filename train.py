@@ -166,25 +166,20 @@ def main(args):
         else:
             train_all(args, model, optimizers, train_dataset, epoch, training_step, train_envs_name, writer, stage='training')
 
-        if training_step not in ["P1", "P2"]:
+        if training_step not in ["P1"]:
             with torch.no_grad():
-                if training_step == "P3":
-                    metric = validate_ade(args, model, valido_dataset, epoch, training_step, writer, stage='validation o')
+                if training_step == "P2":
+                    train_all(args, model, optimizers, valid_dataset, epoch, training_step, val_envs_name, writer, stage='validation')
+                elif training_step == "P3":
                     validate_ade(args, model, valid_dataset, epoch, training_step, writer, stage='validation')
                     validate_ade(args, model, train_dataset, epoch, training_step, writer, stage='training')
-
                 elif training_step == "P4":
-                    validate_ade(args, model, valid_dataset, epoch, training_step, writer, stage='validation')
-                    validate_ade(args, model, train_dataset, epoch, training_step, writer, stage='training')
-
-                elif training_step == "P5":
                     train_all(args, model, optimizers, valid_dataset, epoch, training_step, val_envs_name, writer, stage='validation')
                     metric = validate_ade(args, model, valido_dataset, epoch, training_step, writer, stage='validation o')
-
                 else:
                     metric = validate_ade(args, model, valido_dataset, epoch, training_step, writer, stage='validation o')
 
-        if training_step == "P6":
+        if training_step == "P5":
             if metric < min_metric:
                 min_metric = metric
                 save_all_model(args, model, model_name, optimizers, metric, epoch, training_step)
@@ -322,23 +317,18 @@ def train_all(args, model, optimizers, train_dataset, epoch, training_step, trai
 
     if training_step in "P1":
         writer.add_scalar(f"STGAT_loss_p1/{stage}", total_loss_meter.avg, epoch)
-    elif training_step in "P2":
-        writer.add_scalar(f"STGAT_loss_p2/{stage}", total_loss_meter.avg, epoch)
-    elif training_step == "P3":
-        writer.add_scalar(f"pred_loss/{stage}", p_loss_meter.avg, epoch)
+    elif training_step == "P2":
+        writer.add_scalar(f"reconstruction_loss/{stage}", p_loss_meter.avg, epoch)
         writer.add_scalar(f"elbo_loss/{stage}", e_loss_meter.avg, epoch)
         writer.add_scalar(f"variational_loss/{stage}", total_loss_meter.avg, epoch)
-    elif training_step == "P4":
-        writer.add_scalar(f"variational_loss/{stage}", total_loss_meter.avg, epoch)
-        writer.add_scalar(f"elbo_loss/{stage}", e_loss_meter.avg, epoch)
-        writer.add_scalar(f"pred_loss/{stage}", p_loss_meter.avg, epoch)
         writer.add_scalar(f"theta_hotel/{stage}", torch.norm(model.theta[0]), epoch)
         writer.add_scalar(f"theta_univ/{stage}", torch.norm(model.theta[1]), epoch)
         writer.add_scalar(f"theta_zara1/{stage}", torch.norm(model.theta[2]), epoch)
         writer.add_scalar(f"theta_zara2/{stage}", torch.norm(model.theta[3]), epoch)
+    elif training_step == "P3":
+        writer.add_scalar(f"prediction_loss/{stage}", total_loss_meter.avg, epoch)
     elif training_step == "P5":
         writer.add_scalar(f"theta_loss/{stage}", total_loss_meter.avg, epoch)
-
     else:
         writer.add_scalar(f"variational_loss/{stage}", total_loss_meter.avg, epoch)
         writer.add_scalar(f"elbo_loss/{stage}", e_loss_meter.avg, epoch)
@@ -367,9 +357,9 @@ def validate_ade(args, model, valid_dataset, epoch, training_step, writer, stage
                 (obs_traj, fut_traj, _, _, _) = batch
 
                 if training_step == "P3":
-                    pred_fut_traj_rel = model(batch, training_step)
-                else:
                     pred_fut_traj_rel = model(batch, training_step, env_idx=val_idx)
+                else:
+                    pred_fut_traj_rel = model(batch, training_step)
 
                 # from relative path to absolute path
                 pred_fut_traj = relative_to_abs(pred_fut_traj_rel, obs_traj[-1, :, :2])

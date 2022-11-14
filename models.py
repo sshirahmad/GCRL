@@ -822,13 +822,16 @@ class CRMF(nn.Module):
 
         else:
             if training_step == "P3":
-                q_zgx = self.invariant_encoder(batch, training_step)
+                env_idx = kwargs.get("env_idx")
 
-                # P(z|x)
+                q_zgx = self.invariant_encoder(batch, training_step, self.theta[env_idx])
+                q_sgx = self.variant_encoder(batch, training_step, self.theta[env_idx])
+
                 z_vec = q_zgx.sample()
+                s_vec = q_sgx.sample()
 
                 # p(y|z,c)
-                pred_traj_rel = self.future_decoder(batch, z_vec, training_step, False)
+                pred_traj_rel = self.future_decoder(batch, torch.cat((z_vec, s_vec), dim=1))
 
             elif training_step == "P4":
                 env_idx = kwargs.get("env_idx")
@@ -850,15 +853,13 @@ class CRMF(nn.Module):
             elif training_step == "P7":
                 env_idx = kwargs.get("env_idx")
                 if env_idx is None:
-                    concat_hidden_states = self.variant_encoder(batch, training_step)
                     theta = self.mapping(obs_traj_rel)
-                    ps = self.thetax_to_s(theta, concat_hidden_states)
-                    q_zgx = self.invariant_encoder(batch, training_step)
+                    ps = self.variant_encoder(batch, training_step, theta)
+                    q_zgx = self.invariant_encoder(batch, training_step, theta)
 
                 else:
-                    concat_hidden_states = self.variant_encoder(batch, training_step)
-                    ps = self.thetax_to_s(self.theta[env_idx], concat_hidden_states)
-                    q_zgx = self.invariant_encoder(batch, training_step)
+                    ps = self.variant_encoder(batch, training_step, self.theta[env_idx])
+                    q_zgx = self.invariant_encoder(batch, training_step, self.theta[env_idx])
 
                 return q_zgx, ps
 
