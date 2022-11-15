@@ -837,7 +837,7 @@ class CRMF(nn.Module):
                 q_sgthetax = self.x_to_s(concat_hidden_states)
 
                 # calculate q(y|theta, x)
-                for _ in range(self.num_samples):
+                for _ in range(1):
                     z_vec = q_zgx.rsample()
                     s_vec = q_sgthetax.rsample()
                     p_ygz = self.future_decoder(batch, torch.cat((z_vec, s_vec), dim=1), training_step, True)
