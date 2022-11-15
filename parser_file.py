@@ -36,7 +36,7 @@ def get_training_parser():
                         help='Only test model. 0 -> training, 1 -> testing, 3 -> testing with refinement')  # 0 is normal train, 1 is test, 2 is test with k, 3 is ttr
     # randomness
     parser.add_argument("--seed", type=int, default=72, help="Random seed")
-    parser.add_argument("--num_samples", type=int, default=20, help="Number of samples to calculate MC expectations")
+    parser.add_argument("--num_samples", type=int, default=10, help="Number of samples to calculate MC expectations")
 
     # architecture (STGAT)
     parser.add_argument("--traj_lstm_hidden_size", default=32, type=int)
@@ -76,24 +76,24 @@ def get_training_parser():
 
     # general training
     parser.add_argument("--finetune", default="", type=str)
-    parser.add_argument("--num_epochs", default='150-100-150-100-100-50', type=lambda x: int_tuple(x, '-'))  # '150-100-150',
-    parser.add_argument("--resume", default="./models/Ec/P4/CRMF_epoch_332.pth.tar",
+    parser.add_argument("--num_epochs", default='150-100-50-100-100-50', type=lambda x: int_tuple(x, '-'))  # '150-100-150',
+    parser.add_argument("--resume", default="",
                         type=str, metavar="PATH", help="path to latest checkpoint (default: none)")
 
     # learning rates
-    parser.add_argument("--lrvar", default=1e-2, type=float,
+    parser.add_argument("--lrvar", default=1e-3, type=float,
                         help="initial learning rate for variant encoder optimizer")
-    parser.add_argument("--lrvariation", default=1e-2, type=float,
+    parser.add_argument("--lrvariation", default=1e-3, type=float,
                         help="initial learning rate variational models optimizer")
-    parser.add_argument('--lrinv', default=1e-2, type=float,
+    parser.add_argument('--lrinv', default=1e-3, type=float,
                         help="initial learning rate for the invariant encoder optimizer")
-    parser.add_argument('--lrfut', default=1e-2, type=float,
+    parser.add_argument('--lrfut', default=1e-3, type=float,
                         help="initial learning rate for the future decoder optimizer")
-    parser.add_argument('--lrpast', default=1e-2, type=float,
+    parser.add_argument('--lrpast', default=1e-3, type=float,
                         help="initial learning rate for the past decoder optimizer")
-    parser.add_argument('--lrmap', default=1e-2, type=float,
+    parser.add_argument('--lrmap', default=1e-3, type=float,
                         help="initial learning rate for the regressor optimizer")
-    parser.add_argument('--lrpar', default=1e-1, type=float,
+    parser.add_argument('--lrpar', default=1e-3, type=float,
                         help="initial learning rate for the parameters optimizer")
 
     # other parameters to test after

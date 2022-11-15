@@ -726,7 +726,7 @@ class CRMF(nn.Module):
         self.num_samples = args.num_samples
         self.n_coordinates = args.n_coordinates
 
-        self.theta = nn.Parameter(torch.randn(args.num_envs, args.latent_dim))
+        self.theta = nn.Parameter(torch.rand(args.num_envs, args.latent_dim))
         self.coupling_layers_z = nn.ModuleList([
             CouplingLayer(args.z_dim, reverse_mask=False),
             CouplingLayer(args.z_dim, reverse_mask=True),
@@ -837,7 +837,7 @@ class CRMF(nn.Module):
                 q_sgthetax = self.x_to_s(concat_hidden_states)
 
                 # calculate q(y|theta, x)
-                for _ in range(1):
+                for _ in range(self.num_samples):
                     z_vec = q_zgx.rsample()
                     s_vec = q_sgthetax.rsample()
                     p_ygz = self.future_decoder(batch, torch.cat((z_vec, s_vec), dim=1), training_step, True)
