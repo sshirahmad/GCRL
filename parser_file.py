@@ -51,9 +51,9 @@ def get_training_parser():
     parser.add_argument('--teachingratio', default=0.0, type=float,
                         help="The probability of using ground truth future trajectories instead of model predictions during training")
     # architecture (VE)
-    parser.add_argument('--latent_dim', type=int, default=64, help="Dimension of latent selection variables")
+    parser.add_argument('--latent_dim', type=int, default=2, help="Dimension of latent selection variables")
     parser.add_argument("--z_dim", type=int, default=64, help="Dimension of z latent variable")
-    parser.add_argument("--s_dim", type=int, default=64, help="Dimension of c latent variable")
+    parser.add_argument("--s_dim", type=int, default=2, help="Dimension of s latent variable")
 
     # computation
     parser.add_argument("--loader_num_workers", default=6, type=int)

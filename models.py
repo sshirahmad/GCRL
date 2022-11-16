@@ -670,6 +670,7 @@ class simple_mapping(nn.Module):
     def __init__(self,
                  traj_lstm_hidden_size: int,
                  graph_lstm_hidden_size: int,
+                 latent_dim,
                  s_dim: int,
                  hidden_dims=None,
                  **kwargs) -> None:
@@ -679,7 +680,7 @@ class simple_mapping(nn.Module):
             hidden_dims = [32, 64]
 
         modules = []
-        in_channels = traj_lstm_hidden_size + graph_lstm_hidden_size
+        in_channels = latent_dim + traj_lstm_hidden_size + graph_lstm_hidden_size
         for h_dim in hidden_dims:
             modules.append(
                 nn.Sequential(
@@ -706,9 +707,13 @@ class simple_mapping(nn.Module):
                 m.weight.data.normal_(0, 0.1)
                 m.bias.data.zero_()
 
-    def forward(self, hidden_states):
-        mu = self.fc_mu(self.mapping(hidden_states))
-        logvar = self.fc_logvar(self.mapping(hidden_states))
+    def forward(self, hidden_states, theta):
+        if len(theta.size()) == 1:
+            theta_rep = theta.repeat(hidden_states.shape[0], 1)
+        else:
+            theta_rep = theta
+        mu = self.fc_mu(self.mapping(torch.cat((hidden_states, theta_rep), dim=1)))
+        logvar = self.fc_logvar(self.mapping(torch.cat((hidden_states, theta_rep), dim=1)))
 
         ps = MultivariateNormal(mu, torch.diag_embed(torch.exp(logvar)))
 
@@ -765,7 +770,7 @@ class CRMF(nn.Module):
                                                  args.graph_network_out_dims, args.dropout, args.alpha,
                                                  args.graph_lstm_hidden_size, args.add_confidence)
 
-        self.x_to_s = simple_mapping(args.traj_lstm_hidden_size, args.graph_lstm_hidden_size, args.s_dim)
+        self.x_to_s = simple_mapping(args.traj_lstm_hidden_size, args.graph_lstm_hidden_size, args.latent_dim, args.s_dim)
 
         self.mapping = regressor(args.obs_len, args.n_coordinates, args.latent_dim)
 
@@ -834,7 +839,7 @@ class CRMF(nn.Module):
 
                 first_E = []
                 q_zgx = self.invariant_encoder(batch, training_step)
-                q_sgthetax = self.x_to_s(concat_hidden_states)
+                q_sgthetax = self.x_to_s(concat_hidden_states, self.theta[env_idx])
 
                 # calculate q(y|theta, x)
                 for _ in range(self.num_samples):
@@ -880,9 +885,7 @@ class CRMF(nn.Module):
                     mean = torch.matmul(torch.matmul(self.covwe, torch.inverse(self.covee)), t_vec_c.squeeze())
                     covmat = self.covww - torch.matmul(torch.matmul(self.covwe, torch.inverse(self.covee)), self.covwe)
                     pwe = MultivariateNormal(mean, covmat)
-
-                    # log_psgtheta = pwe.log_prob(s_vec_c) + sldj_s
-                    log_psgtheta = self.pwe.log_prob(torch.cat((s_vec_c, t_vec_c.repeat(s_vec.shape[0], 1)), dim=1)) + sldj_s - self.pe.log_prob(t_vec_c)
+                    log_psgtheta = pwe.log_prob(s_vec_c) + sldj_s
 
                     # calculate p(y|z,s,x)
                     p_ygz = self.future_decoder(batch, torch.cat((z_vec, s_vec), dim=1), training_step, True)
@@ -914,7 +917,7 @@ class CRMF(nn.Module):
 
                 first_E = []
                 q_zgx = self.invariant_encoder(batch, training_step)
-                q_sgthetax = self.x_to_s(concat_hidden_states)
+                q_sgthetax = self.x_to_s(concat_hidden_states, pred_theta)
 
                 # calculate q(y|theta, x)
                 for _ in range(self.num_samples):
@@ -989,9 +992,10 @@ class CRMF(nn.Module):
                 pred_traj_rel = self.future_decoder(batch, z_vec, training_step, False)
 
             elif training_step == "P4":
+                env_idx = kwargs.get("env_idx")
                 concat_hidden_states = self.variant_encoder(batch, training_step)
 
-                ps = self.x_to_s(concat_hidden_states)
+                ps = self.x_to_s(concat_hidden_states, self.theta[env_idx])
                 p_zgx = self.invariant_encoder(batch, training_step)
 
                 # p(s|theta,x)
@@ -1007,19 +1011,21 @@ class CRMF(nn.Module):
                 env_idx = kwargs.get("env_idx")
                 if env_idx is None:
                     concat_hidden_states = self.variant_encoder(batch, training_step)
-                    ps = self.x_to_s(concat_hidden_states)
+                    pred_theta = self.mapping(concat_hidden_states)
+                    ps = self.x_to_s(concat_hidden_states, pred_theta)
                     q_zgx = self.invariant_encoder(batch, training_step)
 
                 else:
                     concat_hidden_states = self.variant_encoder(batch, training_step)
-                    ps = self.x_to_s(concat_hidden_states)
+                    ps = self.x_to_s(concat_hidden_states, self.theta[env_idx])
                     q_zgx = self.invariant_encoder(batch, training_step)
 
                 return q_zgx, ps
 
             else:
                 concat_hidden_states = self.variant_encoder(batch, training_step)
-                ps = self.x_to_s(concat_hidden_states)
+                pred_theta = self.mapping(concat_hidden_states)
+                ps = self.x_to_s(concat_hidden_states, pred_theta)
                 p_zgx = self.invariant_encoder(batch, training_step)
 
                 # p(s|theta,x)

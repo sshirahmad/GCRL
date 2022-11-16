@@ -182,9 +182,9 @@ def main(args):
                 elif training_step == "P4":
                     validate_ade(args, model, valid_dataset, epoch, training_step, writer, stage='validation')
                     validate_ade(args, model, train_dataset, epoch, training_step, writer, stage='training')
-                    metric = validate_ade(args, model, valido_dataset, epoch, training_step, writer, stage='validation o')
 
                 elif training_step == "P5":
+                    metric = validate_ade(args, model, valido_dataset, epoch, training_step, writer, stage='validation o')
                     train_all(args, model, optimizers, valid_dataset, epoch, training_step, val_envs_name, writer, stage='validation')
 
                 else:
@@ -222,6 +222,7 @@ def train_all(args, model, optimizers, train_dataset, epoch, training_step, trai
     total_loss_meter = AverageMeter("Total Loss", ":.4f")
     e_loss_meter = AverageMeter("ELBO Loss", ":.4f")
     p_loss_meter = AverageMeter("Prediction Loss", ":.4f")
+    step = (epoch - 1) * args.batch_size
     for train_idx, train_loader in enumerate(train_dataset['loaders']):
         loss_meter = AverageMeter("Loss", ":.4f")
         progress = ProgressMeter(len(train_loader), [loss_meter],
