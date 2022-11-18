@@ -135,6 +135,8 @@ def main(args):
 
     min_metric = 1e10
     metric = min_metric
+    beta1_scheduler = get_beta(training_steps["P3"][0], 50, 0.01)
+    beta2_scheduler = get_beta(training_steps["P3"][0], 50, 0.01)
     for epoch in range(args.start_epoch, sum(args.num_epochs) + 1):
 
         training_step = get_training_step(epoch)

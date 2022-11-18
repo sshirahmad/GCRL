@@ -578,3 +578,18 @@ def from_abs_to_social(abs_coord):
     res = torch.stack(res)
     return res
 
+
+class get_beta:
+    def __init__(self, start_epoch, interval, init_beta):
+        self.start_epoch = start_epoch
+        self.interval = interval
+        self.init_beta = init_beta
+
+    def beta_val(self, epoch):
+        if self.start_epoch < epoch <= self.start_epoch + self.interval:
+            beta = (1 - self.init_beta) / self.interval * (epoch - self.start_epoch - 1) + self.init_beta
+
+        else:
+            beta = 1.0
+
+        return beta
