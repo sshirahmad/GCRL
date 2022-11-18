@@ -7,6 +7,7 @@ from parser_file import get_training_parser
 from utils import *
 from models import CRMF
 from losses import erm_loss, irm_loss
+from torch.optim.lr_scheduler import OneCycleLR
 from torch.nn.utils import clip_grad_norm_
 import matplotlib.pyplot as plt
 from matplotlib.lines import Line2D
@@ -105,6 +106,35 @@ def main(args):
         )
     }
 
+    num_batches = 0
+    for train_loader in train_loaders:
+        num_batches += len(train_loader)
+
+    training_steps = np.array([sum(args.num_epochs[:i]) - sum(args.num_epochs[:i - 1]) for i in range(1, 8)])
+    total_steps = num_batches * training_steps
+    lr_schedulers = {
+        "P1": {},
+        "P2": {},
+        "P3": {
+            'future_decoder': OneCycleLR(optimizers['future_decoder'], max_lr=1e-3, total_steps=int(total_steps[2]), pct_start=0.3),
+            'past_decoder': OneCycleLR(optimizers['past_decoder'], max_lr=1e-3, total_steps=int(total_steps[2]), pct_start=0.3),
+            'inv': OneCycleLR(optimizers['inv'], max_lr=1e-3, total_steps=int(total_steps[2]), pct_start=0.3),
+        },
+        "P4": {
+            'var': OneCycleLR(optimizers['var'], max_lr=1e-3, total_steps=int(total_steps[3]), pct_start=0.3),
+            'future_decoder': OneCycleLR(optimizers['future_decoder'], max_lr=1e-3, total_steps=int(total_steps[3]), pct_start=0.3),
+            'past_decoder': OneCycleLR(optimizers['past_decoder'], max_lr=1e-3, total_steps=int(total_steps[3]), pct_start=0.3),
+            'par': OneCycleLR(optimizers['par'], max_lr=1e-3, total_steps=int(total_steps[3]), pct_start=0.3),
+        },
+        "P5": {
+            'map': OneCycleLR(optimizers['map'], max_lr=1e-3, total_steps=int(total_steps[4]), pct_start=0.3),
+        },
+
+        "P6": {
+            'var': OneCycleLR(optimizers['var'], max_lr=1e-3, total_steps=int(total_steps[5]), pct_start=0.3),
+        }
+    }
+
     if args.resume:
         load_all_model(args, model, optimizers)
         model.cuda()
@@ -171,10 +201,10 @@ def main(args):
             freeze(False, (model.x_to_s,))
 
         if training_step == "P6":
-            train_all(args, model, optimizers, finetune_dataset, epoch, training_step, valo_envs_name, writer, beta1_scheduler, beta2_scheduler,
+            train_all(args, model, optimizers, finetune_dataset, epoch, training_step, valo_envs_name, writer, lr_schedulers,
                       stage='training')
         else:
-            train_all(args, model, optimizers, train_dataset, epoch, training_step, train_envs_name, writer, beta1_scheduler, beta2_scheduler,
+            train_all(args, model, optimizers, train_dataset, epoch, training_step, train_envs_name, writer, lr_schedulers,
                       stage='training')
 
         if training_step not in ["P1", "P2"]:
@@ -192,12 +222,11 @@ def main(args):
                 elif training_step == "P5":
                     metric = validate_ade(args, model, valido_dataset, epoch, training_step, writer,
                                           stage='validation o')
-                    train_all(args, model, optimizers, valid_dataset, epoch, training_step, val_envs_name, writer, beta1_scheduler, beta2_scheduler,
+                    train_all(args, model, optimizers, valid_dataset, epoch, training_step, val_envs_name, writer, lr_schedulers,
                               stage='validation')
 
                 else:
-                    metric = validate_ade(args, model, valido_dataset, epoch, training_step, writer,
-                                          stage='validation o')
+                    metric = validate_ade(args, model, valido_dataset, epoch, training_step, writer, stage='validation o')
 
         if training_step == "P6":
             if metric < min_metric:
@@ -210,7 +239,7 @@ def main(args):
     writer.close()
 
 
-def train_all(args, model, optimizers, train_dataset, epoch, training_step, train_envs_name, writer, beta1_scheduler, beta2_scheduler,
+def train_all(args, model, optimizers, train_dataset, epoch, training_step, train_envs_name, writer, lr_schedulers,
               stage,
               update=True):
     """
@@ -231,7 +260,6 @@ def train_all(args, model, optimizers, train_dataset, epoch, training_step, trai
     total_loss_meter = AverageMeter("Total Loss", ":.4f")
     e_loss_meter = AverageMeter("ELBO Loss", ":.4f")
     p_loss_meter = AverageMeter("Prediction Loss", ":.4f")
-    step = (epoch - 1) * args.batch_size
     for train_idx, train_loader in enumerate(train_dataset['loaders']):
         loss_meter = AverageMeter("Loss", ":.4f")
         progress = ProgressMeter(len(train_loader), [loss_meter],
@@ -268,7 +296,6 @@ def train_all(args, model, optimizers, train_dataset, epoch, training_step, trai
                 loss = loss_var + loss_inv
 
             elif training_step == "P3":
-                beta = beta1_scheduler.beta_val(epoch)
                 q_ygx, E = model(batch, training_step)
 
                 loss_sum_even_p, loss_sum_odd_p = erm_loss(torch.log(q_ygx), seq_start_end, fut_traj_rel.shape[0])
@@ -278,25 +305,31 @@ def train_all(args, model, optimizers, train_dataset, epoch, training_step, trai
                                                            fut_traj_rel.shape[0])
                 elbo_loss = loss_sum_even_e + loss_sum_odd_e
 
-                loss = (- predict_loss) + (- beta * elbo_loss)
+                loss = (- predict_loss) + (- elbo_loss)
 
                 e_loss_meter.update(elbo_loss.item(), obs_traj.shape[1])
                 p_loss_meter.update(predict_loss.item(), obs_traj.shape[1])
 
             elif training_step == "P4":
-                beta = beta2_scheduler.beta_val(epoch)
-                q_ygthetax, E = model(batch, training_step, env_idx=train_idx)
+                q_ygthetax, E1, E2 = model(batch, training_step, env_idx=train_idx)
 
                 loss_sum_even_p, loss_sum_odd_p = erm_loss(torch.log(q_ygthetax), seq_start_end, fut_traj_rel.shape[0])
 
                 predict_loss = loss_sum_even_p + loss_sum_odd_p
 
-                loss_sum_even_e, loss_sum_odd_e = erm_loss(torch.divide(E, q_ygthetax), seq_start_end,
+                loss_sum_even_e, loss_sum_odd_e = erm_loss(torch.divide(E1, q_ygthetax), seq_start_end,
                                                            fut_traj_rel.shape[0])
 
-                elbo_loss = loss_sum_even_e + loss_sum_odd_e
+                elbo_loss1 = loss_sum_even_e + loss_sum_odd_e
 
-                stacked_loss = torch.cat((-predict_loss, - beta * elbo_loss))
+                loss_sum_even_e, loss_sum_odd_e = erm_loss(torch.divide(E2, q_ygthetax), seq_start_end,
+                                                           fut_traj_rel.shape[0])
+
+                elbo_loss2 = loss_sum_even_e + loss_sum_odd_e
+
+                elbo_loss = elbo_loss1 + elbo_loss2
+
+                stacked_loss = torch.cat((-predict_loss, - elbo_loss))
 
                 loss = torch.sum(stacked_loss)
 
@@ -332,12 +365,37 @@ def train_all(args, model, optimizers, train_dataset, epoch, training_step, trai
                 loss.backward()
 
                 # choose which optimizer to use depending on the training step
-                if training_step in ['P1', 'P2', 'P3']: optimizers['inv'].step()
-                if training_step in ['P3', 'P4']: optimizers['future_decoder'].step()
-                if training_step in ['P3', 'P4']: optimizers['past_decoder'].step()
-                if training_step in ['P1', 'P2', 'P4', 'P6']: optimizers['var'].step()
-                if training_step in ['P5']: optimizers['map'].step()
-                if training_step in ['P4']: optimizers['par'].step()
+                lr_scheduler_optims = lr_schedulers[training_step]
+                # choose which optimizer to use depending on the training step
+                if training_step in ['P1', 'P2', 'P3']:
+                    if lr_scheduler_optims is not None:
+                        lr_scheduler_optims['inv'].step()
+                    optimizers['inv'].step()
+
+                if training_step in ['P3', 'P4']:
+                    if lr_scheduler_optims is not None:
+                        lr_scheduler_optims['future_decoder'].step()
+                    optimizers['future_decoder'].step()
+
+                if training_step in ['P3', 'P4']:
+                    if lr_scheduler_optims is not None:
+                        lr_scheduler_optims['past_decoder'].step()
+                    optimizers['past_decoder'].step()
+
+                if training_step in ['P1', 'P2', 'P4', 'P6']:
+                    if lr_scheduler_optims is not None:
+                        lr_scheduler_optims['var'].step()
+                    optimizers['var'].step()
+
+                if training_step in ['P5']:
+                    if lr_scheduler_optims is not None:
+                        lr_scheduler_optims['map'].step()
+                    optimizers['map'].step()
+
+                if training_step in ['P4']:
+                    if lr_scheduler_optims is not None:
+                        lr_scheduler_optims['par'].step()
+                    optimizers['par'].step()
 
             total_loss_meter.update(loss.item(), obs_traj.shape[1])
             loss_meter.update(loss.item(), obs_traj.shape[1])

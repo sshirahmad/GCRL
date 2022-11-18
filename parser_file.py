@@ -81,19 +81,17 @@ def get_training_parser():
                         type=str, metavar="PATH", help="path to latest checkpoint (default: none)")
 
     # learning rates
-    parser.add_argument("--lrvar", default=1e-3, type=float,
+    parser.add_argument("--lrvar", default=1e-6, type=float,
                         help="initial learning rate for variant encoder optimizer")
-    parser.add_argument("--lrvariation", default=1e-3, type=float,
-                        help="initial learning rate variational models optimizer")
-    parser.add_argument('--lrinv', default=1e-3, type=float,
+    parser.add_argument('--lrinv', default=1e-6, type=float,
                         help="initial learning rate for the invariant encoder optimizer")
-    parser.add_argument('--lrfut', default=1e-3, type=float,
+    parser.add_argument('--lrfut', default=1e-6, type=float,
                         help="initial learning rate for the future decoder optimizer")
-    parser.add_argument('--lrpast', default=1e-3, type=float,
+    parser.add_argument('--lrpast', default=1e-6, type=float,
                         help="initial learning rate for the past decoder optimizer")
-    parser.add_argument('--lrmap', default=1e-3, type=float,
+    parser.add_argument('--lrmap', default=1e-6, type=float,
                         help="initial learning rate for the regressor optimizer")
-    parser.add_argument('--lrpar', default=1e-3, type=float,
+    parser.add_argument('--lrpar', default=1e-6, type=float,
                         help="initial learning rate for the parameters optimizer")
 
     # other parameters to test after

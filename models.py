@@ -853,6 +853,7 @@ class CRMF(nn.Module):
                 qygthetax = torch.mean(torch.stack(first_E), dim=0)
 
                 first_E = []
+                second_E = []
                 for _ in range(self.num_samples):
                     z_vec = q_zgx.rsample()
                     s_vec = q_sgthetax.rsample()
@@ -900,11 +901,13 @@ class CRMF(nn.Module):
                     A1 = torch.multiply(p_ygzs, reconstruction_loss)
                     A2 = torch.multiply(p_ygzs, log_pz + log_psgtheta - log_qzgx - log_qsgthetax)
 
-                    first_E.append(A1 + A2)
+                    first_E.append(A1)
+                    second_E.append(A2)
 
-                E = torch.mean(torch.stack(first_E), dim=0)
+                E1 = torch.mean(torch.stack(first_E), dim=0)
+                E2 = torch.mean(torch.stack(second_E), dim=0)
 
-                return qygthetax, E
+                return qygthetax, E1, E2
 
             elif training_step == "P5":
                 pred_theta = self.mapping(obs_traj_rel)
