@@ -51,9 +51,9 @@ def get_training_parser():
     parser.add_argument('--teachingratio', default=0.0, type=float,
                         help="The probability of using ground truth future trajectories instead of model predictions during training")
     # architecture (VE)
-    parser.add_argument('--latent_dim', type=int, default=2, help="Dimension of latent selection variables")
+    parser.add_argument('--latent_dim', type=int, default=64, help="Dimension of latent selection variables")
     parser.add_argument("--z_dim", type=int, default=64, help="Dimension of z latent variable")
-    parser.add_argument("--s_dim", type=int, default=2, help="Dimension of s latent variable")
+    parser.add_argument("--s_dim", type=int, default=64, help="Dimension of s latent variable")
 
     # computation
     parser.add_argument("--loader_num_workers", default=6, type=int)
@@ -61,7 +61,7 @@ def get_training_parser():
 
     # training
     parser.add_argument("--best_k", default=20, type=int)
-    parser.add_argument("--batch_size", default='16', type=str)
+    parser.add_argument("--batch_size", default='64', type=str)
     parser.add_argument("--batch_method", default='hom', type=str,
                         help='Use Homogeneous (hom), Heterogeneous (het) or alternated homogeneous (alt) batches during training')
     parser.add_argument("--shuffle", default=True, type=bool)
@@ -76,7 +76,7 @@ def get_training_parser():
 
     # general training
     parser.add_argument("--finetune", default="", type=str)
-    parser.add_argument("--num_epochs", default='150-100-50-100-100-50', type=lambda x: int_tuple(x, '-'))  # '150-100-150',
+    parser.add_argument("--num_epochs", default='150-100-50-800-100-50', type=lambda x: int_tuple(x, '-'))  # '150-100-150',
     parser.add_argument("--resume", default="",
                         type=str, metavar="PATH", help="path to latest checkpoint (default: none)")
 
