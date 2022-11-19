@@ -201,10 +201,10 @@ def main(args):
             freeze(False, (model.x_to_s,))
 
         if training_step == "P6":
-            train_all(args, model, optimizers, finetune_dataset, epoch, training_step, valo_envs_name, writer, lr_schedulers,
+            train_all(args, model, optimizers, finetune_dataset, epoch, training_step, valo_envs_name, writer, beta1_scheduler, beta2_scheduler,
                       stage='training')
         else:
-            train_all(args, model, optimizers, train_dataset, epoch, training_step, train_envs_name, writer, lr_schedulers,
+            train_all(args, model, optimizers, train_dataset, epoch, training_step, train_envs_name, writer, beta1_scheduler, beta2_scheduler,
                       stage='training')
 
         if training_step not in ["P1", "P2"]:
@@ -222,11 +222,12 @@ def main(args):
                 elif training_step == "P5":
                     metric = validate_ade(args, model, valido_dataset, epoch, training_step, writer,
                                           stage='validation o')
-                    train_all(args, model, optimizers, valid_dataset, epoch, training_step, val_envs_name, writer, lr_schedulers,
+                    train_all(args, model, optimizers, valid_dataset, epoch, training_step, val_envs_name, writer, beta1_scheduler, beta2_scheduler,
                               stage='validation')
 
                 else:
-                    metric = validate_ade(args, model, valido_dataset, epoch, training_step, writer, stage='validation o')
+                    metric = validate_ade(args, model, valido_dataset, epoch, training_step, writer,
+                                          stage='validation o')
 
         if training_step == "P6":
             if metric < min_metric:
@@ -239,7 +240,7 @@ def main(args):
     writer.close()
 
 
-def train_all(args, model, optimizers, train_dataset, epoch, training_step, train_envs_name, writer, lr_schedulers,
+def train_all(args, model, optimizers, train_dataset, epoch, training_step, train_envs_name, writer, beta1_scheduler, beta2_scheduler,
               stage,
               update=True):
     """
@@ -311,6 +312,7 @@ def train_all(args, model, optimizers, train_dataset, epoch, training_step, trai
                 p_loss_meter.update(predict_loss.item(), obs_traj.shape[1])
 
             elif training_step == "P4":
+                beta = beta2_scheduler.beta_val(epoch)
                 q_ygthetax, E1, E2 = model(batch, training_step, env_idx=train_idx)
 
                 loss_sum_even_p, loss_sum_odd_p = erm_loss(torch.log(q_ygthetax), seq_start_end, fut_traj_rel.shape[0])
@@ -327,7 +329,7 @@ def train_all(args, model, optimizers, train_dataset, epoch, training_step, trai
 
                 elbo_loss2 = loss_sum_even_e + loss_sum_odd_e
 
-                elbo_loss = elbo_loss1 + elbo_loss2
+                elbo_loss = elbo_loss1 + beta * elbo_loss2
 
                 stacked_loss = torch.cat((-predict_loss, - elbo_loss))
 
@@ -365,36 +367,36 @@ def train_all(args, model, optimizers, train_dataset, epoch, training_step, trai
                 loss.backward()
 
                 # choose which optimizer to use depending on the training step
-                lr_scheduler_optims = lr_schedulers[training_step]
+               # lr_scheduler_optims = lr_schedulers[training_step]
                 # choose which optimizer to use depending on the training step
                 if training_step in ['P1', 'P2', 'P3']:
-                    if lr_scheduler_optims is not None:
-                        lr_scheduler_optims['inv'].step()
+                    # if lr_scheduler_optims is not None:
+                    #     lr_scheduler_optims['inv'].step()
                     optimizers['inv'].step()
 
                 if training_step in ['P3', 'P4']:
-                    if lr_scheduler_optims is not None:
-                        lr_scheduler_optims['future_decoder'].step()
+                    # if lr_scheduler_optims is not None:
+                    #     lr_scheduler_optims['future_decoder'].step()
                     optimizers['future_decoder'].step()
 
                 if training_step in ['P3', 'P4']:
-                    if lr_scheduler_optims is not None:
-                        lr_scheduler_optims['past_decoder'].step()
+                    # if lr_scheduler_optims is not None:
+                    #     lr_scheduler_optims['past_decoder'].step()
                     optimizers['past_decoder'].step()
 
                 if training_step in ['P1', 'P2', 'P4', 'P6']:
-                    if lr_scheduler_optims is not None:
-                        lr_scheduler_optims['var'].step()
+                    # if lr_scheduler_optims is not None:
+                    #     lr_scheduler_optims['var'].step()
                     optimizers['var'].step()
 
                 if training_step in ['P5']:
-                    if lr_scheduler_optims is not None:
-                        lr_scheduler_optims['map'].step()
+                    # if lr_scheduler_optims is not None:
+                    #     lr_scheduler_optims['map'].step()
                     optimizers['map'].step()
 
                 if training_step in ['P4']:
-                    if lr_scheduler_optims is not None:
-                        lr_scheduler_optims['par'].step()
+                    # if lr_scheduler_optims is not None:
+                    #     lr_scheduler_optims['par'].step()
                     optimizers['par'].step()
 
             total_loss_meter.update(loss.item(), obs_traj.shape[1])
@@ -435,41 +437,58 @@ def validate_ade(args, model, valid_dataset, epoch, training_step, writer, stage
     model.eval()
 
     assert (stage in ['training', 'validation', 'validation o'])
-    ade_tot_meter, fde_tot_meter = AverageMeter("ADE", ":.4f"), AverageMeter("FDE", ":.4f")
 
     logging.info(f"- Computing ADE ({stage})")
     with torch.no_grad():
+        ade = 0
+        fde = 0
+        total_traj = 0
         for val_idx, (loader, loader_name) in enumerate(zip(valid_dataset['loaders'], valid_dataset['names'])):
-            ade_meter, fde_meter = AverageMeter("ADE", ":.4f"), AverageMeter("FDE", ":.4f")
-
+            ade_outer, fde_outer = [], []
+            total_traj_i = 0
             for batch_idx, batch in enumerate(loader):
                 batch = [tensor.cuda() for tensor in batch]
-                (obs_traj, fut_traj, _, _, _) = batch
+                (obs_traj, fut_traj, _, _, seq_start_end) = batch
 
-                if stage == "validation o":
-                    pred_fut_traj_rel = model(batch, training_step)
-                else:
-                    pred_fut_traj_rel = model(batch, training_step, env_idx=val_idx)
+                ade_list, fde_list = [], []
+                total_traj_i += fut_traj.size(1)
+                for k in range(args.best_k):
 
-                # from relative path to absolute path
-                pred_fut_traj = relative_to_abs(pred_fut_traj_rel, obs_traj[-1, :, :2])
+                    if stage == "validation o":
+                        pred_fut_traj_rel = model(batch, training_step)
+                    else:
+                        pred_fut_traj_rel = model(batch, training_step, env_idx=val_idx)
 
-                # compute ADE and FDE metrics
-                ade_, fde_ = cal_ade_fde(fut_traj, pred_fut_traj)
+                    # from relative path to absolute path
+                    pred_fut_traj = relative_to_abs(pred_fut_traj_rel, obs_traj[-1, :, :2])
 
-                ade_, fde_ = ade_ / (obs_traj.shape[1] * fut_traj.shape[0]), fde_ / (obs_traj.shape[1])
-                ade_meter.update(ade_, obs_traj.shape[1])
-                fde_meter.update(fde_, obs_traj.shape[1])
-                ade_tot_meter.update(ade_, obs_traj.shape[1])
-                fde_tot_meter.update(fde_, obs_traj.shape[1])
+                    # compute ADE and FDE metrics
+                    ade_, fde_ = cal_ade_fde(fut_traj, pred_fut_traj)
 
-            logging.info(f'\t\t ADE on {loader_name:<25} dataset:\t {ade_meter.avg}')
+                    ade_list.append(ade_)
+                    fde_list.append(fde_)
 
-    logging.info(f"Average {stage}:\tADE  {ade_tot_meter.avg:.4f}\tFDE  {fde_tot_meter.avg:.4f}")
+                ade_sum_batch = evaluate_helper(ade_list, seq_start_end)
+                fde_sum_batch = evaluate_helper(fde_list, seq_start_end)
+                ade_outer.append(ade_sum_batch)
+                fde_outer.append(fde_sum_batch)
+
+            ade_sum = sum(ade_outer)
+            fde_sum = sum(fde_outer)
+            ade += ade_sum
+            fde += fde_sum
+            total_traj += total_traj_i
+
+            logging.info(f'\t\t ADE on {loader_name:<25} dataset:\t {ade_sum / (total_traj_i * args.fut_len)}')
+
+        ade = ade / (total_traj * args.fut_len)
+        fde = fde / total_traj
+
+    logging.info(f"Average {stage}:\tADE  {ade:.4f}\tFDE  {fde:.4f}")
     repoch = epoch
     if write:
-        writer.add_scalar(f"ade/{stage}", ade_tot_meter.avg, repoch)
-        writer.add_scalar(f"fde/{stage}", fde_tot_meter.avg, repoch)
+        writer.add_scalar(f"ade/{stage}", ade, repoch)
+        writer.add_scalar(f"fde/{stage}", fde, repoch)
 
     ## SAVE VISUALIZATIONS
     # if epoch % 1 == 0 and stage == 'validation':
@@ -483,20 +502,16 @@ def validate_ade(args, model, valid_dataset, epoch, training_step, writer, stage
     #     fig.savefig(f'images/visu/pred{epoch}.png')
     #     writer.add_image("Some paths", array, epoch)
 
-    return ade_tot_meter.avg
+    return ade
 
 
-def compute_ade_(pred_fut_traj_rel, obs_traj, fut_traj):
-    pred_fut_traj = relative_to_abs(pred_fut_traj_rel, obs_traj[-1, :, :2])
-    ade_, fde_ = cal_ade_fde(fut_traj, pred_fut_traj)
-    ade_ = ade_ / (fut_traj.shape[0] * obs_traj.shape[1])
-    return ade_
-
-
-def compute_ade_single(pred_fut_traj_rel, obs_traj, fut_traj, wto):
-    return compute_ade_(pred_fut_traj_rel[:, wto * NUMBER_PERSONS:NUMBER_PERSONS * (wto + 1)],
-                        obs_traj[:, wto * NUMBER_PERSONS:NUMBER_PERSONS * (wto + 1)],
-                        fut_traj[:, wto * NUMBER_PERSONS:NUMBER_PERSONS * (wto + 1)])
+def cal_ade_fde(fut_traj, pred_fut_traj):
+    """
+    Compute the ADE and FDE
+    """
+    ade = displacement_error(pred_fut_traj, fut_traj, mode="raw")
+    fde = final_displacement_error(pred_fut_traj[-1], fut_traj[-1], mode="raw")
+    return ade, fde
 
 
 def plot_grad_flow(named_parameters):

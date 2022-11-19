@@ -899,7 +899,7 @@ class CRMF(nn.Module):
                                           0.5 * 1 / obs_traj_rel.shape[0] * torch.log(torch.tensor(2 * math.pi * 0.5))
 
                     A1 = torch.multiply(p_ygzs, reconstruction_loss)
-                    A2 = torch.multiply(p_ygzs, log_pz + log_psgtheta - log_qzgx - log_qsgthetax)
+                    A2 = torch.multiply(p_ygzs, log_psgtheta - log_qsgthetax)
 
                     first_E.append(A1)
                     second_E.append(A2)

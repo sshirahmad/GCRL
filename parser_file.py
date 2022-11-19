@@ -51,9 +51,9 @@ def get_training_parser():
     parser.add_argument('--teachingratio', default=0.0, type=float,
                         help="The probability of using ground truth future trajectories instead of model predictions during training")
     # architecture (VE)
-    parser.add_argument('--latent_dim', type=int, default=64, help="Dimension of latent selection variables")
-    parser.add_argument("--z_dim", type=int, default=64, help="Dimension of z latent variable")
-    parser.add_argument("--s_dim", type=int, default=64, help="Dimension of s latent variable")
+    parser.add_argument('--latent_dim', type=int, default=16, help="Dimension of latent selection variables")
+    parser.add_argument("--z_dim", type=int, default=16, help="Dimension of z latent variable")
+    parser.add_argument("--s_dim", type=int, default=16, help="Dimension of s latent variable")
 
     # computation
     parser.add_argument("--loader_num_workers", default=6, type=int)
@@ -81,17 +81,17 @@ def get_training_parser():
                         type=str, metavar="PATH", help="path to latest checkpoint (default: none)")
 
     # learning rates
-    parser.add_argument("--lrvar", default=1e-6, type=float,
+    parser.add_argument("--lrvar", default=1e-3, type=float,
                         help="initial learning rate for variant encoder optimizer")
-    parser.add_argument('--lrinv', default=1e-6, type=float,
+    parser.add_argument('--lrinv', default=1e-3, type=float,
                         help="initial learning rate for the invariant encoder optimizer")
-    parser.add_argument('--lrfut', default=1e-6, type=float,
+    parser.add_argument('--lrfut', default=1e-3, type=float,
                         help="initial learning rate for the future decoder optimizer")
-    parser.add_argument('--lrpast', default=1e-6, type=float,
+    parser.add_argument('--lrpast', default=1e-3, type=float,
                         help="initial learning rate for the past decoder optimizer")
-    parser.add_argument('--lrmap', default=1e-6, type=float,
+    parser.add_argument('--lrmap', default=1e-3, type=float,
                         help="initial learning rate for the regressor optimizer")
-    parser.add_argument('--lrpar', default=1e-6, type=float,
+    parser.add_argument('--lrpar', default=1e-3, type=float,
                         help="initial learning rate for the parameters optimizer")
 
     # other parameters to test after
