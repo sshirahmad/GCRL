@@ -346,7 +346,7 @@ class STGAT_encoder_inv(nn.Module):
 
             z = MultivariateNormal(mu, torch.diag_embed(torch.exp(logvar)))
 
-            return z
+            return torch.cat((traj_lstm_hidden_states[-1], graph_lstm_hidden_states[-1]), dim=1)
 
 
 class STGAT_encoder_var(nn.Module):
@@ -666,7 +666,7 @@ class regressor(nn.Module):
         )
 
         if hidden_dims is None:
-            hidden_dims = [32, 64]
+            hidden_dims = [8, 16]
 
         modules = []
         in_channels = traj_lstm_hidden_size + graph_lstm_hidden_size
@@ -752,7 +752,7 @@ class simple_mapping(nn.Module):
         super(simple_mapping, self).__init__()
 
         if hidden_dims is None:
-            hidden_dims = [32, 64]
+            hidden_dims = [16, 32]
 
         modules = []
         in_channels = latent_dim + traj_lstm_hidden_size + graph_lstm_hidden_size
@@ -835,11 +835,10 @@ class CRMF(nn.Module):
         self.pe = MultivariateNormal(torch.zeros(args.latent_dim).cuda(),
                                      torch.diag(torch.ones(args.latent_dim).cuda()))
 
-        # self.invariant_encoder = STGAT_encoder_inv(args.obs_len, args.fut_len, args.n_coordinates,
-        #                                            args.traj_lstm_hidden_size, args.n_units, args.n_heads,
-        #                                            args.graph_network_out_dims, args.dropout, args.alpha,
-        #                                            args.graph_lstm_hidden_size,
-        #                                            args.z_dim, None, args.add_confidence)
+        self.invariant_encoder = STGAT_encoder_var(args.obs_len, args.fut_len, args.n_coordinates,
+                                                 args.traj_lstm_hidden_size, args.n_units, args.n_heads,
+                                                 args.graph_network_out_dims, args.dropout, args.alpha,
+                                                 args.graph_lstm_hidden_size, args.add_confidence)
 
         self.variant_encoder = STGAT_encoder_var(args.obs_len, args.fut_len, args.n_coordinates,
                                                  args.traj_lstm_hidden_size, args.n_units, args.n_heads,
