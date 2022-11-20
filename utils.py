@@ -441,7 +441,7 @@ def save_all_model(args, model, model_name, optimizers, metric, epoch, training_
         'epoch': epoch + 1,
         'state_dicts': {
             'variant_encoder': model.variant_encoder.state_dict(),
-            'invariant_encoder': model.invariant_encoder.state_dict(),
+            'x_to_z': model.x_to_z.state_dict(),
             'coupling_layers_z': model.coupling_layers_z.state_dict(),
             'coupling_layers_s': model.coupling_layers_s.state_dict(),
             'coupling_layers_theta': model.coupling_layers_theta.state_dict(),
@@ -500,7 +500,7 @@ def load_all_model(args, model, optimizers):
             update_lr(optimizers['past_decoder'], args.lrpast)
 
         # invariant encoder
-        model.invariant_encoder.load_state_dict(models_checkpoint['invariant_encoder'])
+        model.x_to_z.load_state_dict(models_checkpoint['x_to_z'])
         model.coupling_layers_z.load_state_dict(models_checkpoint['coupling_layers_z'])
         if optimizers != None:
             optimizers['inv'].load_state_dict(checkpoint['optimizers']['inv'])
@@ -523,10 +523,6 @@ def load_all_model(args, model, optimizers):
         model.coupling_layers_theta.load_state_dict(models_checkpoint['coupling_layers_theta'])
         model.x_to_s.load_state_dict(models_checkpoint['x_to_s'])
         model.theta.data = models_checkpoint['theta'].data
-        if optimizers != None:
-            optimizers['variational'].load_state_dict(checkpoint['optimizers']['variational'])
-            update_lr(optimizers['variational'], args.lrvariation)
-
         if optimizers != None:
             optimizers['par'].load_state_dict(checkpoint['optimizers']['par'])
             update_lr(optimizers['par'], args.lrpar)

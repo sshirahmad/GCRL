@@ -20,7 +20,7 @@ def get_training_parser():
     # dataset
     parser.add_argument("--dataset_name", default="eth", type=str)
     parser.add_argument("--num_envs", default=4, type=int, help="Number of environments in the dataset")
-    parser.add_argument("--finetune_ratio", default=0.2, type=float, help="Number of batches to be used in finetuning")
+    parser.add_argument("--finetune_ratio", default=0.5, type=float, help="Number of batches to be used in finetuning")
     parser.add_argument("--delim", default="\t")
     parser.add_argument("--obs_len", default=8, type=int)
     parser.add_argument("--fut_len", default=12, type=int)
@@ -61,7 +61,7 @@ def get_training_parser():
 
     # training
     parser.add_argument("--best_k", default=20, type=int)
-    parser.add_argument("--batch_size", default='64', type=str)
+    parser.add_argument("--batch_size", default='10000000', type=str)
     parser.add_argument("--batch_method", default='hom', type=str,
                         help='Use Homogeneous (hom), Heterogeneous (het) or alternated homogeneous (alt) batches during training')
     parser.add_argument("--shuffle", default=True, type=bool)
@@ -76,8 +76,8 @@ def get_training_parser():
 
     # general training
     parser.add_argument("--finetune", default="", type=str)
-    parser.add_argument("--num_epochs", default='150-100-50-800-100-50', type=lambda x: int_tuple(x, '-'))  # '150-100-150',
-    parser.add_argument("--resume", default="",
+    parser.add_argument("--num_epochs", default='150-100-150-800-50-500', type=lambda x: int_tuple(x, '-'))  # '150-100-150',
+    parser.add_argument("--resume", default="./models/E1//P6/CRMF_epoch_1345.pth.tar",
                         type=str, metavar="PATH", help="path to latest checkpoint (default: none)")
 
     # learning rates

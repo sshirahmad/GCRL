@@ -9,6 +9,7 @@ from models import CRMF
 from losses import erm_loss, irm_loss
 from torch.nn.utils import clip_grad_norm_
 import matplotlib.pyplot as plt
+import seaborn as sns
 from matplotlib.lines import Line2D
 from visualize import draw_image, draw_solo, draw_solo_all
 
@@ -22,7 +23,7 @@ def main(args):
     if not os.path.exists(args.tfdir + '/' + model_name):
         os.makedirs(args.tfdir + '/' + model_name)
 
-    writer = SummaryWriter(log_dir=args.tfdir + '/' + model_name, flush_secs=10)
+    training_step = "P8"
 
     logging.info("Initializing Training Set")
     train_envs_path, train_envs_name = get_envs_path(args.dataset_name, "train", args.filter_envs)
@@ -62,10 +63,45 @@ def main(args):
 
     # create the model
     model = CRMF(args).cuda()
-    calculate_distance(model, valid_dataset, valido_dataset)
+    if training_step == "P7":
+        calculate_distance_posteriors(model, valid_dataset, valido_dataset)
+    else:
+        calculate_distance_priors(model, valid_dataset, valido_dataset)
 
 
-def calculate_distance(model, valid_dataset, valido_dataset=None):
+def calculate_distance_priors(model, valid_dataset, valido_dataset=None):
+    """
+    Evaluate the performances on the validation set
+
+    Args:
+        - stage (str): either 'validation' or 'training': says on which dataset the metrics are computed
+    """
+    model.eval()
+
+    fig, ax = plt.subplots(1, 2)
+    with torch.no_grad():
+        for val_idx, (loader, loader_name) in enumerate(zip(valid_dataset['loaders'], valid_dataset['names'])):
+            for batch_idx, batch in enumerate(loader):
+                batch = [tensor.cuda() for tensor in batch]
+                (obs_traj, fut_traj, _, _, _) = batch
+
+                pz, z_vec, ps, s_vec = model(batch, "P8", env_idx=val_idx)
+                ax[0].scatter(z_vec[:, 0].cpu(), pz.cpu())
+                ax[1].scatter(s_vec[:, 0].cpu(), ps.cpu())
+
+        for val_idx, (loader, loader_name) in enumerate(zip(valido_dataset['loaders'], valido_dataset['names'])):
+            for batch_idx, batch in enumerate(loader):
+                batch = [tensor.cuda() for tensor in batch]
+                (obs_traj, fut_traj, _, _, _) = batch
+
+                pz, z_vec, ps, s_vec = model(batch, "P8")
+                ax[0].scatter(z_vec[:, 0].cpu(), pz.cpu())
+                ax[1].scatter(s_vec[:, 0].cpu(), ps.cpu())
+
+        plt.savefig('fig.png')
+
+
+def calculate_distance_posteriors(model, valid_dataset, valido_dataset=None):
     """
     Evaluate the performances on the validation set
 
