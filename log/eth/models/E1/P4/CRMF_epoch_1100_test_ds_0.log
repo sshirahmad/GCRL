@@ -1,0 +1,5 @@
+2022-11-19 01:11:51,101:INFO: => loaded checkpoint './models/E1//P4/CRMF_epoch_1100.pth.tar' (epoch 1101)
+2022-11-19 01:11:51,297:INFO: Model: ./models/E1//P4/CRMF_epoch_1100.pth.tar
+2022-11-19 01:11:51,297:INFO: Dataset: eth
+2022-11-19 01:11:51,297:INFO: Eval shift: 0
+2022-11-19 01:11:51,297:INFO: Dataset type: test
