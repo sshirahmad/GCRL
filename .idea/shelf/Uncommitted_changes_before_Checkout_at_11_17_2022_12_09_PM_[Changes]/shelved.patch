@@ -1,0 +1,47 @@
+Index: .idea/workspace.xml
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/.idea/workspace.xml b/.idea/workspace.xml
+--- a/.idea/workspace.xml	
++++ b/.idea/workspace.xml	
+@@ -1,13 +1,7 @@
+ <?xml version="1.0" encoding="UTF-8"?>
+ <project version="4">
+   <component name="ChangeListManager">
+-    <list default="true" id="8147b731-440c-4981-a21f-e4c8b1f0cd9a" name="Changes" comment="Corrected theta convergence">
+-      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+-      <change beforePath="$PROJECT_DIR$/log/train.log" beforeDir="false" afterPath="$PROJECT_DIR$/log/train.log" afterDir="false" />
+-      <change beforePath="$PROJECT_DIR$/models.py" beforeDir="false" afterPath="$PROJECT_DIR$/models.py" afterDir="false" />
+-      <change beforePath="$PROJECT_DIR$/parser_file.py" beforeDir="false" afterPath="$PROJECT_DIR$/parser_file.py" afterDir="false" />
+-      <change beforePath="$PROJECT_DIR$/train.py" beforeDir="false" afterPath="$PROJECT_DIR$/train.py" afterDir="false" />
+-    </list>
++    <list default="true" id="8147b731-440c-4981-a21f-e4c8b1f0cd9a" name="Changes" comment="Corrected theta convergence" />
+     <option name="SHOW_DIALOG" value="false" />
+     <option name="HIGHLIGHT_CONFLICTS" value="true" />
+     <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
+@@ -157,6 +151,7 @@
+       <workItem from="1668385121155" duration="9013000" />
+       <workItem from="1668443724873" duration="34005000" />
+       <workItem from="1668544348636" duration="11075000" />
++      <workItem from="1668562862596" duration="29000" />
+     </task>
+     <task id="LOCAL-00001" summary="Finetune completed">
+       <created>1667968720588</created>
+@@ -382,7 +377,14 @@
+       <option name="project" value="LOCAL" />
+       <updated>1668479484839</updated>
+     </task>
+-    <option name="localTasksCounter" value="33" />
++    <task id="LOCAL-00033" summary="Corrected theta convergence">
++      <created>1668562870098</created>
++      <option name="number" value="00033" />
++      <option name="presentableId" value="LOCAL-00033" />
++      <option name="project" value="LOCAL" />
++      <updated>1668562870098</updated>
++    </task>
++    <option name="localTasksCounter" value="34" />
+     <servers />
+   </component>
+   <component name="TypeScriptGeneratedFilesManager">

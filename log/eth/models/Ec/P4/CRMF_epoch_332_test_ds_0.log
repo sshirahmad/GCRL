@@ -1,0 +1,6 @@
+2022-11-14 17:09:33,564:INFO: => loaded checkpoint './models/Ec/P4/CRMF_epoch_332.pth.tar' (epoch 333)
+2022-11-14 17:09:34,568:INFO: Model: ./models/Ec/P4/CRMF_epoch_332.pth.tar
+2022-11-14 17:09:34,568:INFO: Dataset: eth
+2022-11-14 17:09:34,568:INFO: Eval shift: 0
+2022-11-14 17:09:34,568:INFO: Dataset type: test
+2022-11-14 17:09:42,058:INFO: ADE: 0.9251	FDE: 1.9367

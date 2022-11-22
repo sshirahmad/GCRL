@@ -1,0 +1,3 @@
+- taking expectation during inference degrades performance significantly 
+- training with homogenous batches are much better than heterogenous 
+- Factorized prior does not work well, adding covariances improved it significantly 
