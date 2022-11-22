@@ -522,7 +522,7 @@ def load_all_model(args, model, optimizers):
         model.coupling_layers_s.load_state_dict(models_checkpoint['coupling_layers_s'])
         model.coupling_layers_theta.load_state_dict(models_checkpoint['coupling_layers_theta'])
         model.x_to_s.load_state_dict(models_checkpoint['x_to_s'])
-        model.theta.data = models_checkpoint['theta'].data
+        model.theta.data = models_checkpoint['theta'].data.cuda()
         if optimizers != None:
             optimizers['par'].load_state_dict(checkpoint['optimizers']['par'])
             update_lr(optimizers['par'], args.lrpar)
