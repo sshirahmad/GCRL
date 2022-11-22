@@ -93,7 +93,6 @@ def main(args):
         'inv': torch.optim.Adam(
             [
                 {"params": model.invariant_encoder.parameters(), 'lr': args.lrinv},
-                {"params": model.x_to_z.parameters(), 'lr': args.lrinv},
                 {"params": model.coupling_layers_z.parameters(), 'lr': args.lrinv},
             ]
         ),
@@ -187,17 +186,17 @@ def main(args):
 
         elif training_step == 'P4':
             freeze(True, (model.mapping,))
-            freeze(False, (model.variant_encoder, model.invariant_encoder, model.coupling_layers_s, model.coupling_layers_theta, model.coupling_layers_z, model.x_to_z,
+            freeze(False, (model.variant_encoder, model.invariant_encoder, model.coupling_layers_s, model.coupling_layers_theta, model.coupling_layers_z,
                            model.x_to_s, model.past_decoder, model.future_decoder))
 
         elif training_step == 'P5':
-            freeze(True, (model.x_to_z, model.variant_encoder, model.invariant_encoder,
+            freeze(True, (model.variant_encoder, model.invariant_encoder,
                           model.coupling_layers_s, model.coupling_layers_theta, model.x_to_s, model.past_decoder, model.future_decoder, model.coupling_layers_z))
             freeze(False, (model.mapping,))
 
         elif training_step == 'P6':
             freeze(True, (model.variant_encoder, model.invariant_encoder, model.past_decoder, model.future_decoder, model.mapping, model.coupling_layers_z))
-            freeze(False, (model.x_to_s, model.x_to_z, model.coupling_layers_theta))
+            freeze(False, (model.x_to_s, model.coupling_layers_theta))
 
         if training_step == "P6":
             train_all(args, model, optimizers, finetune_dataset, epoch, training_step, valo_envs_name, writer, beta1_scheduler, beta2_scheduler,

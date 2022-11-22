@@ -187,7 +187,7 @@ def main(args):
         fde = 0
         total_traj = 0
         for loader in loaders:
-            ade_sum_i, fde_sum_i, total_traj_i = evaluate(args, loader, generator, training_step="P4")
+            ade_sum_i, fde_sum_i, total_traj_i = evaluate(args, loader, generator, training_step="P6")
             ade += ade_sum_i
             fde += fde_sum_i
             total_traj += total_traj_i
