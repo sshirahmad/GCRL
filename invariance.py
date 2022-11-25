@@ -23,7 +23,7 @@ def main(args):
     if not os.path.exists(args.tfdir + '/' + model_name):
         os.makedirs(args.tfdir + '/' + model_name)
 
-    training_step = "P8"
+    training_step = "P7"
 
     logging.info("Initializing Training Set")
     train_envs_path, train_envs_name = get_envs_path(args.dataset_name, "train", args.filter_envs)

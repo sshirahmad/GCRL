@@ -1,13 +1,18 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project version="4">
   <component name="ChangeListManager">
-    <list default="true" id="8147b731-440c-4981-a21f-e4c8b1f0cd9a" name="Changes" comment="Updated model">
-      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Tensorboard.ipynb" beforeDir="false" afterPath="$PROJECT_DIR$/Tensorboard.ipynb" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/distributions.py" beforeDir="false" afterPath="$PROJECT_DIR$/distributions.py" afterDir="false" />
+    <list default="true" id="8147b731-440c-4981-a21f-e4c8b1f0cd9a" name="Changes" comment="Deleted P3 and removed flow priors">
+      <change beforePath="$PROJECT_DIR$/invariance.py" beforeDir="false" afterPath="$PROJECT_DIR$/invariance.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/log/train.log" beforeDir="false" afterPath="$PROJECT_DIR$/log/train.log" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/models.py" beforeDir="false" afterPath="$PROJECT_DIR$/models.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/parser_file.py" beforeDir="false" afterPath="$PROJECT_DIR$/parser_file.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/runs/E1/CRMF_risk_irm_5.0_batch_hom_data_eth_ds_0_bk_20_ep_(150, 100, 150, 800, 200, 100)_shuffle_true_seed_72/events.out.tfevents.1669087085.gra1176.91641.0" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/runs/E1/CRMF_risk_irm_5.0_batch_hom_data_eth_ds_0_bk_20_ep_(150, 100, 150, 800, 200, 100)_shuffle_true_seed_72/events.out.tfevents.1669144101.gra1171.245996.0" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/runs/E1/CRMF_risk_irm_5.0_batch_hom_data_eth_ds_0_bk_20_ep_(150, 100, 150, 800, 50, 500)_shuffle_true_seed_72/events.out.tfevents.1669145023.Predator-Shayan.12612.0" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/runs/E1/CRMF_risk_irm_5.0_batch_hom_data_eth_ds_0_bk_20_ep_(150, 100, 150, 800, 50, 500)_shuffle_true_seed_72/events.out.tfevents.1669145217.Predator-Shayan.10304.0" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/runs/E1/CRMF_risk_irm_5.0_batch_hom_data_eth_ds_0_bk_20_ep_(150, 100, 150, 800, 50, 500)_shuffle_true_seed_72/events.out.tfevents.1669145469.Predator-Shayan.19852.0" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/runs/E1/CRMF_risk_irm_5.0_batch_hom_data_eth_ds_0_bk_20_ep_(150, 100, 150, 800, 50, 500)_shuffle_true_seed_72/events.out.tfevents.1669145846.Predator-Shayan.12752.0" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/runs/E1/CRMF_risk_irm_5.0_batch_hom_data_eth_ds_0_bk_20_ep_(150, 100, 150, 800, 50, 500)_shuffle_true_seed_72/events.out.tfevents.1669145866.Predator-Shayan.10932.0" beforeDir="false" />
       <change beforePath="$PROJECT_DIR$/train.py" beforeDir="false" afterPath="$PROJECT_DIR$/train.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/utils.py" beforeDir="false" afterPath="$PROJECT_DIR$/utils.py" afterDir="false" />
     </list>
@@ -42,17 +47,17 @@
     <option name="hideEmptyMiddlePackages" value="true" />
     <option name="showLibraryContents" value="true" />
   </component>
-  <component name="PropertiesComponent"><![CDATA[{
-  "keyToString": {
-    "RunOnceActivity.OpenProjectViewOnStart": "true",
-    "RunOnceActivity.ShowReadmeOnStart": "true",
-    "WebServerToolWindowFactoryState": "false",
-    "last_opened_file_path": "C:/UWaterloo/PhD_thesis/motion_forecasting/codes/causalmotion-main/style/train.py",
-    "nodejs_package_manager_path": "npm",
-    "settings.editor.selected.configurable": "com.jetbrains.python.configuration.PyActiveSdkModuleConfigurable"
+  <component name="PropertiesComponent">{
+  &quot;keyToString&quot;: {
+    &quot;RunOnceActivity.OpenProjectViewOnStart&quot;: &quot;true&quot;,
+    &quot;RunOnceActivity.ShowReadmeOnStart&quot;: &quot;true&quot;,
+    &quot;WebServerToolWindowFactoryState&quot;: &quot;false&quot;,
+    &quot;last_opened_file_path&quot;: &quot;C:/UWaterloo/PhD_thesis/motion_forecasting/codes/causalmotion-main/style/train.py&quot;,
+    &quot;nodejs_package_manager_path&quot;: &quot;npm&quot;,
+    &quot;settings.editor.selected.configurable&quot;: &quot;com.jetbrains.python.configuration.PyActiveSdkModuleConfigurable&quot;
   }
-}]]></component>
-  <component name="RunManager" selected="Python.train">
+}</component>
+  <component name="RunManager" selected="Python.evaluate_model">
     <configuration name="distributions" type="PythonConfigurationType" factoryName="Python" temporary="true" nameIsGenerated="true">
       <module name="CRMF" />
       <option name="INTERPRETER_OPTIONS" value="" />
@@ -165,10 +170,10 @@
     </configuration>
     <recent_temporary>
       <list>
-        <item itemvalue="Python.train" />
-        <item itemvalue="Python.distributions" />
         <item itemvalue="Python.evaluate_model" />
+        <item itemvalue="Python.train" />
         <item itemvalue="Python.invariance" />
+        <item itemvalue="Python.distributions" />
         <item itemvalue="Python.results" />
       </list>
     </recent_temporary>
@@ -468,7 +473,14 @@
       <option name="project" value="LOCAL" />
       <updated>1669086543150</updated>
     </task>
-    <option name="localTasksCounter" value="40" />
+    <task id="LOCAL-00040" summary="Deleted P3 and removed flow priors">
+      <created>1669342712821</created>
+      <option name="number" value="00040" />
+      <option name="presentableId" value="LOCAL-00040" />
+      <option name="project" value="LOCAL" />
+      <updated>1669342712821</updated>
+    </task>
+    <option name="localTasksCounter" value="41" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
@@ -493,7 +505,8 @@
     <MESSAGE value="added lr_schedulers" />
     <MESSAGE value="joint training" />
     <MESSAGE value="Updated model" />
-    <option name="LAST_COMMIT_MESSAGE" value="Updated model" />
+    <MESSAGE value="Deleted P3 and removed flow priors" />
+    <option name="LAST_COMMIT_MESSAGE" value="Deleted P3 and removed flow priors" />
   </component>
   <component name="XDebuggerManager">
     <breakpoint-manager>
@@ -513,11 +526,6 @@
           <line>88</line>
           <option name="timeStamp" value="43" />
         </line-breakpoint>
-        <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
-          <url>file://$PROJECT_DIR$/models.py</url>
-          <line>968</line>
-          <option name="timeStamp" value="45" />
-        </line-breakpoint>
       </breakpoints>
     </breakpoint-manager>
     <watches-manager>
@@ -528,12 +536,12 @@
     </watches-manager>
   </component>
   <component name="com.intellij.coverage.CoverageDataManagerImpl">
-    <SUITE FILE_PATH="coverage/CRMF$train.coverage" NAME="train Coverage Results" MODIFIED="1669145863007" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
-    <SUITE FILE_PATH="coverage/CRMF$results.coverage" NAME="results Coverage Results" MODIFIED="1668895584912" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
-    <SUITE FILE_PATH="coverage/CRMF$evaluate_model.coverage" NAME="evaluate_model Coverage Results" MODIFIED="1669082249081" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
-    <SUITE FILE_PATH="coverage/CRMF$a5.coverage" NAME="a5 Coverage Results" MODIFIED="1667872384207" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
-    <SUITE FILE_PATH="coverage/CRMF$invariance.coverage" NAME="invariance Coverage Results" MODIFIED="1668731797385" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
     <SUITE FILE_PATH="coverage/CRMF$test.coverage" NAME="test Coverage Results" MODIFIED="1668451807866" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
-    <SUITE FILE_PATH="coverage/CRMF$distributions.coverage" NAME="distributions Coverage Results" MODIFIED="1669141247124" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
+    <SUITE FILE_PATH="coverage/CRMF$evaluate_model.coverage" NAME="evaluate_model Coverage Results" MODIFIED="1669356121120" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
+    <SUITE FILE_PATH="coverage/CRMF$train.coverage" NAME="train Coverage Results" MODIFIED="1669355807554" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
+    <SUITE FILE_PATH="coverage/CRMF$a5.coverage" NAME="a5 Coverage Results" MODIFIED="1667872384207" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
+    <SUITE FILE_PATH="coverage/CRMF$invariance.coverage" NAME="invariance Coverage Results" MODIFIED="1669354496413" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
+    <SUITE FILE_PATH="coverage/CRMF$distributions.coverage" NAME="distributions Coverage Results" MODIFIED="1667958311916" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
+    <SUITE FILE_PATH="coverage/CRMF$results.coverage" NAME="results Coverage Results" MODIFIED="1668895584912" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
   </component>
 </project>
