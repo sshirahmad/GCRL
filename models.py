@@ -487,13 +487,9 @@ class future_STGAT_decoder(nn.Module):
         self.teacher_forcing_ratio = teacher_forcing_ratio
 
         self.n_coordinates = n_coordinates
-        self.pred_lstm_hidden_size1 = z_dim + s_dim
-        self.pred_lstm_hidden_size2 = z_dim
-        self.pred_hidden2pos = nn.ModuleList([nn.Linear(self.pred_lstm_hidden_size1, n_coordinates),
-                                              nn.Linear(self.pred_lstm_hidden_size2, n_coordinates)])
-        self.pred_lstm_model = nn.ModuleList([nn.LSTMCell(n_coordinates, self.pred_lstm_hidden_size1),
-                                              nn.LSTMCell(n_coordinates, self.pred_lstm_hidden_size2)])
-
+        self.pred_lstm_hidden_size = z_dim + s_dim
+        self.pred_hidden2pos = nn.Linear(self.pred_lstm_hidden_size, n_coordinates)
+        self.pred_lstm_model = nn.LSTMCell(n_coordinates, self.pred_lstm_hidden_size)
         self._initialize_weights()
 
     def _initialize_weights(self):
@@ -511,8 +507,6 @@ class future_STGAT_decoder(nn.Module):
             self,
             batch,
             pred_lstm_hidden,
-            training_step,
-            variant_feats,
     ):
 
         (_, _, obs_traj_rel, fut_traj_rel, seq_start_end) = batch
@@ -532,14 +526,8 @@ class future_STGAT_decoder(nn.Module):
                     else:
                         input_t = output
 
-                if variant_feats:
-                    pred_lstm_hidden, pred_lstm_c_t = self.pred_lstm_model[0](input_t,
-                                                                              (pred_lstm_hidden, pred_lstm_c_t))
-                    output = self.pred_hidden2pos[0](pred_lstm_hidden)
-                else:
-                    pred_lstm_hidden, pred_lstm_c_t = self.pred_lstm_model[1](input_t,
-                                                                              (pred_lstm_hidden, pred_lstm_c_t))
-                    output = self.pred_hidden2pos[1](pred_lstm_hidden)
+                pred_lstm_hidden, pred_lstm_c_t = self.pred_lstm_model(input_t, (pred_lstm_hidden, pred_lstm_c_t))
+                output = self.pred_hidden2pos(pred_lstm_hidden)
 
                 pred_traj_rel += [output]
                 p += [MultivariateNormal(output,
@@ -550,12 +538,8 @@ class future_STGAT_decoder(nn.Module):
         # during test
         else:
             for i in range(self.fut_len):
-                if training_step == "P3":
-                    pred_lstm_hidden, pred_lstm_c_t = self.pred_lstm_model[1](output, (pred_lstm_hidden, pred_lstm_c_t))
-                    output = self.pred_hidden2pos[1](pred_lstm_hidden)
-                else:
-                    pred_lstm_hidden, pred_lstm_c_t = self.pred_lstm_model[0](output, (pred_lstm_hidden, pred_lstm_c_t))
-                    output = self.pred_hidden2pos[0](pred_lstm_hidden)
+                pred_lstm_hidden, pred_lstm_c_t = self.pred_lstm_model(output, (pred_lstm_hidden, pred_lstm_c_t))
+                output = self.pred_hidden2pos(pred_lstm_hidden)
                 pred_traj_rel += [output]
 
             return torch.stack(pred_traj_rel)
@@ -574,12 +558,10 @@ class past_decoder(nn.Module):
         self.obs_len = obs_len
 
         self.n_coordinates = n_coordinates
-        self.pred_lstm_hidden_size1 = z_dim + s_dim
-        self.pred_lstm_hidden_size2 = z_dim
-        self.pred_hidden2pos = nn.ModuleList([nn.Linear(self.pred_lstm_hidden_size1, n_coordinates),
-                                              nn.Linear(self.pred_lstm_hidden_size2, n_coordinates)])
-        self.pred_lstm_model = nn.ModuleList([nn.LSTMCell(n_coordinates, self.pred_lstm_hidden_size1),
-                                              nn.LSTMCell(n_coordinates, self.pred_lstm_hidden_size2)])
+        self.pred_lstm_hidden_size = z_dim + s_dim
+        self.pred_hidden2pos = nn.Linear(self.pred_lstm_hidden_size, n_coordinates)
+        self.pred_lstm_model = nn.LSTMCell(n_coordinates, self.pred_lstm_hidden_size)
+
         self._initialize_weights()
 
     def _initialize_weights(self):
@@ -597,7 +579,6 @@ class past_decoder(nn.Module):
             self,
             batch,
             pred_lstm_hidden,
-            variant_feats
     ):
 
         (_, _, obs_traj_rel, _, seq_start_end) = batch
@@ -610,13 +591,8 @@ class past_decoder(nn.Module):
             else:
                 input_t = obs_traj_rel[0, :, :self.n_coordinates]
 
-            if variant_feats:
-                pred_lstm_hidden, pred_lstm_c_t = self.pred_lstm_model[0](input_t, (pred_lstm_hidden, pred_lstm_c_t))
-                output = self.pred_hidden2pos[0](pred_lstm_hidden)
-            else:
-                pred_lstm_hidden, pred_lstm_c_t = self.pred_lstm_model[1](input_t, (pred_lstm_hidden, pred_lstm_c_t))
-                output = self.pred_hidden2pos[1](pred_lstm_hidden)
-
+            pred_lstm_hidden, pred_lstm_c_t = self.pred_lstm_model(input_t, (pred_lstm_hidden, pred_lstm_c_t))
+            output = self.pred_hidden2pos(pred_lstm_hidden)
             pred_traj_rel += [output]
 
         return torch.stack(pred_traj_rel)
@@ -871,7 +847,7 @@ class CRMF(nn.Module):
                 for _ in range(self.num_samples):
                     z_vec = q_zgx.rsample()
                     s_vec = q_sgthetax.rsample()
-                    p_ygz = self.future_decoder(batch, torch.cat((z_vec, s_vec), dim=1), training_step, True)
+                    p_ygz = self.future_decoder(batch, torch.cat((z_vec, s_vec), dim=1))
                     proby_mat = torch.stack(
                         [torch.exp(p_ygz[i].log_prob(fut_traj_rel[i])) for i in range(fut_traj.shape[0])])
 
@@ -901,13 +877,13 @@ class CRMF(nn.Module):
                     log_psgtheta = pwe.log_prob(s_vec)
 
                     # calculate p(y|z,s,x)
-                    p_ygz = self.future_decoder(batch, torch.cat((z_vec, s_vec), dim=1), training_step, True)
+                    p_ygz = self.future_decoder(batch, torch.cat((z_vec, s_vec), dim=1))
                     proby_mat = torch.stack(
                         [torch.exp(p_ygz[i].log_prob(fut_traj_rel[i])) for i in range(fut_traj.shape[0])])
                     p_ygzs = torch.prod(proby_mat, dim=0)
 
                     # calculate log(p(x|z,s))
-                    pred_past_rel = self.past_decoder(batch, torch.cat((z_vec, s_vec), dim=1), True)
+                    pred_past_rel = self.past_decoder(batch, torch.cat((z_vec, s_vec), dim=1))
                     reconstruction_loss = - l2_loss(pred_past_rel, obs_traj_rel, mode="raw") - \
                                           0.5 * 1 / obs_traj_rel.shape[0] * torch.log(torch.tensor(2 * math.pi * 0.5))
 
@@ -939,7 +915,7 @@ class CRMF(nn.Module):
                 for _ in range(self.num_samples):
                     z_vec = q_zgx.rsample()
                     s_vec = q_sgthetax.rsample()
-                    p_ygz = self.future_decoder(batch, torch.cat((z_vec, s_vec), dim=1), training_step, True)
+                    p_ygz = self.future_decoder(batch, torch.cat((z_vec, s_vec), dim=1))
                     proby_mat = torch.stack(
                         [torch.exp(p_ygz[i].log_prob(fut_traj_rel[i])) for i in range(fut_traj.shape[0])])
 
@@ -968,13 +944,13 @@ class CRMF(nn.Module):
                     log_psgtheta = pwe.log_prob(s_vec)
 
                     # calculate p(y|x, s, z)
-                    p_ygz = self.future_decoder(batch, torch.cat((z_vec, s_vec), dim=1), training_step, True)
+                    p_ygz = self.future_decoder(batch, torch.cat((z_vec, s_vec), dim=1))
                     proby_mat = torch.stack(
                         [torch.exp(p_ygz[i].log_prob(fut_traj_rel[i])) for i in range(fut_traj.shape[0])])
                     p_ygzs = torch.prod(proby_mat, dim=0)
 
                     # calculate log(p(x|s,z))
-                    pred_past_rel = self.past_decoder(batch, torch.cat((z_vec, s_vec), dim=1), True)
+                    pred_past_rel = self.past_decoder(batch, torch.cat((z_vec, s_vec), dim=1))
                     reconstruction_loss = - l2_loss(pred_past_rel, obs_traj_rel, mode="raw") - \
                                           0.5 * 1 / obs_traj_rel.shape[0] * torch.log(torch.tensor(2 * math.pi * 0.5))
 
@@ -1018,7 +994,7 @@ class CRMF(nn.Module):
                     z_vec = p_zgx.sample()
 
                     # p(y|z,c)
-                    pred_traj_rel = self.future_decoder(batch, torch.cat((z_vec, s_vec), dim=1), training_step, True)
+                    pred_traj_rel = self.future_decoder(batch, torch.cat((z_vec, s_vec), dim=1))
                 else:
                     concat_hidden_states = self.variant_encoder(batch, training_step)
                     ps = self.x_to_s(concat_hidden_states, self.theta[env_idx])
@@ -1031,6 +1007,6 @@ class CRMF(nn.Module):
                     z_vec = p_zgx.sample()
 
                     # p(y|z,c)
-                    pred_traj_rel = self.future_decoder(batch, torch.cat((z_vec, s_vec), dim=1), training_step, True)
+                    pred_traj_rel = self.future_decoder(batch, torch.cat((z_vec, s_vec), dim=1))
 
             return pred_traj_rel
