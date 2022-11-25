@@ -46,7 +46,6 @@ def main(args):
     sns.jointplot(x=obs_traj[:, 0, 0], y=fut_traj[:, 0, 0], palette="bright", hue=hue, kind="kde", common_norm=False)
     sns.jointplot(x=obs_traj[:, 1, 0], y=fut_traj[:, 1, 0], palette="dark", hue=hue, kind="kde", common_norm=False)
     sns.jointplot(x=obs_traj[:, 1, 0], y=fut_traj[:, 1, 0], kind="kde", common_norm=False)
-
     plt.show()
 
 

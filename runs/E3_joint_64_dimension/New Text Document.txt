@@ -1,0 +1,1 @@
+latent dims are 16 and teaching ratio is 0
