@@ -333,7 +333,6 @@ def train_all(args, model, optimizers, train_dataset, epoch, training_step, trai
                     l2_loss_rel.append(l2_loss(pred_traj_rel, fut_traj_rel, mode="raw"))
 
                 l2_loss_rel = torch.stack(l2_loss_rel, dim=1)
-                print(l2_loss_rel)
                 predict_loss = erm_loss(l2_loss_rel, seq_start_end, fut_traj_rel.shape[0])
 
                 loss_sum_even_e, loss_sum_odd_e = erm_loss(torch.divide(E, q_ygthetax), seq_start_end, fut_traj_rel.shape[0])

@@ -469,7 +469,7 @@ class future_STGAT_decoder(nn.Module):
 
         self.obs_len = obs_len
         self.fut_len = fut_len
-        self.var_p = var_p
+        self.logvar = nn.Parameter(torch.randn(n_coordinates))
         self.teacher_forcing_ratio = teacher_forcing_ratio
 
         self.n_coordinates = n_coordinates
@@ -521,7 +521,7 @@ class future_STGAT_decoder(nn.Module):
             pred_lstm_hidden = torch.stack(pred_lstm_hidden_list)
             pred_lstm_c_t = torch.stack(pred_lstm_c_t_list)
             output = torch.mean(torch.stack(output), dim=0)
-            p += [MultivariateNormal(output, torch.diag_embed(self.var_p * torch.ones(fut_traj_rel.size(1), 2).cuda()))]
+            p += [MultivariateNormal(output, torch.diag(torch.exp(self.logvar)))]
 
         return p
 
@@ -896,7 +896,6 @@ class CRMF(nn.Module):
                 env_idx = kwargs.get("env_idx")
                 concat_hidden_states = self.variant_encoder(batch, training_step)
 
-                first_E = []
                 q_zgx = self.x_to_z(concat_hidden_states, training_step)
                 q_sgthetax = self.x_to_s(concat_hidden_states, training_step, self.theta[env_idx])
 
@@ -933,7 +932,7 @@ class CRMF(nn.Module):
 
                     # calculate p(y|z,s,x)
                     p = self.future_decoder(batch, torch.cat((z_vec.unsqueeze(0), s_vec.unsqueeze(0)), dim=2))
-                    log_py = 0
+                    log_py = torch.zeros(fut_traj_rel.shape[1]).cuda()
                     for i in range(self.fut_len):
                         log_py += p[i].log_prob(fut_traj_rel[i])
 
