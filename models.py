@@ -385,14 +385,6 @@ class STGAT_encoder_var(nn.Module):
             graph_network_out_dims,
             graph_lstm_hidden_size
         )
-        self.traj_hidden2pos = nn.Linear(
-            traj_lstm_hidden_size,
-            n_coordinates
-        )
-        self.traj_gat_hidden2pos = nn.Linear(
-            traj_lstm_hidden_size + graph_lstm_hidden_size,
-            n_coordinates
-        )
 
         self._initialize_weights()
 
@@ -428,20 +420,15 @@ class STGAT_encoder_var(nn.Module):
         num_peds = obs_traj_rel.shape[1]
         traj_lstm_h_t, traj_lstm_c_t = self.init_hidden_traj_lstm(num_peds)
         graph_lstm_h_t, graph_lstm_c_t = self.init_hidden_graph_lstm(num_peds)
-        pred_traj_rel = []
         traj_lstm_hidden_states = []
         graph_lstm_hidden_states = []
-
         # traj_lstm (used in step 1,2,3)
         for i in range(self.obs_len):
             traj_lstm_h_t, traj_lstm_c_t = self.traj_lstm_model(
                 obs_traj_rel[i], (traj_lstm_h_t, traj_lstm_c_t)
             )
-            if training_step == "P1":
-                output = self.traj_hidden2pos(traj_lstm_h_t)
-                pred_traj_rel += [output]
-            else:
-                traj_lstm_hidden_states += [traj_lstm_h_t]
+
+            traj_lstm_hidden_states += [traj_lstm_h_t]
 
         # graph_lstm (used in step 2,3)
         if training_step != "P1":
@@ -452,17 +439,16 @@ class STGAT_encoder_var(nn.Module):
                 graph_lstm_h_t, graph_lstm_c_t = self.graph_lstm_model(
                     graph_lstm_input[i], (graph_lstm_h_t, graph_lstm_c_t)
                 )
-                if training_step == "P2":
-                    encoded_before_noise_hidden = torch.cat(
-                        (traj_lstm_hidden_states[i], graph_lstm_h_t), dim=1
-                    )
-                    output = self.traj_gat_hidden2pos(encoded_before_noise_hidden)
-                    pred_traj_rel += [output]
-                else:
-                    graph_lstm_hidden_states += [graph_lstm_h_t]
 
-        if training_step in ["P1", "P2"]:
-            return torch.stack(pred_traj_rel)
+                graph_lstm_hidden_states += [graph_lstm_h_t]
+
+        if training_step == "P1":
+            return traj_lstm_hidden_states
+
+        elif training_step == "P2":
+            hidden_states = torch.stack([torch.cat((traj_lstm_hidden_states[i], graph_lstm_hidden_states[i]), dim=1) for i in range(self.obs_len)])
+
+            return hidden_states
 
         else:
             return torch.cat((graph_lstm_hidden_states[-1], traj_lstm_hidden_states[-1]), dim=1)
@@ -510,38 +496,34 @@ class future_STGAT_decoder(nn.Module):
     ):
 
         (_, _, obs_traj_rel, fut_traj_rel, seq_start_end) = batch
-        pred_traj_rel = []
 
         input_t = obs_traj_rel[self.obs_len - 1, :, :self.n_coordinates]
         output = input_t
         pred_lstm_c_t = torch.zeros_like(pred_lstm_hidden).cuda()
         p = []
-        # during training
-        if self.training:
-            for i in range(self.fut_len):
-                if i >= 1:
-                    teacher_force = random.random() < self.teacher_forcing_ratio
-                    if teacher_force:
-                        input_t = fut_traj_rel[i - 1, :, :self.n_coordinates]  # with teacher help
-                    else:
-                        input_t = output
+        for i in range(self.fut_len):
+            if i >= 1:
+                teacher_force = random.random() < self.teacher_forcing_ratio
+                if teacher_force:
+                    input_t = fut_traj_rel[i - 1, :, :self.n_coordinates]  # with teacher help
+                else:
+                    input_t = output
 
-                pred_lstm_hidden, pred_lstm_c_t = self.pred_lstm_model(input_t, (pred_lstm_hidden, pred_lstm_c_t))
-                output = self.pred_hidden2pos(pred_lstm_hidden)
+            # average over s and z
+            output = []
+            pred_lstm_hidden_list, pred_lstm_c_t_list = [], []
+            for j in range(len(pred_lstm_hidden)):
+                h, c = self.pred_lstm_model(input_t, (pred_lstm_hidden[j], pred_lstm_c_t[j]))
+                pred_lstm_hidden_list += [h]
+                pred_lstm_c_t_list += [c]
+                output += [self.pred_hidden2pos(h)]
 
-                pred_traj_rel += [output]
-                p += [MultivariateNormal(output, torch.diag_embed(self.var_p * torch.ones(fut_traj_rel.size(1), 2).cuda()))]
+            pred_lstm_hidden = torch.stack(pred_lstm_hidden_list)
+            pred_lstm_c_t = torch.stack(pred_lstm_c_t_list)
+            output = torch.mean(torch.stack(output), dim=0)
+            p += [MultivariateNormal(output, torch.diag_embed(self.var_p * torch.ones(fut_traj_rel.size(1), 2).cuda()))]
 
-            return torch.stack(pred_traj_rel)
-
-        # during test
-        else:
-            for i in range(self.fut_len):
-                pred_lstm_hidden, pred_lstm_c_t = self.pred_lstm_model(output, (pred_lstm_hidden, pred_lstm_c_t))
-                output = self.pred_hidden2pos(pred_lstm_hidden)
-                pred_traj_rel += [output]
-
-            return torch.stack(pred_traj_rel)
+        return p
 
 
 class past_decoder(nn.Module):
@@ -722,12 +704,25 @@ class simple_mapping(nn.Module):
                  graph_lstm_hidden_size: int,
                  latent_dim,
                  s_dim: int,
+                 obs_len,
                  hidden_dims=None,
                  **kwargs) -> None:
         super(simple_mapping, self).__init__()
 
         if hidden_dims is None:
             hidden_dims = [32, 32]
+
+        modules = []
+        in_channels = latent_dim + traj_lstm_hidden_size
+        for h_dim in hidden_dims:
+            modules.append(
+                nn.Sequential(
+                    nn.Linear(in_channels, h_dim),
+                    nn.LeakyReLU())
+            )
+            in_channels = h_dim
+
+        self.mapping1 = nn.Sequential(*modules)
 
         modules = []
         in_channels = latent_dim + traj_lstm_hidden_size + graph_lstm_hidden_size
@@ -739,8 +734,10 @@ class simple_mapping(nn.Module):
             )
             in_channels = h_dim
 
+        self.mapping2 = nn.Sequential(*modules)
+
+        self.obs_len = obs_len
         self.s_dim = s_dim
-        self.mapping = nn.Sequential(*modules)
         self.fc_mu = nn.Linear(hidden_dims[-1], s_dim)
         self.fc_logvar = nn.Linear(hidden_dims[-1], s_dim)
 
@@ -757,17 +754,30 @@ class simple_mapping(nn.Module):
                 m.weight.data.normal_(0, 0.1)
                 m.bias.data.zero_()
 
-    def forward(self, hidden_states, theta=None):
-        if theta is not None:
-            if len(theta.size()) == 1:
-                theta_rep = theta.repeat(hidden_states.shape[0], 1)
+    def forward(self, hidden_states, training_step, theta=None):
+        if training_step == "P1":
+            if theta is not None:
+                if len(theta.size()) == 1:
+                    theta_rep = theta.repeat(hidden_states.shape[0], 1)
+                else:
+                    theta_rep = theta
+                mu = self.fc_mu(self.mapping1(torch.cat((hidden_states, theta_rep), dim=1)))
+                logvar = self.fc_logvar(self.mapping1(torch.cat((hidden_states, theta_rep), dim=1)))
             else:
-                theta_rep = theta
-            mu = self.fc_mu(self.mapping(torch.cat((hidden_states, theta_rep), dim=1)))
-            logvar = self.fc_logvar(self.mapping(torch.cat((hidden_states, theta_rep), dim=1)))
+                mu = self.fc_mu(self.mapping1(hidden_states))
+                logvar = self.fc_logvar(self.mapping1(hidden_states))
+
         else:
-            mu = self.fc_mu(self.mapping(hidden_states))
-            logvar = self.fc_logvar(self.mapping(hidden_states))
+            if theta is not None:
+                if len(theta.size()) == 1:
+                    theta_rep = theta.repeat(hidden_states.shape[0], 1)
+                else:
+                    theta_rep = theta
+                mu = self.fc_mu(self.mapping2(torch.cat((hidden_states, theta_rep), dim=1)))
+                logvar = self.fc_logvar(self.mapping2(torch.cat((hidden_states, theta_rep), dim=1)))
+            else:
+                mu = self.fc_mu(self.mapping2(hidden_states))
+                logvar = self.fc_logvar(self.mapping2(hidden_states))
 
         ps = MultivariateNormal(mu, torch.diag_embed(torch.exp(logvar)))
 
@@ -818,10 +828,10 @@ class CRMF(nn.Module):
                                                  args.graph_lstm_hidden_size, args.add_confidence)
 
         self.x_to_s = simple_mapping(args.traj_lstm_hidden_size, args.graph_lstm_hidden_size, args.latent_dim,
-                                     args.s_dim)
+                                     args.s_dim, self.obs_len)
 
         self.x_to_z = simple_mapping(args.traj_lstm_hidden_size, args.graph_lstm_hidden_size, 0,
-                                     args.z_dim)
+                                     args.z_dim, self.obs_len)
 
         self.mapping = regressor(args.obs_len, args.fut_len, args.n_coordinates,
                                  args.traj_lstm_hidden_size, args.n_units, args.n_heads,
@@ -839,32 +849,69 @@ class CRMF(nn.Module):
 
         if self.training:
             if training_step in ["P1", "P2"]:
-                pred_traj_rel_inv = self.invariant_encoder(batch, training_step)
-                pred_traj_rel_var = self.variant_encoder(batch, training_step)
+                env_idx = kwargs.get("env_idx")
+                hidden_states = self.variant_encoder(batch, training_step)
 
-                return pred_traj_rel_inv, pred_traj_rel_var
+                total_recon_loss = 0
+                total_e_loss = 0
+                for i in range(self.obs_len):
+                    q_zgx = self.x_to_z(hidden_states[i], training_step)
+                    q_sgthetax = self.x_to_s(hidden_states[i], training_step, self.theta[env_idx])
+
+                    recon_loss = []
+                    first_E = []
+                    for _ in range(self.num_samples):
+                        z_vec = q_zgx.rsample()
+                        s_vec = q_sgthetax.rsample()
+
+                        # calculate log(q(z|x))
+                        log_qzgx = q_zgx.log_prob(z_vec)
+
+                        # calculate log(q(s|theta, x))
+                        log_qsgthetax = q_sgthetax.log_prob(s_vec)
+
+                        # calculate log(p(z))
+                        log_pz = self.pw.log_prob(z_vec)
+
+                        # calculate log(p(s|theta))
+                        mean = torch.matmul(torch.matmul(self.covwe, torch.inverse(self.covee)), self.theta[env_idx])
+                        covmat = self.covww - torch.matmul(torch.matmul(self.covwe, torch.inverse(self.covee)), self.covwe)
+                        pwe = MultivariateNormal(mean, covmat)
+                        log_psgtheta = pwe.log_prob(s_vec)
+
+                        # calculate log(p(x|z,s))
+                        pred_past_rel = self.past_decoder(torch.cat((z_vec, s_vec), dim=1))
+                        reconstruction_loss = - l2_loss(pred_past_rel, obs_traj_rel[i], mode="average")
+
+                        recon_loss.append(reconstruction_loss)
+                        first_E.append(log_psgtheta + log_pz - log_qzgx - log_qsgthetax)
+
+                    E1 = torch.mean(torch.stack(first_E), dim=0)
+                    total_e_loss += torch.mean(E1)
+                    total_recon_loss += torch.mean(torch.stack(recon_loss), dim=0)
+
+                return total_recon_loss, total_e_loss
 
             elif training_step == "P3":
                 env_idx = kwargs.get("env_idx")
                 concat_hidden_states = self.variant_encoder(batch, training_step)
 
                 first_E = []
-                q_zgx = self.x_to_z(concat_hidden_states)
-                q_sgthetax = self.x_to_s(concat_hidden_states, self.theta[env_idx])
+                q_zgx = self.x_to_z(concat_hidden_states, training_step)
+                q_sgthetax = self.x_to_s(concat_hidden_states, training_step, self.theta[env_idx])
 
                 # calculate q(y|theta, x)
+                s_vec = []
+                z_vec = []
                 for _ in range(self.num_samples):
-                    z_vec = q_zgx.rsample()
-                    s_vec = q_sgthetax.rsample()
-                    pred_fut_rel = self.future_decoder(batch, torch.cat((z_vec, s_vec), dim=1))
-                    logpy = - l2_loss(pred_fut_rel, fut_traj_rel, mode="raw") - \
-                                          0.5 * fut_traj_rel.shape[0] * torch.log(torch.tensor(2 * math.pi * 0.5))
-                    first_E.append(torch.exp(logpy))
+                    z_vec += [q_zgx.rsample()]
+                    s_vec += [q_sgthetax.rsample()]
 
-                qygthetax = torch.mean(torch.stack(first_E), dim=0)
+                z_vec = torch.stack(z_vec)
+                s_vec = torch.stack(s_vec)
+                qygx = self.future_decoder(batch, torch.cat((z_vec, s_vec), dim=2))
 
                 first_E = []
-                second_E = []
                 for _ in range(self.num_samples):
                     z_vec = q_zgx.rsample()
                     s_vec = q_sgthetax.rsample()
@@ -885,27 +932,25 @@ class CRMF(nn.Module):
                     log_psgtheta = pwe.log_prob(s_vec)
 
                     # calculate p(y|z,s,x)
-                    pred_fut_rel = self.future_decoder(batch, torch.cat((z_vec, s_vec), dim=1))
-                    logpy = - l2_loss(pred_fut_rel, fut_traj_rel, mode="raw") - \
-                                          0.5 * fut_traj_rel.shape[0] * torch.log(torch.tensor(2 * math.pi * 0.5))
+                    p = self.future_decoder(batch, torch.cat((z_vec.unsqueeze(0), s_vec.unsqueeze(0)), dim=2))
+                    log_py = 0
+                    for i in range(self.fut_len):
+                        log_py += p[i].log_prob(fut_traj_rel[i])
 
-                    p_ygzs = torch.exp(logpy)
+                    p_ygzs = torch.exp(log_py)
 
                     # calculate log(p(x|z,s))
                     pred_past_rel = self.past_decoder(batch, torch.cat((z_vec, s_vec), dim=1))
                     reconstruction_loss = - l2_loss(pred_past_rel, obs_traj_rel, mode="raw") - \
                                           0.5 * obs_traj_rel.shape[0] * torch.log(torch.tensor(2 * math.pi * 0.5))
 
-                    A1 = torch.multiply(p_ygzs, reconstruction_loss)
-                    A2 = torch.multiply(p_ygzs, log_psgtheta + log_pz - log_qzgx - log_qsgthetax)
+                    A1 = torch.multiply(p_ygzs, reconstruction_loss + log_psgtheta + log_pz - log_qzgx - log_qsgthetax)
 
                     first_E.append(A1)
-                    second_E.append(A2)
 
                 E1 = torch.mean(torch.stack(first_E), dim=0)
-                E2 = torch.mean(torch.stack(second_E), dim=0)
 
-                return qygthetax, E1, E2
+                return qygx, E1
 
             elif training_step == "P4":
                 pred_theta = self.mapping(obs_traj_rel)
@@ -992,29 +1037,34 @@ class CRMF(nn.Module):
                 if env_idx is None:
                     concat_hidden_states = self.variant_encoder(batch, training_step)
                     pred_theta = self.mapping(obs_traj_rel)
-                    ps = self.x_to_s(concat_hidden_states, pred_theta)
-                    p_zgx = self.x_to_z(concat_hidden_states)
+                    q_sgthetax = self.x_to_s(concat_hidden_states, training_step, pred_theta)
+                    q_zgx = self.x_to_z(concat_hidden_states, training_step)
 
-                    # p(s|theta,x)
-                    s_vec = ps.sample()
+                    # calculate q(y|theta, x)
+                    s_vec = []
+                    z_vec = []
+                    for _ in range(self.num_samples):
+                        z_vec += [q_zgx.rsample()]
+                        s_vec += [q_sgthetax.rsample()]
 
-                    # P(z|x)
-                    z_vec = p_zgx.sample()
+                    z_vec = torch.stack(z_vec)
+                    s_vec = torch.stack(s_vec)
+                    qygx = self.future_decoder(batch, torch.cat((z_vec, s_vec), dim=2))
 
-                    # p(y|z,c)
-                    pred_traj_rel = self.future_decoder(batch, torch.cat((z_vec, s_vec), dim=1))
                 else:
                     concat_hidden_states = self.variant_encoder(batch, training_step)
-                    ps = self.x_to_s(concat_hidden_states, self.theta[env_idx])
-                    p_zgx = self.x_to_z(concat_hidden_states)
+                    q_sgthetax = self.x_to_s(concat_hidden_states, training_step, self.theta[env_idx])
+                    q_zgx = self.x_to_z(concat_hidden_states, training_step)
 
-                    # p(s|theta,x)
-                    s_vec = ps.sample()
+                    # calculate q(y|theta, x)
+                    s_vec = []
+                    z_vec = []
+                    for _ in range(self.num_samples):
+                        z_vec += [q_zgx.rsample()]
+                        s_vec += [q_sgthetax.rsample()]
 
-                    # P(z|x)
-                    z_vec = p_zgx.sample()
+                    z_vec = torch.stack(z_vec)
+                    s_vec = torch.stack(s_vec)
+                    qygx = self.future_decoder(batch, torch.cat((z_vec, s_vec), dim=2))
 
-                    # p(y|z,c)
-                    pred_traj_rel = self.future_decoder(batch, torch.cat((z_vec, s_vec), dim=1))
-
-            return pred_traj_rel
+            return qygx

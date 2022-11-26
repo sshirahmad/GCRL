@@ -191,19 +191,14 @@ criterion = CustomLoss().cuda()
 
 
 def erm_loss(l2_loss_rel, seq_start_end, length_fut):
-    loss_sum_even, loss_sum_odd = torch.zeros(1).cuda(), torch.zeros(1).cuda()
-    even = True
+    loss_sum = torch.zeros(1).cuda()
     for start, end in seq_start_end.data:
         _l2_loss_rel = torch.narrow(l2_loss_rel, 0, start, end - start)
         _l2_loss_rel = torch.sum(_l2_loss_rel, dim=0)  # [best_k elements]
         _l2_loss_rel = torch.min(_l2_loss_rel) / ((length_fut) * (end - start))
-        if even == True:
-            loss_sum_even += _l2_loss_rel
-            even = False
-        else:
-            loss_sum_odd += _l2_loss_rel
-            even = True
-    return loss_sum_even, loss_sum_odd
+        loss_sum += _l2_loss_rel
+
+    return loss_sum
 
 
 def irm_loss(loss_sum_even, loss_sum_odd, dummy_w, args):
