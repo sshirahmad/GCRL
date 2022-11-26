@@ -127,11 +127,11 @@ def main(args):
             'par': OneCycleLR(optimizers['par'], max_lr=1e-3, div_factor=25.0, total_steps=int(total_steps[1]), pct_start=0.3),
         },
         "P3": {
-            'var': OneCycleLR(optimizers['var'], max_lr=1e-3, div_factor=25.0, total_steps=int(total_steps[2]), pct_start=0.3),
-            'inv': OneCycleLR(optimizers['inv'], max_lr=1e-3, div_factor=25.0, total_steps=int(total_steps[2]), pct_start=0.3),
-            'future_decoder': OneCycleLR(optimizers['future_decoder'], max_lr=1e-3, div_factor=25.0, total_steps=int(total_steps[2]), pct_start=0.3),
-            'past_decoder': OneCycleLR(optimizers['past_decoder'], max_lr=1e-3, div_factor=25.0, total_steps=int(total_steps[2]), pct_start=0.3),
-            'par': OneCycleLR(optimizers['par'], max_lr=1e-3, div_factor=25.0, total_steps=int(total_steps[2]), pct_start=0.3),
+            'var': OneCycleLR(optimizers['var'], max_lr=1e-4, div_factor=25.0, total_steps=int(total_steps[2]), pct_start=0.3),
+            'inv': OneCycleLR(optimizers['inv'], max_lr=1e-4, div_factor=25.0, total_steps=int(total_steps[2]), pct_start=0.3),
+            'future_decoder': OneCycleLR(optimizers['future_decoder'], max_lr=1e-4, div_factor=25.0, total_steps=int(total_steps[2]), pct_start=0.3),
+            'past_decoder': OneCycleLR(optimizers['past_decoder'], max_lr=1e-4, div_factor=25.0, total_steps=int(total_steps[2]), pct_start=0.3),
+            'par': OneCycleLR(optimizers['par'], max_lr=1e-4, div_factor=25.0, total_steps=int(total_steps[2]), pct_start=0.3),
         },
         "P4": {
             'map': OneCycleLR(optimizers['map'], max_lr=1e-3, div_factor=25.0, total_steps=int(total_steps[3]), pct_start=0.3),
@@ -151,16 +151,16 @@ def main(args):
     #     "P6": None,
     # }
 
-    if args.resume:
-        load_all_model(args, model, optimizers)
-        model.cuda()
-
     # TRAINING HAPPENS IN 4 STEPS:
     assert (len(args.num_epochs) == 5)
     # 1. Train the invariant encoder along with the future decoder to learn z
     # 2. Train everything except invariant encoder to learn the other variant latent variables
     training_steps = {f'P{i}': [sum(args.num_epochs[:i - 1]), sum(args.num_epochs[:i])] for i in range(1, 7)}
     print(training_steps)
+
+    if args.resume:
+        load_all_model(args, model, optimizers, lr_schedulers, training_steps, num_batches)
+        model.cuda()
 
     def get_training_step(epoch):
         for step, r in training_steps.items():

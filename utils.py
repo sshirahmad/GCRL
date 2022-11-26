@@ -479,7 +479,7 @@ def save_all_model(args, model, model_name, optimizers, metric, epoch, training_
     logging.info(f" --> Model Saved in {filename}")
 
 
-def load_all_model(args, model, optimizers):
+def load_all_model(args, model, optimizers, lr_schedulers=None, training_steps=None, num_batches=0):
     model_path = args.resume
 
     if os.path.isfile(model_path):
@@ -487,6 +487,12 @@ def load_all_model(args, model, optimizers):
         args.start_epoch = checkpoint['epoch']
 
         models_checkpoint = checkpoint['state_dicts']
+
+        if lr_schedulers != None:
+            for phase, lr_scheduler_optims in lr_schedulers.items():
+                start_p = training_steps[phase][0]
+                for k, lr_scheduler in lr_scheduler_optims.items():
+                    lr_scheduler.last_epoch = (args.start_epoch - start_p - 1) * num_batches
 
         # future decoder
         model.future_decoder.load_state_dict(models_checkpoint['future_decoder'])
