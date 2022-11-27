@@ -80,8 +80,8 @@ def main(args):
         'var': torch.optim.Adam(
             [
                 {"params": model.variant_encoder.parameters(), 'lr': args.lrinv},
-                # {"params": model.coupling_layers_theta.parameters(), 'lr': args.lrinv},
-                # {"params": model.coupling_layers_s.parameters(), 'lr': args.lrinv},
+                {"params": model.coupling_layers_theta.parameters(), 'lr': args.lrinv},
+                {"params": model.coupling_layers_s.parameters(), 'lr': args.lrinv},
                 {"params": model.x_to_s.parameters(), 'lr': args.lrinv},
 
             ]
@@ -93,8 +93,7 @@ def main(args):
         'inv': torch.optim.Adam(
             [
                 {"params": model.x_to_z.parameters(), 'lr': args.lrinv},
-                # {"params": model.x_to_z.parameters(), 'lr': args.lrinv},
-                # {"params": model.coupling_layers_z.parameters(), 'lr': args.lrinv},
+                {"params": model.coupling_layers_z.parameters(), 'lr': args.lrinv},
             ]
         ),
         'future_decoder': torch.optim.Adam(
@@ -115,30 +114,45 @@ def main(args):
     total_steps = num_batches * training_steps
     lr_schedulers = {
         "P1": {
-            'var': OneCycleLR(optimizers['var'], max_lr=1e-3, div_factor=25.0, total_steps=int(total_steps[0]), pct_start=0.3),
-            'inv': OneCycleLR(optimizers['inv'], max_lr=1e-3, div_factor=25.0, total_steps=int(total_steps[0]), pct_start=0.3),
-            'past_decoder': OneCycleLR(optimizers['past_decoder'], max_lr=1e-3, div_factor=25.0, total_steps=int(total_steps[0]), pct_start=0.3),
-            'par': OneCycleLR(optimizers['par'], max_lr=1e-3, div_factor=25.0, total_steps=int(total_steps[0]), pct_start=0.3),
+            'var': OneCycleLR(optimizers['var'], max_lr=1e-3, div_factor=25.0, total_steps=int(total_steps[0]),
+                              pct_start=0.3),
+            'inv': OneCycleLR(optimizers['inv'], max_lr=1e-3, div_factor=25.0, total_steps=int(total_steps[0]),
+                              pct_start=0.3),
+            'past_decoder': OneCycleLR(optimizers['past_decoder'], max_lr=1e-3, div_factor=25.0,
+                                       total_steps=int(total_steps[0]), pct_start=0.3),
+            'par': OneCycleLR(optimizers['par'], max_lr=1e-3, div_factor=25.0, total_steps=int(total_steps[0]),
+                              pct_start=0.3),
         },
         "P2": {
-            'var': OneCycleLR(optimizers['var'], max_lr=1e-3, div_factor=25.0, total_steps=int(total_steps[1]), pct_start=0.3),
-            'inv': OneCycleLR(optimizers['inv'], max_lr=1e-3, div_factor=25.0, total_steps=int(total_steps[1]), pct_start=0.3),
-            'past_decoder': OneCycleLR(optimizers['past_decoder'], max_lr=1e-3, div_factor=25.0, total_steps=int(total_steps[1]), pct_start=0.3),
-            'par': OneCycleLR(optimizers['par'], max_lr=1e-3, div_factor=25.0, total_steps=int(total_steps[1]), pct_start=0.3),
+            'var': OneCycleLR(optimizers['var'], max_lr=1e-3, div_factor=25.0, total_steps=int(total_steps[1]),
+                              pct_start=0.3),
+            'inv': OneCycleLR(optimizers['inv'], max_lr=1e-3, div_factor=25.0, total_steps=int(total_steps[1]),
+                              pct_start=0.3),
+            'past_decoder': OneCycleLR(optimizers['past_decoder'], max_lr=1e-3, div_factor=25.0,
+                                       total_steps=int(total_steps[1]), pct_start=0.3),
+            'par': OneCycleLR(optimizers['par'], max_lr=1e-3, div_factor=25.0, total_steps=int(total_steps[1]),
+                              pct_start=0.3),
         },
         "P3": {
-            'var': OneCycleLR(optimizers['var'], max_lr=1e-4, div_factor=25.0, total_steps=int(total_steps[2]), pct_start=0.3),
-            'inv': OneCycleLR(optimizers['inv'], max_lr=1e-4, div_factor=25.0, total_steps=int(total_steps[2]), pct_start=0.3),
-            'future_decoder': OneCycleLR(optimizers['future_decoder'], max_lr=1e-4, div_factor=25.0, total_steps=int(total_steps[2]), pct_start=0.3),
-            'past_decoder': OneCycleLR(optimizers['past_decoder'], max_lr=1e-4, div_factor=25.0, total_steps=int(total_steps[2]), pct_start=0.3),
-            'par': OneCycleLR(optimizers['par'], max_lr=1e-4, div_factor=25.0, total_steps=int(total_steps[2]), pct_start=0.3),
+            'var': OneCycleLR(optimizers['var'], max_lr=1e-4, div_factor=25.0, total_steps=int(total_steps[2]),
+                              pct_start=0.3),
+            'inv': OneCycleLR(optimizers['inv'], max_lr=1e-4, div_factor=25.0, total_steps=int(total_steps[2]),
+                              pct_start=0.3),
+            'future_decoder': OneCycleLR(optimizers['future_decoder'], max_lr=1e-4, div_factor=25.0,
+                                         total_steps=int(total_steps[2]), pct_start=0.3),
+            'past_decoder': OneCycleLR(optimizers['past_decoder'], max_lr=1e-4, div_factor=25.0,
+                                       total_steps=int(total_steps[2]), pct_start=0.3),
+            'par': OneCycleLR(optimizers['par'], max_lr=1e-4, div_factor=25.0, total_steps=int(total_steps[2]),
+                              pct_start=0.3),
         },
         "P4": {
-            'map': OneCycleLR(optimizers['map'], max_lr=1e-3, div_factor=25.0, total_steps=int(total_steps[3]), pct_start=0.3),
+            'map': OneCycleLR(optimizers['map'], max_lr=1e-3, div_factor=25.0, total_steps=int(total_steps[3]),
+                              pct_start=0.3),
         },
 
         "P5": {
-            'var': OneCycleLR(optimizers['var'], max_lr=1e-3, div_factor=25.0, total_steps=int(total_steps[4]), pct_start=0.3),
+            'var': OneCycleLR(optimizers['var'], max_lr=1e-3, div_factor=25.0, total_steps=int(total_steps[4]),
+                              pct_start=0.3),
         }
     }
 
@@ -195,21 +209,26 @@ def main(args):
 
         elif training_step == 'P3':
             freeze(True, (model.mapping,))
-            freeze(False, (model.variant_encoder, model.x_to_s, model.x_to_z, model.past_decoder, model.future_decoder))
+            freeze(False, (model.variant_encoder, model.x_to_s, model.x_to_z, model.past_decoder, model.future_decoder,
+                           model.coupling_layers_z, model.coupling_layers_s, model.coupling_layers_theta))
 
         elif training_step == 'P4':
-            freeze(True, (model.variant_encoder, model.x_to_z, model.x_to_s, model.past_decoder, model.future_decoder))
+            freeze(True, (model.variant_encoder, model.x_to_z, model.x_to_s, model.past_decoder, model.future_decoder,
+                          model.coupling_layers_z, model.coupling_layers_s, model.coupling_layers_theta))
             freeze(False, (model.mapping,))
 
         elif training_step == 'P5':
-            freeze(True, (model.variant_encoder, model.x_to_z, model.past_decoder, model.future_decoder, model.mapping))
+            freeze(True, (model.variant_encoder, model.x_to_z, model.past_decoder, model.future_decoder, model.mapping,
+                          model.coupling_layers_z, model.coupling_layers_s, model.coupling_layers_theta))
             freeze(False, (model.x_to_s,))
 
         if training_step == "P5":
-            train_all(args, model, optimizers, finetune_dataset, epoch, training_step, valo_envs_name, writer, lr_schedulers,
+            train_all(args, model, optimizers, finetune_dataset, epoch, training_step, valo_envs_name, writer,
+                      lr_schedulers,
                       stage='training')
         else:
-            train_all(args, model, optimizers, train_dataset, epoch, training_step, train_envs_name, writer, lr_schedulers,
+            train_all(args, model, optimizers, train_dataset, epoch, training_step, train_envs_name, writer,
+                      lr_schedulers,
                       stage='training')
 
         with torch.no_grad():
@@ -220,7 +239,8 @@ def main(args):
             elif training_step == "P4":
                 metric = validate_ade(args, model, valido_dataset, epoch, training_step, writer,
                                       stage='validation o')
-                train_all(args, model, optimizers, valid_dataset, epoch, training_step, val_envs_name, writer, lr_schedulers,
+                train_all(args, model, optimizers, valid_dataset, epoch, training_step, val_envs_name, writer,
+                          lr_schedulers,
                           stage='validation')
 
             elif training_step == "P5":
@@ -304,7 +324,8 @@ def train_all(args, model, optimizers, train_dataset, epoch, training_step, trai
                 # l2_loss_rel = torch.stack(l2_loss_rel, dim=1)
                 predict_loss = erm_loss(log_qygx.unsqueeze(1), seq_start_end, fut_traj_rel.shape[0])
 
-                elbo_loss = erm_loss(torch.divide(E, torch.exp(log_qygx)).unsqueeze(1), seq_start_end, fut_traj_rel.shape[0])
+                elbo_loss = erm_loss(torch.divide(E, torch.exp(log_qygx) + 1e-6).unsqueeze(1), seq_start_end,
+                                     fut_traj_rel.shape[0])
 
                 stacked_loss = torch.cat((- predict_loss, - elbo_loss))
 
@@ -321,22 +342,16 @@ def train_all(args, model, optimizers, train_dataset, epoch, training_step, trai
                 loss = l2_loss_pred
 
             else:
-                q_ygthetax, E = model(batch, training_step)
+                q_ygx, E = model(batch, training_step)
 
-                l2_loss_rel = []
-                for _ in range(args.best_k):
-                    pred_traj_rel = []
-                    for i in range(len(q_ygthetax)):
-                        pred_traj_rel += [q_ygthetax[i].sample()]
+                log_qygx = torch.zeros(fut_traj_rel.shape[1]).cuda()
+                for i in range(len(q_ygx)):
+                    log_qygx += q_ygx[i].log_prob(fut_traj_rel[i])
 
-                    pred_traj_rel = torch.stack(pred_traj_rel)
-                    l2_loss_rel.append(l2_loss(pred_traj_rel, fut_traj_rel, mode="raw"))
+                predict_loss = erm_loss(log_qygx.unsqueeze(1), seq_start_end, fut_traj_rel.shape[0])
 
-                l2_loss_rel = torch.stack(l2_loss_rel, dim=1)
-                predict_loss = erm_loss(l2_loss_rel, seq_start_end, fut_traj_rel.shape[0])
-
-                loss_sum_even_e, loss_sum_odd_e = erm_loss(torch.divide(E, q_ygthetax), seq_start_end, fut_traj_rel.shape[0])
-                elbo_loss = loss_sum_even_e + loss_sum_odd_e
+                elbo_loss = erm_loss(torch.divide(E, torch.exp(log_qygx) + 1e-6).unsqueeze(1), seq_start_end,
+                                     fut_traj_rel.shape[0])
 
                 stacked_loss = torch.cat((-predict_loss, -elbo_loss))
 

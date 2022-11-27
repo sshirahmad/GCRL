@@ -442,10 +442,9 @@ def save_all_model(args, model, model_name, optimizers, metric, epoch, training_
         'state_dicts': {
             'variant_encoder': model.variant_encoder.state_dict(),
             'x_to_z': model.x_to_z.state_dict(),
-            # 'x_to_z': model.x_to_z.state_dict(),
-            # 'coupling_layers_z': model.coupling_layers_z.state_dict(),
-            # 'coupling_layers_s': model.coupling_layers_s.state_dict(),
-            # 'coupling_layers_theta': model.coupling_layers_theta.state_dict(),
+            'coupling_layers_z': model.coupling_layers_z.state_dict(),
+            'coupling_layers_s': model.coupling_layers_s.state_dict(),
+            'coupling_layers_theta': model.coupling_layers_theta.state_dict(),
             'x_to_s': model.x_to_s.state_dict(),
             'future_decoder': model.future_decoder.state_dict(),
             'past_decoder': model.past_decoder.state_dict(),
@@ -491,8 +490,9 @@ def load_all_model(args, model, optimizers, lr_schedulers=None, training_steps=N
         if lr_schedulers != None:
             for phase, lr_scheduler_optims in lr_schedulers.items():
                 start_p = training_steps[phase][0]
-                for k, lr_scheduler in lr_scheduler_optims.items():
-                    lr_scheduler.last_epoch = (args.start_epoch - start_p - 1) * num_batches
+                if lr_scheduler_optims != None:
+                    for k, lr_scheduler in lr_scheduler_optims.items():
+                        lr_scheduler.last_epoch = (args.start_epoch - start_p - 1) * num_batches
 
         # future decoder
         model.future_decoder.load_state_dict(models_checkpoint['future_decoder'])
@@ -508,8 +508,7 @@ def load_all_model(args, model, optimizers, lr_schedulers=None, training_steps=N
 
         # invariant encoder
         model.x_to_z.load_state_dict(models_checkpoint['x_to_z'])
-        # model.x_to_z.load_state_dict(models_checkpoint['x_to_z'])
-        # model.coupling_layers_z.load_state_dict(models_checkpoint['coupling_layers_z'])
+        model.coupling_layers_z.load_state_dict(models_checkpoint['coupling_layers_z'])
         if optimizers != None:
             optimizers['inv'].load_state_dict(checkpoint['optimizers']['inv'])
             update_lr(optimizers['inv'], args.lrinv)
@@ -527,8 +526,8 @@ def load_all_model(args, model, optimizers, lr_schedulers=None, training_steps=N
             update_lr(optimizers['map'], args.lrmap)
 
         # variational models
-        # model.coupling_layers_s.load_state_dict(models_checkpoint['coupling_layers_s'])
-        # model.coupling_layers_theta.load_state_dict(models_checkpoint['coupling_layers_theta'])
+        model.coupling_layers_s.load_state_dict(models_checkpoint['coupling_layers_s'])
+        model.coupling_layers_theta.load_state_dict(models_checkpoint['coupling_layers_theta'])
         model.x_to_s.load_state_dict(models_checkpoint['x_to_s'])
         model.theta.data = models_checkpoint['theta'].data.cuda()
         if optimizers != None:
