@@ -134,15 +134,15 @@ def main(args):
                               pct_start=0.3),
         },
         "P3": {
-            'var': OneCycleLR(optimizers['var'], max_lr=1e-4, div_factor=25.0, total_steps=int(total_steps[2]),
+            'var': OneCycleLR(optimizers['var'], max_lr=1e-3, div_factor=25.0, total_steps=int(total_steps[2]),
                               pct_start=0.3),
-            'inv': OneCycleLR(optimizers['inv'], max_lr=1e-4, div_factor=25.0, total_steps=int(total_steps[2]),
+            'inv': OneCycleLR(optimizers['inv'], max_lr=1e-3, div_factor=25.0, total_steps=int(total_steps[2]),
                               pct_start=0.3),
-            'future_decoder': OneCycleLR(optimizers['future_decoder'], max_lr=1e-4, div_factor=25.0,
+            'future_decoder': OneCycleLR(optimizers['future_decoder'], max_lr=1e-3, div_factor=25.0,
                                          total_steps=int(total_steps[2]), pct_start=0.3),
-            'past_decoder': OneCycleLR(optimizers['past_decoder'], max_lr=1e-4, div_factor=25.0,
+            'past_decoder': OneCycleLR(optimizers['past_decoder'], max_lr=1e-3, div_factor=25.0,
                                        total_steps=int(total_steps[2]), pct_start=0.3),
-            'par': OneCycleLR(optimizers['par'], max_lr=1e-4, div_factor=25.0, total_steps=int(total_steps[2]),
+            'par': OneCycleLR(optimizers['par'], max_lr=1e-3, div_factor=25.0, total_steps=int(total_steps[2]),
                               pct_start=0.3),
         },
         "P4": {
@@ -233,6 +233,7 @@ def main(args):
 
         with torch.no_grad():
             if training_step == "P3":
+                validate_ade(args, model, train_dataset, epoch, training_step, writer, stage='training')
                 validate_ade(args, model, valid_dataset, epoch, training_step, writer, stage='validation')
                 metric = validate_ade(args, model, valido_dataset, epoch, training_step, writer, stage='validation o')
 

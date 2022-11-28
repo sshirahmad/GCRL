@@ -469,7 +469,7 @@ class future_STGAT_decoder(nn.Module):
 
         self.obs_len = obs_len
         self.fut_len = fut_len
-        self.logvar = nn.Parameter(torch.randn(n_coordinates))
+        self.logvar = nn.Parameter(torch.randn(n_coordinates)) #TODO change this
         self.teacher_forcing_ratio = teacher_forcing_ratio
 
         self.n_coordinates = n_coordinates
@@ -521,7 +521,9 @@ class future_STGAT_decoder(nn.Module):
             pred_lstm_hidden = torch.stack(pred_lstm_hidden_list)
             pred_lstm_c_t = torch.stack(pred_lstm_c_t_list)
             output = torch.mean(torch.stack(output), dim=0)
-            p += [MultivariateNormal(output, torch.diag(torch.exp(self.logvar)))]
+            dist = MultivariateNormal(output, torch.diag_embed(torch.exp(self.logvar)))
+            output = dist.rsample()
+            p += [dist]
 
         return p
 
