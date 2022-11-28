@@ -506,6 +506,7 @@ class future_STGAT_decoder(nn.Module):
             _to_cat = _vec.repeat(end - start, 1)
             _list_cat = torch.stack([torch.cat([_input[i, start:end], _to_cat], dim=1) for i in range(len(_input))])
             _list.append(_list_cat)
+            print(_list)
         decoder_h = torch.cat(_list, dim=1)
         return decoder_h
 
@@ -519,9 +520,9 @@ class future_STGAT_decoder(nn.Module):
 
         input_t = obs_traj_rel[self.obs_len - 1, :, :self.n_coordinates]
         output = input_t
-        pred_lstm_hidden = self.add_noise(pred_lstm_hidden, seq_start_end)
+        # pred_lstm_hidden = self.add_noise(pred_lstm_hidden, seq_start_end)
         pred_lstm_c_t = torch.zeros_like(pred_lstm_hidden).cuda()
-        pred_traj_rel = []
+        p = []
         for i in range(self.fut_len):
             if i >= 1:
                 teacher_force = random.random() < self.teacher_forcing_ratio
@@ -542,10 +543,10 @@ class future_STGAT_decoder(nn.Module):
             pred_lstm_hidden = torch.stack(pred_lstm_hidden_list)
             pred_lstm_c_t = torch.stack(pred_lstm_c_t_list)
             output = torch.mean(torch.stack(output), dim=0)
-            pred_traj_rel += [output]
-            p = MultivariateNormal(output, torch.diag(1 * torch.ones(2)).cuda())
+            dist = MultivariateNormal(output, torch.diag(torch.exp(self.logvar)))
+            p += [dist]
 
-        return torch.stack(pred_traj_rel)
+        return p
 
 
 class past_decoder(nn.Module):
@@ -930,7 +931,7 @@ class CRMF(nn.Module):
 
                 z_vec = torch.stack(z_vec)
                 s_vec = torch.stack(s_vec)
-                pred_traj_rel = self.future_decoder(batch, torch.cat((z_vec, s_vec), dim=2))
+                qygx = self.future_decoder(batch, torch.cat((z_vec, s_vec), dim=2))
 
                 first_E = []
                 for _ in range(self.num_samples):
@@ -968,12 +969,11 @@ class CRMF(nn.Module):
                     log_psgtheta = pwe.log_prob(s_vec_c) + sldj_s
 
                     # calculate p(y|z,s,x)
-                    pred_fut_rel = self.future_decoder(batch, torch.cat((z_vec.unsqueeze(0), s_vec.unsqueeze(0)), dim=2))
-                    # log_py = torch.zeros(fut_traj_rel.shape[1]).cuda()
-                    # for i in range(self.fut_len):
-                    #     log_py += p.log_prob(fut_traj_rel[i])
+                    p = self.future_decoder(batch, torch.cat((z_vec.unsqueeze(0), s_vec.unsqueeze(0)), dim=2))
+                    log_py = torch.zeros(fut_traj_rel.shape[1]).cuda()
+                    for i in range(self.fut_len):
+                        log_py += p[i].log_prob(fut_traj_rel[i])
 
-                    log_py = - l2_loss(pred_fut_rel, fut_traj_rel, mode="raw") - 0.5 * fut_traj_rel.shape[0] * torch.log(torch.tensor(2 * math.pi * 0.5))
                     p_ygzs = torch.exp(log_py)
 
                     # calculate log(p(x|z,s))
@@ -986,7 +986,7 @@ class CRMF(nn.Module):
 
                 E1 = torch.mean(torch.stack(first_E), dim=0)
 
-                return pred_traj_rel, E1
+                return qygx, E1
 
             elif training_step == "P4":
                 pred_theta = self.mapping(obs_traj_rel)
