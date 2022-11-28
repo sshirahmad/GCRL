@@ -521,7 +521,7 @@ class future_STGAT_decoder(nn.Module):
             pred_lstm_hidden = torch.stack(pred_lstm_hidden_list)
             pred_lstm_c_t = torch.stack(pred_lstm_c_t_list)
             output = torch.mean(torch.stack(output), dim=0)
-            dist = MultivariateNormal(output, torch.diag_embed(torch.exp(self.logvar)))
+            dist = MultivariateNormal(output, torch.diag(1 * torch.ones(2)).cuda())
             output = dist.rsample()
             p += [dist]
 
