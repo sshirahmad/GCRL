@@ -474,7 +474,7 @@ class future_STGAT_decoder(nn.Module):
         self.teacher_forcing_ratio = teacher_forcing_ratio
 
         self.n_coordinates = n_coordinates
-        self.pred_lstm_hidden_size = z_dim + s_dim + noise_dim[0]
+        self.pred_lstm_hidden_size = z_dim + s_dim
         self.pred_hidden2pos = nn.Linear(self.pred_lstm_hidden_size, n_coordinates)
         self.pred_lstm_model = nn.LSTMCell(n_coordinates, self.pred_lstm_hidden_size)
         self.noise_dim = noise_dim
@@ -506,7 +506,6 @@ class future_STGAT_decoder(nn.Module):
             _to_cat = _vec.repeat(end - start, 1)
             _list_cat = torch.stack([torch.cat([_input[i, start:end], _to_cat], dim=1) for i in range(len(_input))])
             _list.append(_list_cat)
-            print(_list)
         decoder_h = torch.cat(_list, dim=1)
         return decoder_h
 
@@ -523,28 +522,47 @@ class future_STGAT_decoder(nn.Module):
         # pred_lstm_hidden = self.add_noise(pred_lstm_hidden, seq_start_end)
         pred_lstm_c_t = torch.zeros_like(pred_lstm_hidden).cuda()
         p = []
-        for i in range(self.fut_len):
-            if i >= 1:
-                teacher_force = random.random() < self.teacher_forcing_ratio
-                if teacher_force:
-                    input_t = fut_traj_rel[i - 1, :, :self.n_coordinates]  # with teacher help
-                else:
-                    input_t = output
+        if self.training:
+            for i in range(self.fut_len):
+                if i >= 1:
+                    teacher_force = random.random() < self.teacher_forcing_ratio
+                    if teacher_force:
+                        input_t = fut_traj_rel[i - 1, :, :self.n_coordinates]  # with teacher help
+                    else:
+                        input_t = output
 
-            # average over s and z
-            output = []
-            pred_lstm_hidden_list, pred_lstm_c_t_list = [], []
-            for j in range(len(pred_lstm_hidden)):
-                h, c = self.pred_lstm_model(input_t, (pred_lstm_hidden[j], pred_lstm_c_t[j]))
-                pred_lstm_hidden_list += [h]
-                pred_lstm_c_t_list += [c]
-                output += [self.pred_hidden2pos(h)]
+                # average over s and z
+                output = []
+                pred_lstm_hidden_list, pred_lstm_c_t_list = [], []
+                for j in range(len(pred_lstm_hidden)):
+                    h, c = self.pred_lstm_model(input_t, (pred_lstm_hidden[j], pred_lstm_c_t[j]))
+                    pred_lstm_hidden_list += [h]
+                    pred_lstm_c_t_list += [c]
+                    output += [self.pred_hidden2pos(h)]
 
-            pred_lstm_hidden = torch.stack(pred_lstm_hidden_list)
-            pred_lstm_c_t = torch.stack(pred_lstm_c_t_list)
-            output = torch.mean(torch.stack(output), dim=0)
-            dist = MultivariateNormal(output, torch.diag(torch.exp(self.logvar)))
-            p += [dist]
+                pred_lstm_hidden = torch.stack(pred_lstm_hidden_list)
+                pred_lstm_c_t = torch.stack(pred_lstm_c_t_list)
+                output = torch.mean(torch.stack(output), dim=0)
+                dist = MultivariateNormal(output, torch.diag(torch.exp(self.logvar)))
+                p += [dist]
+        else:
+            for i in range(self.fut_len):
+                input_t = output
+
+                # average over s and z
+                output = []
+                pred_lstm_hidden_list, pred_lstm_c_t_list = [], []
+                for j in range(len(pred_lstm_hidden)):
+                    h, c = self.pred_lstm_model(input_t, (pred_lstm_hidden[j], pred_lstm_c_t[j]))
+                    pred_lstm_hidden_list += [h]
+                    pred_lstm_c_t_list += [c]
+                    output += [self.pred_hidden2pos(h)]
+
+                pred_lstm_hidden = torch.stack(pred_lstm_hidden_list)
+                pred_lstm_c_t = torch.stack(pred_lstm_c_t_list)
+                output = torch.mean(torch.stack(output), dim=0)
+                dist = MultivariateNormal(output, torch.diag(torch.exp(self.logvar)))
+                p += [dist]
 
         return p
 
@@ -1056,8 +1074,7 @@ class CRMF(nn.Module):
 
                     # calculate log(p(x|s,z))
                     pred_past_rel = self.past_decoder(batch, torch.cat((z_vec, s_vec), dim=1))
-                    reconstruction_loss = - l2_loss(pred_past_rel, obs_traj_rel, mode="raw") - \
-                                          0.5 * 1 / obs_traj_rel.shape[0] * torch.log(torch.tensor(2 * math.pi * 0.5))
+                    reconstruction_loss = - l2_loss(pred_past_rel, obs_traj_rel, mode="raw") - 0.5 * 1 / obs_traj_rel.shape[0] * torch.log(torch.tensor(2 * math.pi * 0.5))
 
                     A1 = torch.multiply(p_ygzs, reconstruction_loss)
                     A2 = torch.multiply(p_ygzs, log_pz + log_psgtheta - log_qzgx - log_qsgthetax)

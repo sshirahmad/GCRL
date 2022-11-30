@@ -56,7 +56,7 @@ def get_training_parser():
     parser.add_argument("--s_dim", type=int, default=32, help="Dimension of s latent variable")
 
     # computation
-    parser.add_argument("--loader_num_workers", default=6, type=int)
+    parser.add_argument("--loader_num_workers", default=10, type=int)
     parser.add_argument("--gpu_num", default="1", type=str)
 
     # training
@@ -77,11 +77,11 @@ def get_training_parser():
     # general training
     parser.add_argument("--finetune", default="", type=str)
     parser.add_argument("--num_epochs", default='150-100-300-200-100', type=lambda x: int_tuple(x, '-'))  # '150-100-150',
-    parser.add_argument("--resume", default="./models/E1//P3/CRMF_epoch_257.pth.tar",
+    parser.add_argument("--resume", default="",
                         type=str, metavar="PATH", help="path to latest checkpoint (default: none)")
 
     # learning rates
-    parser.add_argument("--lrvar", default=1e-5, type=float,
+    parser.add_argument("--lrvar", default=1e-3, type=float,
                         help="initial learning rate for variant encoder optimizer")
     parser.add_argument('--lrinv', default=1e-3, type=float,
                         help="initial learning rate for the invariant encoder optimizer")
