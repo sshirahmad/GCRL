@@ -474,7 +474,7 @@ class future_STGAT_decoder(nn.Module):
         self.teacher_forcing_ratio = teacher_forcing_ratio
 
         self.n_coordinates = n_coordinates
-        self.pred_lstm_hidden_size = z_dim + s_dim + noise_dim[0]
+        self.pred_lstm_hidden_size = z_dim + s_dim
         self.pred_hidden2pos = nn.Linear(self.pred_lstm_hidden_size, n_coordinates)
         self.pred_lstm_model = nn.LSTMCell(n_coordinates, self.pred_lstm_hidden_size)
         self.noise_dim = noise_dim
@@ -544,6 +544,7 @@ class future_STGAT_decoder(nn.Module):
             pred_lstm_c_t = torch.stack(pred_lstm_c_t_list)
             output = torch.mean(torch.stack(output), dim=0)
             dist = MultivariateNormal(output, torch.diag(torch.exp(self.logvar)))
+            output = dist.rsample()
             p += [dist]
 
         return p
