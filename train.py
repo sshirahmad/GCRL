@@ -321,7 +321,7 @@ def train_all(args, model, optimizers, train_dataset, epoch, training_step, trai
                     for i in range(len(qygx)):
                         log_qygx += qygx[i].log_prob(fut_traj_rel[i])
 
-                    l2_loss_rel.append(l2_loss(pred_traj_rel, fut_traj_rel, mode="raw"))
+                    l2_loss_rel.append(-l2_loss(pred_traj_rel, fut_traj_rel, mode="raw"))
                     l2_loss_elbo.append(torch.divide(E, torch.exp(log_qygx)))
 
                 l2_loss_rel = torch.stack(l2_loss_rel, dim=1)
@@ -330,7 +330,7 @@ def train_all(args, model, optimizers, train_dataset, epoch, training_step, trai
 
                 elbo_loss = erm_loss(l2_loss_elbo, seq_start_end, fut_traj_rel.shape[0])
 
-                loss = (predict_loss) + (- elbo_loss)
+                loss = (- predict_loss) + (- elbo_loss)
 
                 e_loss_meter.update(elbo_loss.item(), obs_traj.shape[1])
                 p_loss_meter.update(predict_loss.item(), obs_traj.shape[1])
