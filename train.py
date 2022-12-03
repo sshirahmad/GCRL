@@ -307,28 +307,35 @@ def train_all(args, model, optimizers, train_dataset, epoch, training_step, trai
                 p_loss_meter.update(recon_loss.item(), obs_traj.shape[1])
 
             elif training_step == "P3":
-                qygx, E = model(batch, training_step, env_idx=train_idx)
+                pred_q_rel, qygx, E = model(batch, training_step, env_idx=train_idx)
 
                 l2_loss_rel = []
                 l2_loss_elbo = []
-                for _ in range(args.best_k):
-                    pred_traj_rel = []
-                    for i in range(len(qygx)):
-                        pred_traj_rel += [qygx[i].rsample()]
-                    pred_traj_rel = torch.stack(pred_traj_rel)
+                # for _ in range(args.best_k):
+                #     pred_traj_rel = []
+                #     for i in range(len(qygx)):
+                #         pred_traj_rel += [qygx[i].rsample()]
+                #     pred_traj_rel = torch.stack(pred_traj_rel)
+                #
+                #     log_qygx = torch.zeros(fut_traj_rel.shape[1]).cuda()
+                #     for i in range(len(qygx)):
+                #         log_qygx += qygx[i].log_prob(fut_traj_rel[i])
+                #
+                #     l2_loss_rel.append(-l2_loss(pred_traj_rel, fut_traj_rel, mode="raw"))
+                #     l2_loss_elbo.append(torch.divide(E, torch.exp(log_qygx)))
 
-                    log_qygx = torch.zeros(fut_traj_rel.shape[1]).cuda()
-                    for i in range(len(qygx)):
-                        log_qygx += qygx[i].log_prob(fut_traj_rel[i])
+                log_qygx = torch.zeros(fut_traj_rel.shape[1]).cuda()
+                for i in range(len(qygx)):
+                    log_qygx += qygx[i].log_prob(fut_traj_rel[i])
 
-                    l2_loss_rel.append(-l2_loss(pred_traj_rel, fut_traj_rel, mode="raw"))
-                    l2_loss_elbo.append(torch.divide(E, torch.exp(log_qygx)))
+                l2_loss_rel.append(log_qygx)
+                l2_loss_elbo.append(torch.divide(E, torch.exp(log_qygx)))
 
                 l2_loss_rel = torch.stack(l2_loss_rel, dim=1)
                 l2_loss_elbo = torch.stack(l2_loss_elbo, dim=1)
-                predict_loss = erm_loss(l2_loss_rel, seq_start_end, fut_traj_rel.shape[0])
+                predict_loss = erm_loss(l2_loss_rel, seq_start_end)
 
-                elbo_loss = erm_loss(l2_loss_elbo, seq_start_end, fut_traj_rel.shape[0])
+                elbo_loss = erm_loss(l2_loss_elbo, seq_start_end)
 
                 loss = (- predict_loss) + (- elbo_loss)
 
@@ -419,7 +426,6 @@ def train_all(args, model, optimizers, train_dataset, epoch, training_step, trai
         writer.add_scalar(f"theta_univ/{stage}", torch.mean(model.theta[1]), epoch)
         writer.add_scalar(f"theta_zara1/{stage}", torch.mean(model.theta[2]), epoch)
         writer.add_scalar(f"theta_zara2/{stage}", torch.mean(model.theta[3]), epoch)
-        writer.add_scalar(f"logvar/{stage}", torch.mean(model.future_decoder.logvar), epoch)
 
     elif training_step == "P4":
         writer.add_scalar(f"theta_loss/{stage}", total_loss_meter.avg, epoch)
@@ -452,18 +458,13 @@ def validate_ade(args, model, valid_dataset, epoch, training_step, writer, stage
                 batch = [tensor.cuda() for tensor in batch]
                 (obs_traj, fut_traj, _, _, seq_start_end) = batch
 
-                if stage == "validation o":
-                    qygx = model(batch, training_step)
-                else:
-                    qygx = model(batch, training_step, env_idx=val_idx)
-
                 ade_list, fde_list = [], []
                 total_traj_i += fut_traj.size(1)
-                for k in range(20):
-                    pred_fut_traj_rel = []
-                    for i in range(fut_traj.shape[0]):
-                        pred_fut_traj_rel += [qygx[i].rsample()]
-                    pred_fut_traj_rel = torch.stack(pred_fut_traj_rel)
+                for k in range(1):
+                    if stage == "validation o":
+                        pred_fut_traj_rel = model(batch, training_step)
+                    else:
+                        pred_fut_traj_rel = model(batch, training_step, env_idx=val_idx)
 
                     # from relative path to absolute path
                     pred_fut_traj = relative_to_abs(pred_fut_traj_rel, obs_traj[-1, :, :2])

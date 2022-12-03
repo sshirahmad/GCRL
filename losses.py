@@ -190,12 +190,12 @@ class CustomLoss(nn.Module):
 criterion = CustomLoss().cuda()
 
 
-def erm_loss(l2_loss_rel, seq_start_end, length_fut):
+def erm_loss(l2_loss_rel, seq_start_end):
     loss_sum = torch.zeros(1).cuda()
     for start, end in seq_start_end.data:
         _l2_loss_rel = torch.narrow(l2_loss_rel, 0, start, end - start)
         _l2_loss_rel = torch.sum(_l2_loss_rel, dim=0)  # [best_k elements]
-        _l2_loss_rel = torch.max(_l2_loss_rel) / ((length_fut) * (end - start))
+        _l2_loss_rel = torch.max(_l2_loss_rel) / (end - start)
         loss_sum += _l2_loss_rel
 
     return loss_sum
