@@ -449,7 +449,7 @@ def save_all_model(args, model, model_name, optimizers, metric, epoch, training_
             'future_decoder': model.future_decoder.state_dict(),
             'past_decoder': model.past_decoder.state_dict(),
             'mapping': model.mapping.state_dict(),
-            'theta': model.theta,
+            'theta': model.x_to_theta.state_dict(),
         },
         'optimizers': {
             key: val.state_dict() for key, val in optimizers.items()

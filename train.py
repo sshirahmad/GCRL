@@ -74,7 +74,7 @@ def main(args):
     optimizers = {
         'par': torch.optim.Adam(
             [
-                {"params": model.theta, 'lr': args.lrpar},
+                {"params": model.x_to_theta.parameters(), 'lr': args.lrpar},
             ]
         ),
         'var': torch.optim.Adam(
@@ -422,10 +422,10 @@ def train_all(args, model, optimizers, train_dataset, epoch, training_step, trai
         writer.add_scalar(f"variational_loss/{stage}", total_loss_meter.avg, epoch)
         writer.add_scalar(f"elbo_loss/{stage}", e_loss_meter.avg, epoch)
         writer.add_scalar(f"pred_loss/{stage}", p_loss_meter.avg, epoch)
-        writer.add_scalar(f"theta_hotel/{stage}", torch.mean(model.theta[0]), epoch)
-        writer.add_scalar(f"theta_univ/{stage}", torch.mean(model.theta[1]), epoch)
-        writer.add_scalar(f"theta_zara1/{stage}", torch.mean(model.theta[2]), epoch)
-        writer.add_scalar(f"theta_zara2/{stage}", torch.mean(model.theta[3]), epoch)
+        # writer.add_scalar(f"theta_hotel/{stage}", torch.mean(model.theta[0]), epoch)
+        # writer.add_scalar(f"theta_univ/{stage}", torch.mean(model.theta[1]), epoch)
+        # writer.add_scalar(f"theta_zara1/{stage}", torch.mean(model.theta[2]), epoch)
+        # writer.add_scalar(f"theta_zara2/{stage}", torch.mean(model.theta[3]), epoch)
 
     elif training_step == "P4":
         writer.add_scalar(f"theta_loss/{stage}", total_loss_meter.avg, epoch)

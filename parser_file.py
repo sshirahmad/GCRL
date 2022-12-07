@@ -51,17 +51,17 @@ def get_training_parser():
     parser.add_argument('--teachingratio', default=0.0, type=float,
                         help="The probability of using ground truth future trajectories instead of model predictions during training")
     # architecture (VE)
-    parser.add_argument('--latent_dim', type=int, default=32, help="Dimension of latent selection variables")
-    parser.add_argument("--z_dim", type=int, default=32, help="Dimension of z latent variable")
-    parser.add_argument("--s_dim", type=int, default=32, help="Dimension of s latent variable")
+    parser.add_argument('--latent_dim', type=int, default=16, help="Dimension of latent selection variables")
+    parser.add_argument("--z_dim", type=int, default=16, help="Dimension of z latent variable")
+    parser.add_argument("--s_dim", type=int, default=16, help="Dimension of s latent variable")
 
     # computation
-    parser.add_argument("--loader_num_workers", default=10, type=int)
+    parser.add_argument("--loader_num_workers", default=6, type=int)
     parser.add_argument("--gpu_num", default="1", type=str)
 
     # training
     parser.add_argument("--best_k", default=20, type=int)
-    parser.add_argument("--batch_size", default='64', type=str)
+    parser.add_argument("--batch_size", default='16', type=str)
     parser.add_argument("--batch_method", default='hom', type=str,
                         help='Use Homogeneous (hom), Heterogeneous (het) or alternated homogeneous (alt) batches during training')
     parser.add_argument("--shuffle", default=True, type=bool)
@@ -77,7 +77,7 @@ def get_training_parser():
     # general training
     parser.add_argument("--finetune", default="", type=str)
     parser.add_argument("--num_epochs", default='150-100-400-200-100', type=lambda x: int_tuple(x, '-'))  # '150-100-150',
-    parser.add_argument("--resume", default="./models/E1//P3/CRMF_epoch_400.pth.tar",
+    parser.add_argument("--resume", default="",
                         type=str, metavar="PATH", help="path to latest checkpoint (default: none)")
 
     # learning rates
@@ -85,7 +85,7 @@ def get_training_parser():
                         help="initial learning rate for variant encoder optimizer")
     parser.add_argument('--lrinv', default=1e-3, type=float,
                         help="initial learning rate for the invariant encoder optimizer")
-    parser.add_argument('--lrfut', default=1e-3, type=float,
+    parser.add_argument('--lrfut', default=1e-4, type=float,
                         help="initial learning rate for the future decoder optimizer")
     parser.add_argument('--lrpast', default=1e-3, type=float,
                         help="initial learning rate for the past decoder optimizer")
