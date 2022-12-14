@@ -442,14 +442,15 @@ def save_all_model(args, model, model_name, optimizers, metric, epoch, training_
         'state_dicts': {
             'variant_encoder': model.variant_encoder.state_dict(),
             'x_to_z': model.x_to_z.state_dict(),
-            'coupling_layers_z': model.coupling_layers_z.state_dict(),
-            'coupling_layers_s': model.coupling_layers_s.state_dict(),
-            'coupling_layers_theta': model.coupling_layers_theta.state_dict(),
             'x_to_s': model.x_to_s.state_dict(),
             'future_decoder': model.future_decoder.state_dict(),
             'past_decoder': model.past_decoder.state_dict(),
-            'mapping': model.mapping.state_dict(),
-            'theta': model.x_to_theta.state_dict(),
+            'pi_priore': model.pi_priore,
+            'mu_priors': model.mu_priors,
+            'mu_priorz': model.mu_priorz,
+            'logvar_priors': model.logvar_priors,
+            'logvar_priorz': model.logvar_priorz,
+
         },
         'optimizers': {
             key: val.state_dict() for key, val in optimizers.items()
@@ -508,7 +509,6 @@ def load_all_model(args, model, optimizers, lr_schedulers=None, training_steps=N
 
         # invariant encoder
         model.x_to_z.load_state_dict(models_checkpoint['x_to_z'])
-        model.coupling_layers_z.load_state_dict(models_checkpoint['coupling_layers_z'])
         if optimizers != None:
             optimizers['inv'].load_state_dict(checkpoint['optimizers']['inv'])
             update_lr(optimizers['inv'], args.lrinv)
@@ -519,17 +519,13 @@ def load_all_model(args, model, optimizers, lr_schedulers=None, training_steps=N
             optimizers['var'].load_state_dict(checkpoint['optimizers']['var'])
             update_lr(optimizers['var'], args.lrvar)
 
-        # Regressor
-        model.mapping.load_state_dict(models_checkpoint['mapping'])
-        if optimizers != None:
-            optimizers['map'].load_state_dict(checkpoint['optimizers']['map'])
-            update_lr(optimizers['map'], args.lrmap)
-
         # variational models
-        model.coupling_layers_s.load_state_dict(models_checkpoint['coupling_layers_s'])
-        model.coupling_layers_theta.load_state_dict(models_checkpoint['coupling_layers_theta'])
         model.x_to_s.load_state_dict(models_checkpoint['x_to_s'])
-        model.x_to_theta.load_state_dict(models_checkpoint['theta'])
+        model.pi_priore.data = models_checkpoint['pi_priore'].data
+        model.mu_priors.data = models_checkpoint['mu_priors'].data
+        model.mu_priorz.data = models_checkpoint['mu_priorz'].data
+        model.logvar_priors.data = models_checkpoint['logvar_priors'].data
+        model.logvar_priorz.data = models_checkpoint['logvar_priorz'].data
         if optimizers != None:
             optimizers['par'].load_state_dict(checkpoint['optimizers']['par'])
             update_lr(optimizers['par'], args.lrpar)
