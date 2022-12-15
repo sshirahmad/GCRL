@@ -7,11 +7,7 @@ from parser_file import get_training_parser
 from utils import *
 from models import CRMF
 from losses import erm_loss, irm_loss
-from torch.optim.lr_scheduler import OneCycleLR
-from torch.nn.utils import clip_grad_norm_
-import matplotlib.pyplot as plt
-from matplotlib.lines import Line2D
-from visualize import draw_image, draw_solo, draw_solo_all
+import math
 
 
 def main(args):
@@ -84,12 +80,11 @@ def main(args):
         'var': torch.optim.Adam(
             [
                 {"params": model.variant_encoder.parameters(), 'lr': args.lrinv},
-                {"params": model.x_to_s.parameters(), 'lr': args.lrinv},
             ]
         ),
         'inv': torch.optim.Adam(
             [
-                {"params": model.x_to_z.parameters(), 'lr': args.lrinv},
+                {"params": model.invariant_encoder.parameters(), 'lr': args.lrinv},
             ]
         ),
         'future_decoder': torch.optim.Adam(
@@ -195,7 +190,7 @@ def main(args):
         logging.info(f"\n===> EPOCH: {epoch} ({training_step})")
 
         if training_step == 'P1':
-            freeze(False, (model.variant_encoder, model.x_to_s, model.x_to_z, model.past_decoder, model.future_decoder))
+            freeze(False, (model.variant_encoder, model.invariant_encoder, model.past_decoder, model.future_decoder))
 
         elif training_step == 'P2':
             freeze(True, (model.variant_encoder, model.x_to_z, model.x_to_s, model.past_decoder, model.future_decoder,
@@ -284,13 +279,12 @@ def train_all(args, model, optimizers, train_dataset, epoch, training_step, trai
                 opt.zero_grad()
 
             if training_step == "P1":
-                pred_q_rel, qygx, E = model(batch, training_step, env_idx=train_idx)
+                pred_q_rel, E = model(batch, training_step, env_idx=train_idx)
 
                 l2_loss_rel = []
                 l2_loss_elbo = []
-                log_qygx = torch.zeros(fut_traj_rel.shape[1]).cuda()
-                for i in range(len(qygx)):
-                    log_qygx += torch.log(torch.exp(qygx[i].log_prob(fut_traj_rel[i].repeat(args.num_samples, 1, 1))).mean(dim=0))
+                qygx = torch.exp(- l2_loss(pred_q_rel, fut_traj_rel, mode="raw") - fut_traj.shape[0] * torch.log(torch.tensor(math.pi))).mean(0)
+                log_qygx = torch.log(qygx)
 
                 l2_loss_rel.append(log_qygx)
                 l2_loss_elbo.append(torch.divide(E, torch.exp(log_qygx)))
@@ -413,6 +407,8 @@ def validate_ade(args, model, valid_dataset, epoch, training_step, writer, stage
                         pred_fut_traj_rel = model(batch, training_step, env_idx=val_idx)
 
                     # from relative path to absolute path
+                    obs_traj = obs_traj[:, :pred_fut_traj_rel.shape[1], :]
+                    fut_traj = fut_traj[:, :pred_fut_traj_rel.shape[1], :]
                     pred_fut_traj = relative_to_abs(pred_fut_traj_rel, obs_traj[-1, :, :2])
 
                     # compute ADE and FDE metrics
