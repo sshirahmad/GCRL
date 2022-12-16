@@ -580,8 +580,7 @@ class SimpleEncoder(nn.Module):
         mu = self.mu(encoded)
         logvar = self.logvar(encoded)
 
-        ps = MultivariateNormal(mu.repeat(self.num_samples, 1, 1),
-                                torch.diag_embed(torch.exp(logvar)).repeat(self.num_samples, 1, 1, 1))
+        ps = MultivariateNormal(mu, torch.diag_embed(torch.exp(logvar)))
 
         return ps
 
@@ -675,8 +674,8 @@ class CRMF(nn.Module):
                 q_sgx = self.variant_encoder(obs_traj_rel)
 
                 # calculate q(y|theta, x)
-                s_vec = q_sgx.rsample()
-                z_vec = q_zgx.rsample()
+                s_vec = q_sgx.rsample([self.num_samples, ])
+                z_vec = q_zgx.rsample([self.num_samples, ])
                 pred_q_rel = self.future_decoder(torch.cat((z_vec, s_vec), dim=2))
 
                 # calculate norm_factor
@@ -696,12 +695,14 @@ class CRMF(nn.Module):
 
                 # calculate p(y|z,s,x)
                 pred_fut_rel = self.future_decoder(torch.cat((z_vec, s_vec), dim=2))
-                log_py = - l2_loss(pred_fut_rel, fut_traj_rel, mode="raw") - self.fut_len * torch.log(torch.tensor(math.pi))
+                log_py = - l2_loss(pred_fut_rel, fut_traj_rel, mode="raw") - self.fut_len * torch.log(
+                    torch.tensor(math.pi))
                 p_ygzs = torch.exp(log_py)
 
                 # calculate log(p(x|z,s))
                 pred_past_rel = self.past_decoder(torch.cat((z_vec, s_vec), dim=2))
-                log_px = - l2_loss(pred_past_rel, obs_traj_rel, mode="raw") - self.obs_len * torch.log(torch.tensor(math.pi))
+                log_px = - l2_loss(pred_past_rel, obs_traj_rel, mode="raw") - self.obs_len * torch.log(
+                    torch.tensor(math.pi))
 
                 E = torch.multiply(p_ygzs, log_px + torch.log(norm_factor) + log_pz - log_qzgx - log_qsgx).mean(dim=0)
 
@@ -808,8 +809,8 @@ class CRMF(nn.Module):
                 q_sgx = self.variant_encoder(obs_traj_rel)
 
                 # calculate q(y|theta, x)
-                z_vec = q_zgx.rsample()
-                s_vec = q_sgx.rsample()
+                z_vec = q_zgx.rsample([self.num_samples, ])
+                s_vec = q_sgx.rsample([self.num_samples, ])
 
                 pred_traj_rel = self.future_decoder(torch.cat((z_vec, s_vec), dim=2)).mean(0)
 
