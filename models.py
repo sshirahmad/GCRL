@@ -994,7 +994,7 @@ class CRMF(nn.Module):
                     _, p = self.future_decoder(batch, torch.cat((z_vec, s_vec), dim=2))
                     log_py = torch.zeros((self.num_samples, fut_traj_rel.shape[1])).cuda()
                     for i in range(self.fut_len):
-                        log_py += p[i].log_prob(fut_traj_rel[i])
+                        log_py += p[i].log_prob(fut_traj_rel[i, :, :2])
 
                     p_ygzs = torch.exp(log_py)
 
@@ -1002,7 +1002,7 @@ class CRMF(nn.Module):
                     p = self.past_decoder(batch, torch.cat((z_vec, s_vec), dim=2))
                     log_px = torch.zeros((self.num_samples, fut_traj_rel.shape[1])).cuda()
                     for i in range(self.obs_len):
-                        log_px += p[i].log_prob(obs_traj_rel[i])
+                        log_px += p[i].log_prob(obs_traj_rel[i, :, :2])
 
                     A1 = torch.multiply(p_ygzs, log_px + log_psgtheta + log_pz - log_qzgx - log_qthetagx - log_qsgthetax)
                     first_E.append(torch.mean(A1, dim=0))

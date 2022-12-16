@@ -326,7 +326,7 @@ def train_all(args, model, optimizers, train_dataset, epoch, training_step, trai
 
                 log_qygx = torch.zeros(fut_traj_rel.shape[1]).cuda()
                 for i in range(len(qygx)):
-                    log_qygx += torch.log(torch.exp(qygx[i].log_prob(fut_traj_rel[i].repeat(args.num_samples, 1, 1))).mean(dim=0))
+                    log_qygx += torch.log(torch.exp(qygx[i].log_prob(fut_traj_rel[i, :, :2].repeat(args.num_samples, 1, 1))).mean(dim=0))
 
                 l2_loss_rel.append(log_qygx)
                 l2_loss_elbo.append(torch.divide(E, torch.exp(log_qygx)))
