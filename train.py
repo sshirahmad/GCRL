@@ -280,7 +280,7 @@ def train_all(args, model, optimizers, train_dataset, epoch, training_step, trai
                 opt.zero_grad()
 
             if training_step == "P1":
-                pred_q_rel, qygx, E = model(batch, training_step, env_idx=train_idx)
+                qygx, E = model(batch, training_step, env_idx=train_idx)
 
                 l2_loss_rel = []
                 l2_loss_elbo = []
@@ -299,16 +299,16 @@ def train_all(args, model, optimizers, train_dataset, epoch, training_step, trai
 
                 log_qygx = torch.zeros(fut_traj_rel.shape[1]).cuda()
                 for i in range(len(qygx)):
-                    log_qygx += torch.log(torch.exp(qygx[i].log_prob(fut_traj_rel[i, :, :2])))
+                    log_qygx += torch.log(torch.exp(qygx[i].log_prob(fut_traj_rel[i, :, :2])).mean(dim=0))
 
                 l2_loss_rel.append(log_qygx)
                 l2_loss_elbo.append(torch.divide(E, torch.exp(log_qygx)))
 
                 l2_loss_rel = torch.stack(l2_loss_rel, dim=1)
                 l2_loss_elbo = torch.stack(l2_loss_elbo, dim=1)
-                predict_loss = erm_loss(l2_loss_rel, seq_start_end)
+                predict_loss = erm_loss(l2_loss_rel, seq_start_end, fut_traj_rel.shape[0])
 
-                elbo_loss = erm_loss(l2_loss_elbo, seq_start_end)
+                elbo_loss = erm_loss(l2_loss_elbo, seq_start_end, fut_traj_rel.shape[0])
 
                 loss = (- predict_loss) + (- elbo_loss)
 
@@ -414,12 +414,18 @@ def validate_ade(args, model, valid_dataset, epoch, training_step, writer, stage
 
                 ade_list, fde_list = [], []
                 total_traj_i += fut_traj.size(1)
-                for k in range(1):
-                    if stage == "validation o":
-                        pred_fut_traj_rel = model(batch, training_step)
-                    else:
-                        pred_fut_traj_rel = model(batch, training_step, env_idx=val_idx)
 
+                if stage == "validation o":
+                    q = model(batch, training_step)
+                else:
+                    q = model(batch, training_step, env_idx=val_idx)
+
+                for k in range(1):
+                    pred_fut_traj_rel = []
+                    for i in range(fut_traj.shape[0]):
+                        pred_fut_traj_rel += [q[i].rsample().mean(dim=0)]
+
+                    pred_fut_traj_rel = torch.stack(pred_fut_traj_rel)
                     # from relative path to absolute path
                     pred_fut_traj = relative_to_abs(pred_fut_traj_rel, obs_traj[-1, :, :2])
 

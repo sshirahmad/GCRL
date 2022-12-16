@@ -7,7 +7,7 @@ def get_parser():
     parser.add_argument("--log_dir", default="./log/", help="Directory containing logging file")
     parser.add_argument("--model_dir", default="./models/E1/", help="Directory containing logging file")
     parser.add_argument("--dataset_name", default="eth", type=str)
-    parser.add_argument("--resume", default="./models/E1//P1/CRMF_epoch_32.pth.tar",
+    parser.add_argument("--resume", default="./models/E1//P1/CRMF_epoch_39.pth.tar",
                         type=str, metavar="PATH", help="path to latest checkpoint (default: none)")
 
     # randomness
@@ -52,7 +52,7 @@ def get_parser():
 
     # spurious feature
     parser.add_argument("--add_confidence", default=True, type=bool)
-    parser.add_argument("--domain_shifts", default='1-2-4-8-1', type=str,
+    parser.add_argument("--domain_shifts", default='1-2-4-8-64', type=str,
                         help='domain_shifts per environment: hotel,univ,zara1,zara2,eth')
 
     return parser

@@ -257,7 +257,7 @@ class Encoder(nn.Module):
         self.n_coordinates = n_coordinates
         self.add_confidence = add_confidence
 
-        self.traj_lstm_model = LSTMCell(
+        self.traj_lstm_model = nn.LSTMCell(
             n_coordinates + add_confidence,
             traj_lstm_hidden_size
         )
@@ -346,7 +346,7 @@ class Predictor(nn.Module):
         self.n_coordinates = n_coordinates
         self.pred_lstm_hidden_size = z_dim + s_dim
         self.pred_hidden2pos = nn.Linear(self.pred_lstm_hidden_size, n_coordinates)
-        self.pred_lstm_model = LSTMCell(n_coordinates, self.pred_lstm_hidden_size)
+        self.pred_lstm_model = nn.LSTMCell(n_coordinates, self.pred_lstm_hidden_size)
         self.noise_dim = noise_dim
         self.noise_type = noise_type
 
@@ -414,10 +414,8 @@ class Predictor(nn.Module):
                 pred_lstm_hidden = torch.stack(pred_lstm_hidden_list)
                 pred_lstm_c_t = torch.stack(pred_lstm_c_t_list)
                 output = torch.stack(output)
-                mean = output.mean(dim=0)
-                dist = MultivariateNormal(mean, torch.diag(0.5 * torch.ones(self.n_coordinates).cuda()))
+                dist = MultivariateNormal(output, torch.diag(0.5 * torch.ones(self.n_coordinates).cuda()))
                 p += [dist]
-                pred_traj_rel += [mean]
         else:
             for i in range(self.fut_len):
                 input_t = output
@@ -434,12 +432,10 @@ class Predictor(nn.Module):
                 pred_lstm_hidden = torch.stack(pred_lstm_hidden_list)
                 pred_lstm_c_t = torch.stack(pred_lstm_c_t_list)
                 output = torch.stack(output)
-                mean = output.mean(dim=0)
-                dist = MultivariateNormal(mean, torch.diag(0.5 * torch.ones(self.n_coordinates).cuda()))
+                dist = MultivariateNormal(output, torch.diag(0.5 * torch.ones(self.n_coordinates).cuda()))
                 p += [dist]
-                pred_traj_rel += [mean]
 
-        return torch.stack(pred_traj_rel), p
+        return p
 
 
 class Decoder(nn.Module):
@@ -459,7 +455,7 @@ class Decoder(nn.Module):
         self.n_coordinates = n_coordinates
         self.pred_lstm_hidden_size = z_dim + s_dim
         self.pred_hidden2pos = nn.Linear(self.pred_lstm_hidden_size, n_coordinates)
-        self.pred_lstm_model = LSTMCell(n_coordinates, self.pred_lstm_hidden_size)
+        self.pred_lstm_model = nn.LSTMCell(n_coordinates, self.pred_lstm_hidden_size)
 
         self._initialize_weights()
 
@@ -695,7 +691,7 @@ class CRMF(nn.Module):
                 # calculate q(y|theta, x)
                 s_vec = q_sgx.rsample([self.num_samples, ])
                 z_vec = q_zgx.rsample([self.num_samples, ])
-                pred_q_rel, q = self.future_decoder(batch, torch.cat((z_vec, s_vec), dim=2))
+                q = self.future_decoder(batch, torch.cat((z_vec, s_vec), dim=2))
 
                 # calculate norm_factor
                 norm_factor = torch.zeros(s_vec.shape[0], s_vec.shape[1], device=s_vec.device)
@@ -713,7 +709,7 @@ class CRMF(nn.Module):
                 log_pz = pz.log_prob(z_vec)
 
                 # calculate p(y|z,s,x)
-                _, p = self.future_decoder(batch, torch.cat((z_vec, s_vec), dim=2))
+                p = self.future_decoder(batch, torch.cat((z_vec, s_vec), dim=2))
                 log_py = torch.zeros((self.num_samples, fut_traj_rel.shape[1])).cuda()
                 for i in range(self.fut_len):
                     log_py += p[i].log_prob(fut_traj_rel[i, :, :2])
@@ -722,13 +718,13 @@ class CRMF(nn.Module):
 
                 # calculate log(p(x|z,s))
                 p = self.past_decoder(batch, torch.cat((z_vec, s_vec), dim=2))
-                log_px = torch.zeros((self.num_samples, fut_traj_rel.shape[1])).cuda()
+                log_px = torch.zeros((self.num_samples, obs_traj_rel.shape[1])).cuda()
                 for i in range(self.obs_len):
                     log_px += p[i].log_prob(obs_traj_rel[i, :, :2])
 
                 E = torch.multiply(p_ygzs, log_px + torch.log(norm_factor) + log_pz - log_qzgx - log_qsgx).mean(dim=0)
 
-                return pred_q_rel, q, E
+                return q, E
 
             elif training_step == "P4":
                 pred_theta = self.mapping(obs_traj_rel)
@@ -835,6 +831,6 @@ class CRMF(nn.Module):
                 z_vec = q_zgx.rsample([self.num_samples, ])
                 s_vec = q_sgx.rsample([self.num_samples, ])
 
-                pred_traj_rel, _ = self.future_decoder(batch, torch.cat((z_vec, s_vec), dim=2))
+                q = self.future_decoder(batch, torch.cat((z_vec, s_vec), dim=2))
 
-            return pred_traj_rel
+            return q

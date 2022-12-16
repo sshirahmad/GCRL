@@ -190,7 +190,6 @@ def l2_loss(pred_fut_traj, fut_traj, mode="average"):
             return loss.sum(dim=3).sum(dim=2)
 
 
-
 def displacement_error(pred_fut_traj, fut_traj, consider_ped=None, mode="sum"):
     """
     Compute ADE

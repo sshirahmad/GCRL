@@ -65,8 +65,13 @@ def evaluate(args, loader, generator, training_step):
             step += seq_start_end.shape[0]
             ade, fde = [], []
             total_traj += fut_traj.size(1)
+            q = generator(batch, training_step)
             for _ in range(args.best_k):
-                pred_fut_traj_rel = generator(batch, training_step)
+                pred_fut_traj_rel = []
+                for i in range(fut_traj.shape[0]):
+                    pred_fut_traj_rel += [q[i].rsample().mean(dim=0)]
+
+                pred_fut_traj_rel = torch.stack(pred_fut_traj_rel)
                 pred_fut_traj = relative_to_abs(pred_fut_traj_rel, obs_traj[-1, :, :2])
 
                 ade_, fde_ = cal_ade_fde(fut_traj, pred_fut_traj)
