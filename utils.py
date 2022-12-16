@@ -267,14 +267,7 @@ def set_domain_shift(domain_shifts, env_name):
 
 def set_name_experiment(args, name='CRMF'):
 
-    if args.irm > 0:
-        name_risk = 'irm_' + str(args.irm)
-    elif args.vrex > 0:
-        name_risk = 'vrex_' + str(args.vrex)
-    else:
-        name_risk = 'erm_0.0'
-
-    return f'{name}_risk_{name_risk}_batch_{args.batch_method}_data_{args.dataset_name}_ds_{args.domain_shifts}_bk_{args.best_k}_ep_{args.num_epochs}_shuffle_{str(args.shuffle).lower()}_seed_{args.seed}'
+    return f'{name}_batch_{args.batch_method}_data_{args.dataset_name}_ds_{args.domain_shifts}_bk_{args.best_k}_ep_{args.num_epochs}_shuffle_{str(args.shuffle).lower()}_seed_{args.seed}'
 
 
 def set_batch_size(batch_method, batch_sizes, env_name):
@@ -444,8 +437,9 @@ def save_all_model(args, model, model_name, optimizers, metric, epoch, training_
     checkpoint = {
         'epoch': epoch + 1,
         'state_dicts': {
-            'variant_encoder': model.variant_encoder.state_dict(),
-            'invariant_encoder': model.invariant_encoder.state_dict(),
+            'variant_encoder': model.encoder.state_dict(),
+            'x_to_z': model.x_to_z.state_dict(),
+            'x_to_s': model.x_to_s.state_dict(),
             'future_decoder': model.future_decoder.state_dict(),
             'past_decoder': model.past_decoder.state_dict(),
             'pi_priore': model.pi_priore,
@@ -517,18 +511,18 @@ def load_all_model(args, model, optimizers, lr_schedulers=None, training_steps=N
             update_lr(optimizers['inv'], args.lrinv)
 
         # variant encoder
-        model.variant_encoder.load_state_dict(models_checkpoint['variant_encoder'])
+        model.encoder.load_state_dict(models_checkpoint['variant_encoder'])
         if optimizers != None:
             optimizers['var'].load_state_dict(checkpoint['optimizers']['var'])
             update_lr(optimizers['var'], args.lrvar)
 
         # variational models
         model.x_to_s.load_state_dict(models_checkpoint['x_to_s'])
-        model.pi_priore.data = models_checkpoint['pi_priore'].data
-        model.mu_priors.data = models_checkpoint['mu_priors'].data
-        model.mu_priorz.data = models_checkpoint['mu_priorz'].data
-        model.logvar_priors.data = models_checkpoint['logvar_priors'].data
-        model.logvar_priorz.data = models_checkpoint['logvar_priorz'].data
+        model.pi_priore.data = models_checkpoint['pi_priore'].data.cuda()
+        model.mu_priors.data = models_checkpoint['mu_priors'].data.cuda()
+        model.mu_priorz.data = models_checkpoint['mu_priorz'].data.cuda()
+        model.logvar_priors.data = models_checkpoint['logvar_priors'].data.cuda()
+        model.logvar_priorz.data = models_checkpoint['logvar_priorz'].data.cuda()
         if optimizers != None:
             optimizers['par'].load_state_dict(checkpoint['optimizers']['par'])
             update_lr(optimizers['par'], args.lrpar)

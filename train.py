@@ -79,12 +79,13 @@ def main(args):
         ),
         'var': torch.optim.Adam(
             [
-                {"params": model.variant_encoder.parameters(), 'lr': args.lrinv},
+                {"params": model.x_to_s.parameters(), 'lr': args.lrinv},
+                {"params": model.encoder.parameters(), 'lr': args.lrinv},
             ]
         ),
         'inv': torch.optim.Adam(
             [
-                {"params": model.invariant_encoder.parameters(), 'lr': args.lrinv},
+                {"params": model.x_to_z.parameters(), 'lr': args.lrinv},
             ]
         ),
         'future_decoder': torch.optim.Adam(
@@ -190,7 +191,7 @@ def main(args):
         logging.info(f"\n===> EPOCH: {epoch} ({training_step})")
 
         if training_step == 'P1':
-            freeze(False, (model.variant_encoder, model.invariant_encoder, model.past_decoder, model.future_decoder))
+            freeze(False, (model.encoder, model.x_to_z, model.x_to_s, model.past_decoder, model.future_decoder))
 
         elif training_step == 'P2':
             freeze(True, (model.variant_encoder, model.x_to_z, model.x_to_s, model.past_decoder, model.future_decoder,
@@ -279,12 +280,26 @@ def train_all(args, model, optimizers, train_dataset, epoch, training_step, trai
                 opt.zero_grad()
 
             if training_step == "P1":
-                pred_q_rel, E = model(batch, training_step, env_idx=train_idx)
+                pred_q_rel, qygx, E = model(batch, training_step, env_idx=train_idx)
 
                 l2_loss_rel = []
                 l2_loss_elbo = []
-                qygx = torch.exp(- l2_loss(pred_q_rel, fut_traj_rel, mode="raw") - fut_traj.shape[0] * torch.log(torch.tensor(math.pi))).mean(0)
-                log_qygx = torch.log(qygx)
+                # for _ in range(args.best_k):
+                #     pred_traj_rel = []
+                #     for i in range(len(qygx)):
+                #         pred_traj_rel += [qygx[i].rsample()]
+                #     pred_traj_rel = torch.stack(pred_traj_rel)
+                #
+                #     log_qygx = torch.zeros(fut_traj_rel.shape[1]).cuda()
+                #     for i in range(len(qygx)):
+                #         log_qygx += qygx[i].log_prob(fut_traj_rel[i])
+                #
+                #     l2_loss_rel.append(-l2_loss(pred_traj_rel, fut_traj_rel, mode="raw"))
+                #     l2_loss_elbo.append(torch.divide(E, torch.exp(log_qygx)))
+
+                log_qygx = torch.zeros(fut_traj_rel.shape[1]).cuda()
+                for i in range(len(qygx)):
+                    log_qygx += torch.log(torch.exp(qygx[i].log_prob(fut_traj_rel[i, :, :2])))
 
                 l2_loss_rel.append(log_qygx)
                 l2_loss_elbo.append(torch.divide(E, torch.exp(log_qygx)))
@@ -299,7 +314,6 @@ def train_all(args, model, optimizers, train_dataset, epoch, training_step, trai
 
                 e_loss_meter.update(elbo_loss.item(), obs_traj.shape[1])
                 p_loss_meter.update(predict_loss.item(), obs_traj.shape[1])
-
             elif training_step == "P4":
                 pred_theta = model(batch, training_step)
 
@@ -407,8 +421,6 @@ def validate_ade(args, model, valid_dataset, epoch, training_step, writer, stage
                         pred_fut_traj_rel = model(batch, training_step, env_idx=val_idx)
 
                     # from relative path to absolute path
-                    obs_traj = obs_traj[:, :pred_fut_traj_rel.shape[1], :]
-                    fut_traj = fut_traj[:, :pred_fut_traj_rel.shape[1], :]
                     pred_fut_traj = relative_to_abs(pred_fut_traj_rel, obs_traj[-1, :, :2])
 
                     # compute ADE and FDE metrics
