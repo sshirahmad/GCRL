@@ -32,7 +32,7 @@ class CouplingLayer(nn.Module):
 
         # Build scale and translate network
         if hidden_dims is None:
-            hidden_dims = [32]
+            hidden_dims = [64, 64]
 
         modules = []
         in_channels = latent_dim // 2
@@ -48,7 +48,7 @@ class CouplingLayer(nn.Module):
         self.st_net = nn.Sequential(*modules)
 
         # Learnable scale for s
-        # self.rescale = nn.utils.weight_norm(Rescale(latent_dim // 2))
+        self.rescale = nn.utils.weight_norm(Rescale(latent_dim // 2))
 
     def forward(self, x, sldj=None, reverse=False):
         # Channel-wise mask
@@ -59,7 +59,7 @@ class CouplingLayer(nn.Module):
 
         st = self.st_net(x_id)
         s, t = st.chunk(2, dim=2)
-        # s = self.rescale(torch.tanh(s))
+        s = self.rescale(torch.tanh(s))
 
         # Scale and translate
         if reverse:
@@ -344,7 +344,7 @@ class Predictor(nn.Module):
         self.teacher_forcing_ratio = teacher_forcing_ratio
 
         self.n_coordinates = n_coordinates
-        self.pred_lstm_hidden_size = z_dim + s_dim
+        self.pred_lstm_hidden_size = z_dim + s_dim + noise_dim[0]
         self.pred_hidden2pos = nn.Linear(self.pred_lstm_hidden_size, n_coordinates)
         self.pred_lstm_model = nn.LSTMCell(n_coordinates, self.pred_lstm_hidden_size)
         self.noise_dim = noise_dim
@@ -389,7 +389,7 @@ class Predictor(nn.Module):
 
         input_t = obs_traj_rel[self.obs_len - 1, :, :self.n_coordinates].repeat(len(pred_lstm_hidden), 1, 1)
         output = input_t
-        # pred_lstm_hidden = self.add_noise(pred_lstm_hidden, seq_start_end)
+        pred_lstm_hidden = self.add_noise(pred_lstm_hidden, seq_start_end)
         pred_lstm_c_t = torch.zeros_like(pred_lstm_hidden).cuda()
         p = []
         pred_traj_rel = []
@@ -561,7 +561,8 @@ class SimpleEncoder(nn.Module):
             obs_len,
             hidden_size,
             number_agents,
-            num_samples
+            num_samples,
+            add_confidence,
     ):
         super(SimpleEncoder, self).__init__()
 
@@ -571,10 +572,10 @@ class SimpleEncoder(nn.Module):
         self.number_agents = number_agents
 
         self.mlp = nn.Sequential(
-            nn.Linear(obs_len * number_agents * 2, hidden_size * number_agents * 2),
-            nn.ReLU(),
+            nn.Linear(obs_len * number_agents * (2 + add_confidence), hidden_size * number_agents * 2),
+            nn.LeakyReLU(),
             nn.Linear(hidden_size * number_agents * 2, hidden_size * number_agents * 2),
-            nn.ReLU(),
+            nn.LeakyReLU(),
             nn.Linear(hidden_size * number_agents * 2, hidden_size * number_agents),
         )
 
@@ -602,6 +603,52 @@ class SimpleEncoder(nn.Module):
         return ps
 
 
+class Classifier(nn.Module):
+    def __init__(
+            self,
+            obs_len,
+            hidden_size,
+            number_agents,
+            num_samples,
+            num_envs,
+            add_confidence,
+    ):
+        super(Classifier, self).__init__()
+
+        # num of frames per sequence
+        self.obs_len = obs_len
+        self.num_samples = num_samples
+        self.number_agents = number_agents
+
+        self.mlp = nn.Sequential(
+            nn.Linear(obs_len * number_agents * (2 + add_confidence), hidden_size * number_agents * 2),
+            nn.LeakyReLU(),
+            nn.Linear(hidden_size * number_agents * 2, hidden_size * number_agents * 2),
+            nn.LeakyReLU(),
+            nn.Linear(hidden_size * number_agents * 2, hidden_size * number_agents),
+        )
+
+        self.final = nn.Linear(hidden_size, num_envs)
+
+    def forward(self, obs_traj_rel):
+        splits = obs_traj_rel.split(self.number_agents, dim=1)
+        if splits[-1].shape[1] != splits[0].shape[1]:
+            splits = splits[:-1]
+        obs_traj_rel = torch.stack(splits, dim=1)
+        obs_traj_rel = torch.permute(obs_traj_rel, (1, 2, 0, 3))
+        obs_traj_rel = obs_traj_rel.flatten(start_dim=1)
+
+        encoded = self.mlp(obs_traj_rel)
+
+        encoded = torch.stack(encoded.split(encoded.shape[1] // self.number_agents, dim=1), dim=1)
+        encoded = encoded.flatten(start_dim=0, end_dim=1)
+
+        logits = self.final(encoded)
+        p = Categorical(logits=logits)
+
+        return p
+
+
 class SimpleDecoder(nn.Module):
     def __init__(
             self,
@@ -618,13 +665,13 @@ class SimpleDecoder(nn.Module):
 
         self.mlp1 = nn.Sequential(
             nn.Linear(hidden_size * number_of_agents, 2 * number_of_agents * hidden_size),
-            nn.ReLU(),
+            nn.LeakyReLU(),
             nn.Linear(2 * number_of_agents * hidden_size, 2 * number_of_agents * hidden_size)
         )
 
         self.mlp2 = nn.Sequential(
             nn.Linear(2 * number_of_agents * hidden_size, number_of_agents * 2 * seq_len),
-            nn.ReLU(),
+            nn.LeakyReLU(),
             nn.Linear(number_of_agents * 2 * seq_len, number_of_agents * 2 * seq_len)
         )
 
@@ -659,22 +706,58 @@ class CRMF(nn.Module):
 
         self.num_envs = args.num_envs
         self.pi_priore = nn.Parameter(-1 * torch.ones(args.num_envs))
-        self.mu_priors = nn.Parameter(torch.zeros(args.num_envs, args.s_dim))
-        self.logvar_priors = nn.Parameter(torch.randn(args.num_envs, args.s_dim))
-        self.mu_priorz = nn.Parameter(torch.zeros(args.z_dim))
-        self.logvar_priorz = nn.Parameter(torch.randn(args.z_dim))
 
-        self.encoder = Encoder(args.obs_len, args.fut_len, args.n_coordinates,
-                               args.traj_lstm_hidden_size, args.n_units, args.n_heads,
-                               args.graph_network_out_dims, args.dropout, args.alpha,
-                               args.graph_lstm_hidden_size, args.add_confidence)
-        self.x_to_z = Mapping(args.traj_lstm_hidden_size, args.graph_lstm_hidden_size, args.z_dim)
-        self.x_to_s = Mapping(args.traj_lstm_hidden_size, args.graph_lstm_hidden_size, args.s_dim)
+        self.coupling_layers_z = nn.ModuleList([
+            CouplingLayer(args.z_dim, reverse_mask=False),
+            CouplingLayer(args.z_dim, reverse_mask=True),
+            CouplingLayer(args.z_dim, reverse_mask=False)
+        ])
 
-        self.past_decoder = Decoder(args.obs_len, args.n_coordinates, args.z_dim, args.s_dim)
+        self.coupling_layers_s = nn.ModuleList([
+            CouplingLayer(args.s_dim, reverse_mask=False),
+            CouplingLayer(args.s_dim, reverse_mask=True),
+            CouplingLayer(args.s_dim, reverse_mask=False)
+        ])
 
-        self.future_decoder = Predictor(args.obs_len, args.fut_len, args.n_coordinates, args.s_dim,
-                                        args.z_dim, args.teachingratio)
+        self.pw = MultivariateNormal(torch.zeros(args.z_dim).cuda(), torch.diag(torch.ones(args.z_dim).cuda()))
+
+        self.ps = []
+        for i in range(self.num_envs):
+            self.ps += [MultivariateNormal(i * torch.zeros(args.s_dim).cuda(), torch.diag(torch.ones(args.s_dim).cuda()))]
+
+        # self.ps = []
+        # for j in range(self.num_envs):
+        #     self.ps += [MultivariateNormal(j * torch.ones(args.s_dim).cuda(), torch.diag(torch.ones(args.s_dim).cuda()))]
+        #
+        # self.pz = MultivariateNormal(torch.zeros(args.z_dim).cuda(), torch.diag(torch.ones(args.z_dim).cuda()))
+
+        # self.encoder = Encoder(args.obs_len, args.fut_len, args.n_coordinates,
+        #                        args.traj_lstm_hidden_size, args.n_units, args.n_heads,
+        #                        args.graph_network_out_dims, args.dropout, args.alpha,
+        #                        args.graph_lstm_hidden_size, args.add_confidence)
+        # self.x_to_z = Mapping(args.traj_lstm_hidden_size, args.graph_lstm_hidden_size, args.z_dim)
+        # self.x_to_s = Mapping(args.traj_lstm_hidden_size, args.graph_lstm_hidden_size, args.s_dim)
+        #
+        # self.past_decoder = Decoder(args.obs_len, args.n_coordinates, args.z_dim, args.s_dim)
+        #
+        # self.future_decoder = Predictor(args.obs_len, args.fut_len, args.n_coordinates, args.s_dim,
+        #                                 args.z_dim, args.teachingratio)
+
+        self.invariant_encoder = SimpleEncoder(args.obs_len, args.z_dim, NUMBER_PERSONS, args.num_samples, args.add_confidence)
+        self.variant_encoder = SimpleEncoder(args.obs_len, args.s_dim, NUMBER_PERSONS, args.num_samples, args.add_confidence)
+        self.e_encoder = Classifier(args.obs_len, args.s_dim, NUMBER_PERSONS, args.num_samples, args.num_envs, args.add_confidence)
+
+        self.past_decoder = SimpleDecoder(
+            args.obs_len,
+            args.s_dim + args.z_dim,
+            NUMBER_PERSONS,
+        )
+
+        self.future_decoder = SimpleDecoder(
+            args.fut_len,
+            args.s_dim + args.z_dim,
+            NUMBER_PERSONS,
+        )
 
     def forward(self, batch, training_step, **kwargs):
 
@@ -683,21 +766,39 @@ class CRMF(nn.Module):
         if self.training:
             if training_step == "P1":
                 pe = Categorical(logits=self.pi_priore)
-                pz = MultivariateNormal(self.mu_priorz, torch.diag(torch.exp(self.logvar_priorz)))
-                concat_hidden_states = self.encoder(batch, training_step)
-                q_zgx = self.x_to_z(concat_hidden_states)
-                q_sgx = self.x_to_s(concat_hidden_states)
+
+                q_zgx = self.invariant_encoder(obs_traj_rel)
+                q_sgx = self.variant_encoder(obs_traj_rel)
+                q_egx = self.e_encoder(obs_traj_rel)
 
                 # calculate q(y|theta, x)
                 s_vec = q_sgx.rsample([self.num_samples, ])
                 z_vec = q_zgx.rsample([self.num_samples, ])
-                q = self.future_decoder(batch, torch.cat((z_vec, s_vec), dim=2))
 
-                # calculate norm_factor
-                norm_factor = torch.zeros(s_vec.shape[0], s_vec.shape[1], device=s_vec.device)
+                # calculate q(y|x)
+                pred_q_rel = self.future_decoder(torch.cat((z_vec, s_vec), dim=2))
+
+                sldj = torch.zeros((self.num_samples, s_vec.shape[1]), device=s_vec.device)
+                s_vec_c = s_vec
+                for coupling in self.coupling_layers_s:
+                    s_vec_c, sldj = coupling(s_vec_c, sldj)
+
+                # # calculate p(s|e)
+                # norm_factor = torch.zeros(s_vec.shape[0], s_vec.shape[1], device=s_vec.device)
+                # for j in range(self.num_envs):
+                #     psge = self.ps[j]
+                #     norm_factor += torch.exp(psge.log_prob(s_vec_c) + sldj) * torch.exp(pe.log_prob(torch.tensor(j).cuda()))
+
+                # calculate p(s|e)
+                Et = []
                 for j in range(self.num_envs):
-                    psge = MultivariateNormal(self.mu_priors[j], torch.diag(torch.exp(self.logvar_priors[j])))
-                    norm_factor += torch.exp(psge.log_prob(s_vec)) * torch.exp(pe.log_prob(torch.tensor(j).cuda()))
+                    psge = self.ps[j]
+                    log_ps = psge.log_prob(s_vec_c) + sldj
+                    log_pe = pe.log_prob(torch.tensor(j).cuda())
+                    log_qe = q_egx.log_prob(torch.tensor(j).cuda())
+                    Et.append(torch.multiply(torch.exp(q_egx.log_prob(torch.tensor(j).cuda())), log_ps + log_pe - log_qe))
+
+                Et = torch.stack(Et).sum(0)
 
                 # calculate log(q(z|x))
                 log_qzgx = q_zgx.log_prob(z_vec)
@@ -706,25 +807,25 @@ class CRMF(nn.Module):
                 log_qsgx = q_sgx.log_prob(s_vec)
 
                 # calculate log(p(z))
-                log_pz = pz.log_prob(z_vec)
+                sldj = torch.zeros((self.num_samples, z_vec.shape[1]), device=z_vec.device)
+                z_vec_c = z_vec
+                for coupling in self.coupling_layers_z:
+                    z_vec_c, sldj = coupling(z_vec_c, sldj)
+
+                log_pz = self.pw.log_prob(z_vec_c) + sldj
 
                 # calculate p(y|z,s,x)
-                p = self.future_decoder(batch, torch.cat((z_vec, s_vec), dim=2))
-                log_py = torch.zeros((self.num_samples, fut_traj_rel.shape[1])).cuda()
-                for i in range(self.fut_len):
-                    log_py += p[i].log_prob(fut_traj_rel[i, :, :2])
-
+                pred_fut_rel = self.future_decoder(torch.cat((z_vec, s_vec), dim=2))
+                log_py = - l2_loss(pred_fut_rel, fut_traj_rel, mode="raw") - 0.5 * self.fut_len * torch.log(torch.tensor(2 * math.pi) - 0.5 * torch.log(torch.tensor(0.25)))
                 p_ygzs = torch.exp(log_py)
 
                 # calculate log(p(x|z,s))
-                p = self.past_decoder(batch, torch.cat((z_vec, s_vec), dim=2))
-                log_px = torch.zeros((self.num_samples, obs_traj_rel.shape[1])).cuda()
-                for i in range(self.obs_len):
-                    log_px += p[i].log_prob(obs_traj_rel[i, :, :2])
+                pred_past_rel = self.past_decoder(torch.cat((z_vec, s_vec), dim=2))
+                log_px = - l2_loss(pred_past_rel, obs_traj_rel, mode="raw") - 0.5 * self.obs_len * torch.log(torch.tensor(2 * math.pi) - 0.5 * torch.log(torch.tensor(0.25)))
 
-                E = torch.multiply(p_ygzs, log_px + torch.log(norm_factor) + log_pz - log_qzgx - log_qsgx).mean(dim=0)
+                E = torch.multiply(p_ygzs, log_px + Et + log_pz - log_qzgx - log_qsgx).mean(dim=0)
 
-                return q, E
+                return pred_q_rel, E
 
             elif training_step == "P4":
                 pred_theta = self.mapping(obs_traj_rel)
@@ -823,14 +924,13 @@ class CRMF(nn.Module):
                 return q_zgx, ps
 
             else:
-                concat_hidden_states = self.encoder(batch, training_step)
-                q_zgx = self.x_to_z(concat_hidden_states)
-                q_sgx = self.x_to_s(concat_hidden_states)
+                q_zgx = self.invariant_encoder(obs_traj_rel)
+                q_sgx = self.variant_encoder(obs_traj_rel)
 
                 # calculate q(y|theta, x)
-                z_vec = q_zgx.rsample([self.num_samples, ])
-                s_vec = q_sgx.rsample([self.num_samples, ])
+                z_vec = q_zgx.rsample([100, ])
+                s_vec = q_sgx.rsample([100, ])
 
-                q = self.future_decoder(batch, torch.cat((z_vec, s_vec), dim=2))
+                pred_traj_rel = self.future_decoder(torch.cat((z_vec, s_vec), dim=2)).mean(0)
 
-            return q
+                return pred_traj_rel

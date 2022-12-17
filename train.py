@@ -8,7 +8,7 @@ from utils import *
 from models import CRMF
 from losses import erm_loss, irm_loss
 import math
-
+from torch.optim.lr_scheduler import OneCycleLR
 
 def main(args):
     # Set environment variables
@@ -71,21 +71,19 @@ def main(args):
         'par': torch.optim.Adam(
             [
                 {"params": model.pi_priore, 'lr': args.lrpar},
-                {"params": model.mu_priors, 'lr': args.lrpar},
-                {"params": model.mu_priorz, 'lr': args.lrpar},
-                {"params": model.logvar_priors, 'lr': args.lrpar},
-                {"params": model.logvar_priorz, 'lr': args.lrpar},
+                {"params": model.coupling_layers_s.parameters(), 'lr': args.lrpar},
             ]
         ),
         'var': torch.optim.Adam(
             [
-                {"params": model.x_to_s.parameters(), 'lr': args.lrinv},
-                {"params": model.encoder.parameters(), 'lr': args.lrinv},
+                {"params": model.variant_encoder.parameters(), 'lr': args.lrvar},
+                {"params": model.e_encoder.parameters(), 'lr': args.lrvar},
             ]
         ),
         'inv': torch.optim.Adam(
             [
-                {"params": model.x_to_z.parameters(), 'lr': args.lrinv},
+                {"params": model.coupling_layers_z.parameters(), 'lr': args.lrinv},
+                {"params": model.invariant_encoder.parameters(), 'lr': args.lrinv},
             ]
         ),
         'future_decoder': torch.optim.Adam(
@@ -112,6 +110,8 @@ def main(args):
     #                           pct_start=0.3),
     #         'past_decoder': OneCycleLR(optimizers['past_decoder'], max_lr=1e-3, div_factor=25.0,
     #                                    total_steps=int(total_steps[0]), pct_start=0.3),
+    #         'future_decoder': OneCycleLR(optimizers['future_decoder'], max_lr=1e-3, div_factor=25.0,
+    #                                      total_steps=int(total_steps[0]), pct_start=0.3),
     #         'par': OneCycleLR(optimizers['par'], max_lr=1e-3, div_factor=25.0, total_steps=int(total_steps[0]),
     #                           pct_start=0.3),
     #     },
@@ -137,15 +137,6 @@ def main(args):
     #         'par': OneCycleLR(optimizers['par'], max_lr=1e-3, div_factor=25.0, total_steps=int(total_steps[2]),
     #                           pct_start=0.3),
     #     },
-    #     "P4": {
-    #         'map': OneCycleLR(optimizers['map'], max_lr=1e-3, div_factor=25.0, total_steps=int(total_steps[3]),
-    #                           pct_start=0.3),
-    #     },
-    #
-    #     "P5": {
-    #         'var': OneCycleLR(optimizers['var'], max_lr=1e-3, div_factor=25.0, total_steps=int(total_steps[4]),
-    #                           pct_start=0.3),
-    #     }
     # }
 
     lr_schedulers = {
@@ -191,7 +182,7 @@ def main(args):
         logging.info(f"\n===> EPOCH: {epoch} ({training_step})")
 
         if training_step == 'P1':
-            freeze(False, (model.encoder, model.x_to_z, model.x_to_s, model.past_decoder, model.future_decoder))
+            freeze(False, (model.variant_encoder, model.coupling_layers_z, model.coupling_layers_s, model.invariant_encoder, model.past_decoder, model.future_decoder))
 
         elif training_step == 'P2':
             freeze(True, (model.variant_encoder, model.x_to_z, model.x_to_s, model.past_decoder, model.future_decoder,
@@ -280,29 +271,14 @@ def train_all(args, model, optimizers, train_dataset, epoch, training_step, trai
                 opt.zero_grad()
 
             if training_step == "P1":
-                qygx, E = model(batch, training_step, env_idx=train_idx)
-
                 l2_loss_rel = []
                 l2_loss_elbo = []
-                # for _ in range(args.best_k):
-                #     pred_traj_rel = []
-                #     for i in range(len(qygx)):
-                #         pred_traj_rel += [qygx[i].rsample()]
-                #     pred_traj_rel = torch.stack(pred_traj_rel)
-                #
-                #     log_qygx = torch.zeros(fut_traj_rel.shape[1]).cuda()
-                #     for i in range(len(qygx)):
-                #         log_qygx += qygx[i].log_prob(fut_traj_rel[i])
-                #
-                #     l2_loss_rel.append(-l2_loss(pred_traj_rel, fut_traj_rel, mode="raw"))
-                #     l2_loss_elbo.append(torch.divide(E, torch.exp(log_qygx)))
+                for _ in range(args.best_k):
+                    pred_q_rel, E = model(batch, training_step, env_idx=train_idx)
 
-                log_qygx = torch.zeros(fut_traj_rel.shape[1]).cuda()
-                for i in range(len(qygx)):
-                    log_qygx += torch.log(torch.exp(qygx[i].log_prob(fut_traj_rel[i, :, :2])).mean(dim=0))
-
-                l2_loss_rel.append(log_qygx)
-                l2_loss_elbo.append(torch.divide(E, torch.exp(log_qygx)))
+                    log_q_ygx = -l2_loss(pred_q_rel, fut_traj_rel, mode="raw") - 0.5 * fut_traj.shape[0] * torch.log(torch.tensor(2 * math.pi) - 0.5 * torch.log(torch.tensor(0.25)))
+                    l2_loss_rel.append(log_q_ygx.mean(0))
+                    l2_loss_elbo.append(torch.divide(E, torch.exp(log_q_ygx.mean(0))))
 
                 l2_loss_rel = torch.stack(l2_loss_rel, dim=1)
                 l2_loss_elbo = torch.stack(l2_loss_elbo, dim=1)
@@ -344,7 +320,9 @@ def train_all(args, model, optimizers, train_dataset, epoch, training_step, trai
             if stage == 'training' and update:
                 loss.backward()
 
-                # choose which optimizer to use depending on the training step
+                # Gradient clipping
+                # clip_grad.clip_grad_norm_(filter(lambda p: p.requires_grad, model.parameters()), max_norm=2)
+
                 lr_scheduler_optims = lr_schedulers[training_step]
                 # choose which optimizer to use depending on the training step
                 if training_step in ['P1', 'P2']:
@@ -415,22 +393,16 @@ def validate_ade(args, model, valid_dataset, epoch, training_step, writer, stage
                 ade_list, fde_list = [], []
                 total_traj_i += fut_traj.size(1)
 
-                if stage == "validation o":
-                    q = model(batch, training_step)
-                else:
-                    q = model(batch, training_step, env_idx=val_idx)
-
-                for k in range(1):
-                    pred_fut_traj_rel = []
-                    for i in range(fut_traj.shape[0]):
-                        pred_fut_traj_rel += [q[i].rsample().mean(dim=0)]
-
-                    pred_fut_traj_rel = torch.stack(pred_fut_traj_rel)
+                for k in range(args.best_k):
+                    if stage == "validation o":
+                        pred_fut_traj_rel = model(batch, training_step)
+                    else:
+                        pred_fut_traj_rel = model(batch, training_step, env_idx=val_idx)
                     # from relative path to absolute path
-                    pred_fut_traj = relative_to_abs(pred_fut_traj_rel, obs_traj[-1, :, :2])
+                    pred_fut_traj = relative_to_abs(pred_fut_traj_rel, obs_traj[-1, :pred_fut_traj_rel.shape[1], :2])
 
                     # compute ADE and FDE metrics
-                    ade_, fde_ = cal_ade_fde(fut_traj, pred_fut_traj)
+                    ade_, fde_ = cal_ade_fde(fut_traj[:, :pred_fut_traj_rel.shape[1], :2], pred_fut_traj)
 
                     ade_list.append(ade_)
                     fde_list.append(fde_)

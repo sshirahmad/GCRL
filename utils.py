@@ -177,7 +177,7 @@ def l2_loss(pred_fut_traj, fut_traj, mode="average"):
     if len(pred_fut_traj.size()) == 3:
         loss = (fut_traj[:, :, :2].permute(1, 0, 2) - pred_fut_traj.permute(1, 0, 2)) ** 2
     else:
-        loss = (fut_traj[:, :pred_fut_traj.shape[2], :].repeat(pred_fut_traj.shape[0], 1, 1, 1).permute(0, 2, 1, 3) - pred_fut_traj.permute(0, 2, 1, 3)) ** 2
+        loss = (fut_traj[:, :pred_fut_traj.shape[2], :2].repeat(pred_fut_traj.shape[0], 1, 1, 1).permute(0, 2, 1, 3) - pred_fut_traj.permute(0, 2, 1, 3)) ** 2
 
     if mode == "sum":
         return torch.sum(loss)
@@ -436,17 +436,14 @@ def save_all_model(args, model, model_name, optimizers, metric, epoch, training_
     checkpoint = {
         'epoch': epoch + 1,
         'state_dicts': {
-            'variant_encoder': model.encoder.state_dict(),
-            'x_to_z': model.x_to_z.state_dict(),
-            'x_to_s': model.x_to_s.state_dict(),
+            'variant_encoder': model.variant_encoder.state_dict(),
+            'invariant_encoder': model.invariant_encoder.state_dict(),
+            'e_encoder': model.e_encoder.state_dict(),
             'future_decoder': model.future_decoder.state_dict(),
             'past_decoder': model.past_decoder.state_dict(),
+            'coupling_layers_z': model.coupling_layers_z.state_dict(),
             'pi_priore': model.pi_priore,
-            'mu_priors': model.mu_priors,
-            'mu_priorz': model.mu_priorz,
-            'logvar_priors': model.logvar_priors,
-            'logvar_priorz': model.logvar_priorz,
-
+            'coupling_layers_s': model.coupling_layers_s.state_dict(),
         },
         'optimizers': {
             key: val.state_dict() for key, val in optimizers.items()
@@ -504,24 +501,22 @@ def load_all_model(args, model, optimizers, lr_schedulers=None, training_steps=N
             update_lr(optimizers['past_decoder'], args.lrpast)
 
         # invariant encoder
-        model.x_to_z.load_state_dict(models_checkpoint['x_to_z'])
+        model.coupling_layers_z.load_state_dict(models_checkpoint['coupling_layers_z'])
+        model.coupling_layers_s.load_state_dict(models_checkpoint['coupling_layers_s'])
+        model.invariant_encoder.load_state_dict(models_checkpoint['invariant_encoder'])
+        model.e_encoder.load_state_dict(models_checkpoint['e_encoder'])
         if optimizers != None:
             optimizers['inv'].load_state_dict(checkpoint['optimizers']['inv'])
             update_lr(optimizers['inv'], args.lrinv)
 
         # variant encoder
-        model.encoder.load_state_dict(models_checkpoint['variant_encoder'])
+        model.variant_encoder.load_state_dict(models_checkpoint['variant_encoder'])
         if optimizers != None:
             optimizers['var'].load_state_dict(checkpoint['optimizers']['var'])
             update_lr(optimizers['var'], args.lrvar)
 
         # variational models
-        model.x_to_s.load_state_dict(models_checkpoint['x_to_s'])
         model.pi_priore.data = models_checkpoint['pi_priore'].data.cuda()
-        model.mu_priors.data = models_checkpoint['mu_priors'].data.cuda()
-        model.mu_priorz.data = models_checkpoint['mu_priorz'].data.cuda()
-        model.logvar_priors.data = models_checkpoint['logvar_priors'].data.cuda()
-        model.logvar_priorz.data = models_checkpoint['logvar_priorz'].data.cuda()
         if optimizers != None:
             optimizers['par'].load_state_dict(checkpoint['optimizers']['par'])
             update_lr(optimizers['par'], args.lrpar)
