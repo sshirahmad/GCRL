@@ -9,9 +9,7 @@ from models import CRMF
 from losses import erm_loss, irm_loss
 from torch.nn.utils import clip_grad_norm_
 import matplotlib.pyplot as plt
-import seaborn as sns
-from matplotlib.lines import Line2D
-from visualize import draw_image, draw_solo, draw_solo_all
+from sklearn.manifold import TSNE
 
 
 def main(args):
@@ -24,6 +22,7 @@ def main(args):
         os.makedirs(args.tfdir + '/' + model_name)
 
     training_step = "P7"
+    args.batch_size = "10000"
 
     logging.info("Initializing Training Set")
     train_envs_path, train_envs_name = get_envs_path(args.dataset_name, "train", args.filter_envs)
@@ -113,13 +112,20 @@ def calculate_distance_posteriors(model, valid_dataset, valido_dataset=None):
     cov_z_env = []
     mean_s_env = []
     cov_s_env = []
+
+    pca = TSNE(n_components=2)
     with torch.no_grad():
+        z_vec = []
+        s_vec = []
         for val_idx, (loader, loader_name) in enumerate(zip(valid_dataset['loaders'], valid_dataset['names'])):
             for batch_idx, batch in enumerate(loader):
                 batch = [tensor.cuda() for tensor in batch]
                 (obs_traj, fut_traj, _, _, _) = batch
 
                 z, s = model(batch, "P7", env_idx=val_idx)
+                z_vec += [z.rsample()]
+                s_vec += [s.rsample()]
+
                 mean_z = torch.mean(z.mean, dim=0)
                 covariance_z = torch.mean(z.covariance_matrix, dim=0)
                 mean_s = torch.mean(s.mean, dim=0)
@@ -129,6 +135,19 @@ def calculate_distance_posteriors(model, valid_dataset, valido_dataset=None):
             cov_z_env += [covariance_z]
             mean_s_env += [mean_s]
             cov_s_env += [covariance_s]
+
+        plt.figure(1)
+        colors = ['b', 'g', 'r', 'c']
+        for i in range(len(s_vec)):
+            z_pca = pca.fit_transform(z_vec[i].cpu())
+            plt.scatter(z_pca[:, 0], z_pca[:, 1], color=colors[i])
+        plt.show()
+
+        plt.figure(2)
+        for i in range(len(s_vec)):
+            s_pca = pca.fit_transform(s_vec[i].cpu())
+            plt.scatter(s_pca[:, 0], s_pca[:, 1], color=colors[i])
+        plt.show()
 
         for val_idx, (loader, loader_name) in enumerate(zip(valido_dataset['loaders'], valido_dataset['names'])):
             for batch_idx, batch in enumerate(loader):

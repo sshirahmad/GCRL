@@ -436,9 +436,9 @@ def save_all_model(args, model, model_name, optimizers, metric, epoch, training_
     checkpoint = {
         'epoch': epoch + 1,
         'state_dicts': {
-            'variant_encoder': model.variant_encoder.state_dict(),
-            'invariant_encoder': model.invariant_encoder.state_dict(),
-            'e_encoder': model.e_encoder.state_dict(),
+            'encoder': model.encoder.state_dict(),
+            'x_to_z': model.x_to_z.state_dict(),
+            'x_to_s': model.x_to_s.state_dict(),
             'future_decoder': model.future_decoder.state_dict(),
             'past_decoder': model.past_decoder.state_dict(),
             'coupling_layers_z': model.coupling_layers_z.state_dict(),
@@ -503,14 +503,14 @@ def load_all_model(args, model, optimizers, lr_schedulers=None, training_steps=N
         # invariant encoder
         model.coupling_layers_z.load_state_dict(models_checkpoint['coupling_layers_z'])
         model.coupling_layers_s.load_state_dict(models_checkpoint['coupling_layers_s'])
-        model.invariant_encoder.load_state_dict(models_checkpoint['invariant_encoder'])
-        model.e_encoder.load_state_dict(models_checkpoint['e_encoder'])
+        model.encoder.load_state_dict(models_checkpoint['encoder'])
         if optimizers != None:
             optimizers['inv'].load_state_dict(checkpoint['optimizers']['inv'])
             update_lr(optimizers['inv'], args.lrinv)
 
         # variant encoder
-        model.variant_encoder.load_state_dict(models_checkpoint['variant_encoder'])
+        model.x_to_z.load_state_dict(models_checkpoint['x_to_z'])
+        model.x_to_s.load_state_dict(models_checkpoint['x_to_s'])
         if optimizers != None:
             optimizers['var'].load_state_dict(checkpoint['optimizers']['var'])
             update_lr(optimizers['var'], args.lrvar)

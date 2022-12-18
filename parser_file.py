@@ -5,9 +5,9 @@ from utils import int_tuple
 def get_parser():
     parser = argparse.ArgumentParser()
     parser.add_argument("--log_dir", default="./log/", help="Directory containing logging file")
-    parser.add_argument("--model_dir", default="./models/E1/", help="Directory containing logging file")
+    parser.add_argument("--model_dir", default="./models/E2/", help="Directory containing logging file")
     parser.add_argument("--dataset_name", default="eth", type=str)
-    parser.add_argument("--resume", default="./models/E1//P1/CRMF_epoch_220.pth.tar",
+    parser.add_argument("--resume", default="./models/E2//P1/CRMF_epoch_400.pth.tar",
                         type=str, metavar="PATH", help="path to latest checkpoint (default: none)")
 
     # randomness
@@ -48,11 +48,11 @@ def get_parser():
     # architecture (VE)
     parser.add_argument("--z_dim", type=int, default=16, help="Dimension of z latent variable")
     parser.add_argument("--s_dim", type=int, default=16, help="Dimension of s latent variable")
-    parser.add_argument("--num_envs", default=4, type=int, help="Number of environments in the dataset")
+    parser.add_argument("--num_envs", default=5, type=int, help="Number of environments in the dataset")
 
     # spurious feature
     parser.add_argument("--add_confidence", default=True, type=bool)
-    parser.add_argument("--domain_shifts", default='1-2-4-8-32', type=str,
+    parser.add_argument("--domain_shifts", default='1-2-4-8-16', type=str,
                         help='domain_shifts per environment: hotel,univ,zara1,zara2,eth')
 
     return parser
@@ -70,7 +70,7 @@ def get_evaluation_parser():
 
 def get_training_parser():
     parser = get_parser()
-    parser.add_argument("--tfdir", default='./runs/E1/', type=str)
+    parser.add_argument("--tfdir", default='./runs/E2/', type=str)
 
     # dataset
     parser.add_argument("--filter_envs_pretrain", type=str, default="",
@@ -81,7 +81,7 @@ def get_training_parser():
                         help='Only test model. 0 -> training, 1 -> testing, 3 -> testing with refinement')  # 0 is normal train, 1 is test, 2 is test with k, 3 is ttr
 
     # training
-    parser.add_argument("--best_k", default=20, type=int)
+    parser.add_argument("--best_k", default=1, type=int)
     parser.add_argument("--start-epoch", default=1, type=int, metavar="N",
                         help="manual epoch number (useful on restarts)")
     parser.add_argument("--use_gpu", default=1, type=int)

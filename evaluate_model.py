@@ -67,9 +67,10 @@ def evaluate(args, loader, generator, training_step):
             total_traj += fut_traj.size(1)
             for _ in range(args.best_k):
                 pred_fut_traj_rel = generator(batch, training_step)
-                pred_fut_traj = relative_to_abs(pred_fut_traj_rel, obs_traj[-1, :pred_fut_traj_rel.shape[1], :2])
 
-                ade_, fde_ = cal_ade_fde(fut_traj[:, :pred_fut_traj_rel.shape[1], :2], pred_fut_traj)
+                pred_fut_traj = relative_to_abs(pred_fut_traj_rel, obs_traj[-1, :, :2])
+
+                ade_, fde_ = cal_ade_fde(fut_traj[:, :, :2], pred_fut_traj)
 
                 ade.append(ade_)
                 fde.append(fde_)
@@ -107,6 +108,10 @@ def sceneplot(obsv_scene, pred_scene, gt_scene, figname='scene.png', lim=9.0):
             plt.plot(pred_scene[i, k - 1:k + 1, 0], pred_scene[i, k - 1:k + 1, 1],
                      '--', color=colors[i], alpha=alpha, linewidth=width)
 
+        for k in range(1, pred_frame):
+            plt.plot(gt_scene[i, k - 1:k + 1, 0], gt_scene[i, k - 1:k + 1, 1],
+                     '--', color=colors[i], alpha=1.0)
+
     xc = obsv_scene[:, -1, 0].mean()
     yc = obsv_scene[:, -1, 1].mean()
     plt.xlim(xc - lim, xc + lim)
@@ -124,7 +129,7 @@ def visualize(args, loader, generator, training_step):
     Viasualize some scenes
     """
     keywords = args.resume.split('_')
-    suffix = 'ds_' + args.domain_shifts + '_' + keywords[1] + '_irm_' + keywords[3] + '.png'
+    suffix = 'ds_' + args.domain_shifts + '_' + keywords[1] + '.png'
 
     # range of idx for visualization
     lb_idx = 44
@@ -142,7 +147,7 @@ def visualize(args, loader, generator, training_step):
             ) = batch
 
             for k in range(args.best_k):
-                pred_fut_traj_rel = generator(batch, training_step)[0]
+                pred_fut_traj_rel = generator(batch, training_step)
                 pred_fut_traj = relative_to_abs(pred_fut_traj_rel, obs_traj[-1, :, :2])
                 idx_sample = seq_start_end.shape[0]
                 for i in range(idx_sample):
@@ -183,17 +188,28 @@ def main(args):
 
     # quantitative
     if args.metrics == 'accuracy':
-        ade = 0
-        fde = 0
-        total_traj = 0
-        for loader in loaders:
-            ade_sum_i, fde_sum_i, total_traj_i = evaluate(args, loader, generator, training_step="P1")
-            ade += ade_sum_i
-            fde += fde_sum_i
-            total_traj += total_traj_i
-        ade = ade / (total_traj * args.fut_len)
-        fde = fde / total_traj
-        logging.info('ADE: {:.4f}\tFDE: {:.4f}'.format(ade, fde))
+
+        ade_outer = []
+        fde_outer = []
+        for _ in range(100):
+            ade = 0
+            fde = 0
+            total_traj = 0
+            for loader in loaders:
+
+                ade_sum_i, fde_sum_i, total_traj_i = evaluate(args, loader, generator, training_step="P1")
+                ade += ade_sum_i
+                fde += fde_sum_i
+                total_traj += total_traj_i
+            ade = ade / (total_traj * args.fut_len)
+            fde = fde / total_traj
+            logging.info('ADE: {:.4f}\tFDE: {:.4f}'.format(ade, fde))
+            ade_outer += [ade]
+            fde_outer += [fde]
+
+        ade_outer = torch.stack(ade_outer).mean(0)
+        fde_outer = torch.stack(fde_outer).mean(0)
+        print(ade_outer, fde_outer)
 
     # qualitative
     if args.metrics == 'qualitative':
