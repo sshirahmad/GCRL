@@ -74,10 +74,10 @@ def main(args):
     optimizers = {
         'par': torch.optim.Adam(
             [
-                {"params": model.x_to_theta.parameters(), 'lr': args.lrpar},
-                {"params": model.coupling_layers_theta.parameters(), 'lr': args.lrinv},
-                {"params": model.coupling_layers_s.parameters(), 'lr': args.lrinv},
-                {"params": model.x_to_s.parameters(), 'lr': args.lrinv},
+                {"params": model.theta, 'lr': args.lrpar},
+                {"params": model.coupling_layers_theta.parameters(), 'lr': args.lrpar},
+                {"params": model.coupling_layers_s.parameters(), 'lr': args.lrpar},
+                {"params": model.x_to_s.parameters(), 'lr': args.lrpar},
             ]
         ),
         'var': torch.optim.Adam(
@@ -160,15 +160,13 @@ def main(args):
         "P2": None,
         "P3": None,
         "P4": None,
-        "P5": None,
-        "P6": None,
     }
 
     # TRAINING HAPPENS IN 4 STEPS:
-    assert (len(args.num_epochs) == 5)
+    assert (len(args.num_epochs) == 4)
     # 1. Train the invariant encoder along with the future decoder to learn z
     # 2. Train everything except invariant encoder to learn the other variant latent variables
-    training_steps = {f'P{i}': [sum(args.num_epochs[:i - 1]), sum(args.num_epochs[:i])] for i in range(1, 7)}
+    training_steps = {f'P{i}': [sum(args.num_epochs[:i - 1]), sum(args.num_epochs[:i])] for i in range(1, 6)}
     print(training_steps)
 
     if args.resume:
@@ -310,33 +308,23 @@ def train_all(args, model, optimizers, train_dataset, epoch, training_step, trai
 
                 l2_loss_rel = []
                 l2_loss_elbo = []
-                # for _ in range(args.best_k):
-                #     pred_traj_rel = []
-                #     for i in range(len(qygx)):
-                #         pred_traj_rel += [qygx[i].rsample()]
-                #     pred_traj_rel = torch.stack(pred_traj_rel)
-                #
-                #     log_qygx = torch.zeros(fut_traj_rel.shape[1]).cuda()
-                #     for i in range(len(qygx)):
-                #         log_qygx += qygx[i].log_prob(fut_traj_rel[i])
-                #
-                #     l2_loss_rel.append(-l2_loss(pred_traj_rel, fut_traj_rel, mode="raw"))
-                #     l2_loss_elbo.append(torch.divide(E, torch.exp(log_qygx)))
+                l2_loss_exp = []
 
-                log_qygx = torch.zeros(fut_traj_rel.shape[1]).cuda()
-                for i in range(len(qygx)):
-                    log_qygx += torch.log(torch.exp(qygx[i].log_prob(fut_traj_rel[i, :, :2])).mean(dim=0))
+                log_qygx = -l2_loss(qygx, fut_traj_rel, mode="raw")
 
                 l2_loss_rel.append(log_qygx)
-                l2_loss_elbo.append(torch.divide(E, torch.exp(log_qygx)))
+                l2_loss_exp.append(torch.exp(log_qygx))
+                l2_loss_elbo.append(E)
 
                 l2_loss_rel = torch.stack(l2_loss_rel, dim=1)
                 l2_loss_elbo = torch.stack(l2_loss_elbo, dim=1)
-                predict_loss = erm_loss(l2_loss_rel, seq_start_end)
+                l2_loss_exp = torch.stack(l2_loss_exp, dim=1)
 
+                predict_loss = erm_loss(l2_loss_rel, seq_start_end)
+                exp_loss = erm_loss(l2_loss_exp, seq_start_end)
                 elbo_loss = erm_loss(l2_loss_elbo, seq_start_end)
 
-                loss = (- predict_loss) + (- elbo_loss)
+                loss = - (predict_loss + 1 / exp_loss * elbo_loss)
 
                 e_loss_meter.update(elbo_loss.item(), obs_traj.shape[1])
                 p_loss_meter.update(predict_loss.item(), obs_traj.shape[1])
@@ -415,10 +403,10 @@ def train_all(args, model, optimizers, train_dataset, epoch, training_step, trai
         writer.add_scalar(f"variational_loss/{stage}", total_loss_meter.avg, epoch)
         writer.add_scalar(f"elbo_loss/{stage}", e_loss_meter.avg, epoch)
         writer.add_scalar(f"pred_loss/{stage}", p_loss_meter.avg, epoch)
-        # writer.add_scalar(f"theta_hotel/{stage}", torch.mean(model.theta[0]), epoch)
-        # writer.add_scalar(f"theta_univ/{stage}", torch.mean(model.theta[1]), epoch)
-        # writer.add_scalar(f"theta_zara1/{stage}", torch.mean(model.theta[2]), epoch)
-        # writer.add_scalar(f"theta_zara2/{stage}", torch.mean(model.theta[3]), epoch)
+        writer.add_scalar(f"theta_hotel/{stage}", torch.mean(model.theta[0]), epoch)
+        writer.add_scalar(f"theta_univ/{stage}", torch.mean(model.theta[1]), epoch)
+        writer.add_scalar(f"theta_zara1/{stage}", torch.mean(model.theta[2]), epoch)
+        writer.add_scalar(f"theta_zara2/{stage}", torch.mean(model.theta[3]), epoch)
 
     elif training_step == "P4":
         writer.add_scalar(f"theta_loss/{stage}", total_loss_meter.avg, epoch)

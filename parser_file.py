@@ -14,8 +14,8 @@ def get_evaluation_parser():
 def get_training_parser():
     parser = argparse.ArgumentParser()
     parser.add_argument("--log_dir", default="./log/", help="Directory containing logging file")
-    parser.add_argument("--model_dir", default="./models/E1/", help="Directory containing logging file")
-    parser.add_argument("--tfdir", default='./runs/E1/', type=str)
+    parser.add_argument("--model_dir", default="./models/E3/", help="Directory containing logging file")
+    parser.add_argument("--tfdir", default='./runs/E3/', type=str)
 
     # dataset
     parser.add_argument("--dataset_name", default="eth", type=str)
@@ -36,7 +36,7 @@ def get_training_parser():
                         help='Only test model. 0 -> training, 1 -> testing, 3 -> testing with refinement')  # 0 is normal train, 1 is test, 2 is test with k, 3 is ttr
     # randomness
     parser.add_argument("--seed", type=int, default=72, help="Random seed")
-    parser.add_argument("--num_samples", type=int, default=1, help="Number of samples to calculate MC expectations")
+    parser.add_argument("--num_samples", type=int, default=10, help="Number of samples to calculate MC expectations")
 
     # architecture (STGAT)
     parser.add_argument("--traj_lstm_hidden_size", default=32, type=int)
@@ -60,7 +60,7 @@ def get_training_parser():
     parser.add_argument("--gpu_num", default="1", type=str)
 
     # training
-    parser.add_argument("--best_k", default=20, type=int)
+    parser.add_argument("--best_k", default=1, type=int)
     parser.add_argument("--batch_size", default='64', type=str)
     parser.add_argument("--batch_method", default='hom', type=str,
                         help='Use Homogeneous (hom), Heterogeneous (het) or alternated homogeneous (alt) batches during training')
@@ -76,8 +76,8 @@ def get_training_parser():
 
     # general training
     parser.add_argument("--finetune", default="", type=str)
-    parser.add_argument("--num_epochs", default='150-100-400-200-100', type=lambda x: int_tuple(x, '-'))  # '150-100-150',
-    parser.add_argument("--resume", default="./models/E1//P3/CRMF_epoch_426.pth.tar",
+    parser.add_argument("--num_epochs", default='150-100-150-200', type=lambda x: int_tuple(x, '-'))  # '150-100-150',
+    parser.add_argument("--resume", default="./models/E3/P2/CRMF_epoch_250.pth.tar",
                         type=str, metavar="PATH", help="path to latest checkpoint (default: none)")
 
     # learning rates
@@ -85,7 +85,7 @@ def get_training_parser():
                         help="initial learning rate for variant encoder optimizer")
     parser.add_argument('--lrinv', default=1e-3, type=float,
                         help="initial learning rate for the invariant encoder optimizer")
-    parser.add_argument('--lrfut', default=1e-4, type=float,
+    parser.add_argument('--lrfut', default=1e-3, type=float,
                         help="initial learning rate for the future decoder optimizer")
     parser.add_argument('--lrpast', default=1e-3, type=float,
                         help="initial learning rate for the past decoder optimizer")
@@ -101,7 +101,7 @@ def get_training_parser():
     parser.add_argument('--ttrlr', default=0, type=float, help="initial learning rate for the refinement optimizer")
 
     # method
-    parser.add_argument("--irm", default=5.0, type=float, help='IRM parameter (lambda)')
+    parser.add_argument("--irm", default=0.0, type=float, help='IRM parameter (lambda)')
     parser.add_argument("--vrex", default=0.0, type=float, help='v-REx parameter (beta)')
 
     parser.add_argument("--unbiased", default=False, type=bool, help='')

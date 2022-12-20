@@ -174,8 +174,10 @@ def l2_loss(pred_fut_traj, fut_traj, mode="average"):
     Output:
     - loss: l2 loss depending on mode
     """
-    if len(fut_traj.size()) == 3:
+    if len(pred_fut_traj.size()) == 3:
         loss = (fut_traj[:, :, :2].permute(1, 0, 2) - pred_fut_traj.permute(1, 0, 2)) ** 2
+    elif len(pred_fut_traj.size()) == 4:
+        loss = (fut_traj[:, :, :2].repeat(pred_fut_traj.shape[1], 1, 1, 1).permute(0, 2, 1, 3) - pred_fut_traj.permute(1, 2, 0, 3)) ** 2
     else:
         loss = (fut_traj - pred_fut_traj) ** 2
 
@@ -184,7 +186,10 @@ def l2_loss(pred_fut_traj, fut_traj, mode="average"):
     elif mode == "average":
         return torch.mean(loss)
     elif mode == "raw":
-        return loss.sum(dim=2).sum(dim=1)
+        if len(pred_fut_traj.size()) == 4:
+            return loss.sum(dim=3).sum(dim=2)
+        else:
+            return loss.sum(dim=2).sum(dim=1)
 
 
 def displacement_error(pred_fut_traj, fut_traj, consider_ped=None, mode="sum"):
@@ -449,7 +454,7 @@ def save_all_model(args, model, model_name, optimizers, metric, epoch, training_
             'future_decoder': model.future_decoder.state_dict(),
             'past_decoder': model.past_decoder.state_dict(),
             'mapping': model.mapping.state_dict(),
-            'theta': model.x_to_theta.state_dict(),
+            'theta': model.theta,
         },
         'optimizers': {
             key: val.state_dict() for key, val in optimizers.items()
@@ -495,10 +500,10 @@ def load_all_model(args, model, optimizers, lr_schedulers=None, training_steps=N
                         lr_scheduler.last_epoch = (args.start_epoch - start_p - 1) * num_batches
 
         # future decoder
-        model.future_decoder.load_state_dict(models_checkpoint['future_decoder'])
-        if optimizers != None:
-            optimizers['future_decoder'].load_state_dict(checkpoint['optimizers']['future_decoder'])
-            update_lr(optimizers['future_decoder'], args.lrfut)
+        # model.future_decoder.load_state_dict(models_checkpoint['future_decoder'])
+        # if optimizers != None:
+        #     optimizers['future_decoder'].load_state_dict(checkpoint['optimizers']['future_decoder'])
+        #     update_lr(optimizers['future_decoder'], args.lrfut)
 
         # past decoder
         model.past_decoder.load_state_dict(models_checkpoint['past_decoder'])
@@ -520,16 +525,16 @@ def load_all_model(args, model, optimizers, lr_schedulers=None, training_steps=N
             update_lr(optimizers['var'], args.lrvar)
 
         # Regressor
-        model.mapping.load_state_dict(models_checkpoint['mapping'])
-        if optimizers != None:
-            optimizers['map'].load_state_dict(checkpoint['optimizers']['map'])
-            update_lr(optimizers['map'], args.lrmap)
+        # model.mapping.load_state_dict(models_checkpoint['mapping'])
+        # if optimizers != None:
+        #     optimizers['map'].load_state_dict(checkpoint['optimizers']['map'])
+        #     update_lr(optimizers['map'], args.lrmap)
 
         # variational models
         model.coupling_layers_s.load_state_dict(models_checkpoint['coupling_layers_s'])
         model.coupling_layers_theta.load_state_dict(models_checkpoint['coupling_layers_theta'])
         model.x_to_s.load_state_dict(models_checkpoint['x_to_s'])
-        model.x_to_theta.load_state_dict(models_checkpoint['theta'])
+        model.theta.data = models_checkpoint['theta'].data.cuda()
         if optimizers != None:
             optimizers['par'].load_state_dict(checkpoint['optimizers']['par'])
             update_lr(optimizers['par'], args.lrpar)
