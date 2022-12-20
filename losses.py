@@ -193,8 +193,6 @@ criterion = CustomLoss().cuda()
 def erm_loss(l2_loss_rel, seq_start_end, len_seq):
     loss_sum = torch.zeros(1).cuda()
     for start, end in seq_start_end.data:
-        if end > l2_loss_rel.shape[0]:
-            continue
         _l2_loss_rel = torch.narrow(l2_loss_rel, 0, start, end - start)
         _l2_loss_rel = torch.sum(_l2_loss_rel, dim=0)  # [best_k elements]
         _l2_loss_rel = torch.max(_l2_loss_rel) / (len_seq * (end - start))

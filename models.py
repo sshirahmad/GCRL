@@ -266,6 +266,15 @@ class Encoder(nn.Module):
             graph_lstm_hidden_size
         )
 
+        self.traj_hidden2pos = nn.Linear(
+            traj_lstm_hidden_size,
+            n_coordinates
+        )
+        self.traj_gat_hidden2pos = nn.Linear(
+            traj_lstm_hidden_size + graph_lstm_hidden_size,
+            n_coordinates
+        )
+
         self._initialize_weights()
 
     def _initialize_weights(self):
@@ -300,28 +309,46 @@ class Encoder(nn.Module):
         num_peds = obs_traj_rel.shape[1]
         traj_lstm_h_t, traj_lstm_c_t = self.init_hidden_traj_lstm(num_peds)
         graph_lstm_h_t, graph_lstm_c_t = self.init_hidden_graph_lstm(num_peds)
+        pred_traj_rel = []
         traj_lstm_hidden_states = []
         graph_lstm_hidden_states = []
+
         # traj_lstm (used in step 1,2,3)
         for i in range(self.obs_len):
             traj_lstm_h_t, traj_lstm_c_t = self.traj_lstm_model(
                 obs_traj_rel[i], (traj_lstm_h_t, traj_lstm_c_t)
             )
-
-            traj_lstm_hidden_states += [traj_lstm_h_t]
+            if training_step == "P1":
+                output = self.traj_hidden2pos(traj_lstm_h_t)
+                pred_traj_rel += [output]
+            else:
+                traj_lstm_hidden_states += [traj_lstm_h_t]
 
         # graph_lstm (used in step 2,3)
-        graph_lstm_input = self.gatencoder(
-            torch.stack(traj_lstm_hidden_states), seq_start_end
-        )
-        for i in range(self.obs_len):
-            graph_lstm_h_t, graph_lstm_c_t = self.graph_lstm_model(
-                graph_lstm_input[i], (graph_lstm_h_t, graph_lstm_c_t)
+        if training_step != "P1":
+            graph_lstm_input = self.gatencoder(
+                torch.stack(traj_lstm_hidden_states), seq_start_end
             )
+            for i in range(self.obs_len):
+                graph_lstm_h_t, graph_lstm_c_t = self.graph_lstm_model(
+                    graph_lstm_input[i], (graph_lstm_h_t, graph_lstm_c_t)
+                )
+                if training_step == "P2":
+                    encoded_before_noise_hidden = torch.cat(
+                        (traj_lstm_hidden_states[i], graph_lstm_h_t), dim=1
+                    )
+                    output = self.traj_gat_hidden2pos(encoded_before_noise_hidden)
+                    pred_traj_rel += [output]
+                else:
+                    graph_lstm_hidden_states += [graph_lstm_h_t]
 
-            graph_lstm_hidden_states += [graph_lstm_h_t]
+        if training_step in ["P1", "P2"]:
+            return torch.stack(pred_traj_rel)
 
-        return torch.cat((graph_lstm_hidden_states[-1], traj_lstm_hidden_states[-1]), dim=1)
+        else:
+            encoded_before_noise_hidden = torch.cat((traj_lstm_hidden_states[-1], graph_lstm_hidden_states[-1]), dim=1)
+
+            return encoded_before_noise_hidden
 
 
 class Predictor(nn.Module):
@@ -344,8 +371,10 @@ class Predictor(nn.Module):
         self.teacher_forcing_ratio = teacher_forcing_ratio
 
         self.n_coordinates = n_coordinates
-        self.pred_lstm_hidden_size = z_dim + s_dim
-        self.pred_hidden2pos = nn.Linear(self.pred_lstm_hidden_size, n_coordinates)
+        self.pred_lstm_hidden_size = z_dim + s_dim + noise_dim[0]
+        self.pred_hidden2pos_mean = nn.Linear(self.pred_lstm_hidden_size, n_coordinates)
+        self.pred_hidden2pos_logvar = nn.Linear(self.pred_lstm_hidden_size, n_coordinates)
+        self.pred_hidden2pos_cov = nn.Linear(self.pred_lstm_hidden_size, (n_coordinates * n_coordinates - n_coordinates) // 2)
         self.pred_lstm_model = LSTMCell(n_coordinates, self.pred_lstm_hidden_size)
         self.noise_dim = noise_dim
         self.noise_type = noise_type
@@ -365,7 +394,6 @@ class Predictor(nn.Module):
 
     def add_noise(self, _input, seq_start_end):
         noise_shape = (seq_start_end.size(0),) + self.noise_dim
-
         z_decoder = get_noise(noise_shape, self.noise_type)
 
         _list = []
@@ -373,8 +401,8 @@ class Predictor(nn.Module):
             start = start.item()
             end = end.item()
             _vec = z_decoder[idx].view(1, -1)
-            _to_cat = _vec.repeat(end - start, 1)
-            _list_cat = torch.stack([torch.cat([_input[i, start:end], _to_cat], dim=1) for i in range(len(_input))])
+            _to_cat = _vec.repeat(_input.shape[0], end - start, 1)
+            _list_cat = torch.cat([_input[:, start:end, :], _to_cat], dim=2)
             _list.append(_list_cat)
         decoder_h = torch.cat(_list, dim=1)
         return decoder_h
@@ -389,10 +417,10 @@ class Predictor(nn.Module):
 
         input_t = obs_traj_rel[self.obs_len - 1, :, :self.n_coordinates].repeat(len(pred_lstm_hidden), 1, 1)
         output = input_t
-        # pred_lstm_hidden = self.add_noise(pred_lstm_hidden, seq_start_end)
+        pred_lstm_hidden = self.add_noise(pred_lstm_hidden, seq_start_end)
         pred_lstm_c_t = torch.zeros_like(pred_lstm_hidden).cuda()
         p = []
-        pred_traj_rel = []
+        q = []
         if self.training:
             for i in range(self.fut_len):
                 if i >= 1:
@@ -403,42 +431,75 @@ class Predictor(nn.Module):
                         input_t = output
 
                 # average over s and z
-                output = []
+                mean = []
+                logvar = []
+                cov = []
                 pred_lstm_hidden_list, pred_lstm_c_t_list = [], []
                 for j in range(len(pred_lstm_hidden)):
                     h, c = self.pred_lstm_model(input_t[j], (pred_lstm_hidden[j], pred_lstm_c_t[j]))
                     pred_lstm_hidden_list += [h]
                     pred_lstm_c_t_list += [c]
-                    output += [self.pred_hidden2pos(h)]
+                    mean += [self.pred_hidden2pos_mean(h)]
+                    # logvar += [self.pred_hidden2pos_logvar(h)]
+                    # cov += [self.pred_hidden2pos_cov(h)]
 
                 pred_lstm_hidden = torch.stack(pred_lstm_hidden_list)
                 pred_lstm_c_t = torch.stack(pred_lstm_c_t_list)
-                output = torch.stack(output)
-                dist = MultivariateNormal(output, torch.diag(0.5 * torch.ones(self.n_coordinates).cuda()))
-                p += [dist]
+                mean = torch.stack(mean)
+                # logvar = torch.stack(logvar)
+                # cov = torch.stack(cov)
+                #
+                # covmat = torch.diag_embed(torch.exp(logvar))
+                # start = 0
+                # for j in range(covmat.shape[2]):
+                #     length = self.n_coordinates - j - 1
+                #     covmat[:, :, j + 1:, j] = cov[:, :, start: start + length]
+                #     start += length
 
-            return p
+                dist = MultivariateNormal(mean, torch.diag(0.5 * torch.ones(self.n_coordinates).cuda()))
+                output = mean
+                p += [mean]
+
+                q += [mean.mean(0)]
+
+            return torch.stack(q), torch.stack(p)
 
         else:
+            q = []
             pred_traj_rel = []
             for i in range(self.fut_len):
                 input_t = output
 
                 # average over s and z
-                output = []
+                mean = []
+                logvar = []
+                cov= []
                 pred_lstm_hidden_list, pred_lstm_c_t_list = [], []
                 for j in range(len(pred_lstm_hidden)):
                     h, c = self.pred_lstm_model(input_t[j], (pred_lstm_hidden[j], pred_lstm_c_t[j]))
                     pred_lstm_hidden_list += [h]
                     pred_lstm_c_t_list += [c]
-                    output += [self.pred_hidden2pos(h)]
+                    mean += [self.pred_hidden2pos_mean(h)]
+                    # logvar += [self.pred_hidden2pos_logvar(h)]
+                    # cov += [self.pred_hidden2pos_cov(h)]
 
                 pred_lstm_hidden = torch.stack(pred_lstm_hidden_list)
                 pred_lstm_c_t = torch.stack(pred_lstm_c_t_list)
-                output = torch.stack(output)
-                pred_traj_rel += [output.mean(0)]
+                mean = torch.stack(mean)
+                # logvar = torch.stack(logvar)
+                # cov = torch.stack(cov)
+                #
+                # covmat = torch.diag_embed(torch.exp(logvar))
+                # start = 0
+                # for j in range(covmat.shape[2]):
+                #     length = self.n_coordinates - j - 1
+                #     covmat[:, :, j + 1:, j] = cov[:, :, start: start + length]
+                #     start += length
 
-            return torch.stack(pred_traj_rel)
+                output = mean
+                q += [mean.mean(0)]
+
+            return torch.stack(q)
 
 
 class Decoder(nn.Module):
@@ -457,7 +518,9 @@ class Decoder(nn.Module):
         self.logvar = nn.Parameter(torch.zeros(n_coordinates))
         self.n_coordinates = n_coordinates
         self.pred_lstm_hidden_size = z_dim + s_dim
-        self.pred_hidden2pos = nn.Linear(self.pred_lstm_hidden_size, n_coordinates)
+        self.pred_hidden2pos_mean = nn.Linear(self.pred_lstm_hidden_size, n_coordinates)
+        self.pred_hidden2pos_logvar = nn.Linear(self.pred_lstm_hidden_size, n_coordinates)
+        self.pred_hidden2pos_cov = nn.Linear(self.pred_lstm_hidden_size, (n_coordinates * n_coordinates - n_coordinates) // 2)
         self.pred_lstm_model = LSTMCell(n_coordinates, self.pred_lstm_hidden_size)
 
         self._initialize_weights()
@@ -481,7 +544,7 @@ class Decoder(nn.Module):
 
         (_, _, obs_traj_rel, _, seq_start_end) = batch
 
-        p = []
+        pred_traj_rel = []
         pred_lstm_c_t = torch.zeros_like(pred_lstm_hidden).cuda()
         for i in range(self.obs_len):
             if i >= 1:
@@ -490,21 +553,36 @@ class Decoder(nn.Module):
                 input_t = obs_traj_rel[0, :, :self.n_coordinates].repeat(len(pred_lstm_hidden), 1, 1)
 
             # average over s and z
-            output = []
+            mean = []
+            logvar = []
+            cov = []
             pred_lstm_hidden_list, pred_lstm_c_t_list = [], []
             for j in range(len(pred_lstm_hidden)):
                 h, c = self.pred_lstm_model(input_t[j], (pred_lstm_hidden[j], pred_lstm_c_t[j]))
                 pred_lstm_hidden_list += [h]
                 pred_lstm_c_t_list += [c]
-                output += [self.pred_hidden2pos(h)]
+                mean += [self.pred_hidden2pos_mean(h)]
+                # logvar += [self.pred_hidden2pos_logvar(h)]
+                # cov += [self.pred_hidden2pos_cov(h)]
 
             pred_lstm_hidden = torch.stack(pred_lstm_hidden_list)
             pred_lstm_c_t = torch.stack(pred_lstm_c_t_list)
-            output = torch.stack(output)
-            dist = MultivariateNormal(output, torch.diag(0.5 * torch.ones(self.n_coordinates).cuda()))
-            p += [dist]
+            mean = torch.stack(mean)
+            # logvar = torch.stack(logvar)
+            # cov = torch.stack(cov)
 
-        return p
+            # covmat = torch.diag_embed(torch.exp(logvar))
+            # start = 0
+            # for j in range(covmat.shape[2]):
+            #     length = self.n_coordinates - j - 1
+            #     covmat[:, :, j + 1:, j] = cov[:, :, start: start + length]
+            #     start += length
+
+            # dist = MultivariateNormal(mean, scale_tril=covmat)
+            dist = MultivariateNormal(mean, torch.diag(0.5 * torch.ones(self.n_coordinates).cuda()))
+            pred_traj_rel += [mean]
+
+        return torch.stack(pred_traj_rel)
 
 
 class Mapping(nn.Module):
@@ -558,6 +636,54 @@ class Mapping(nn.Module):
         return ps
 
 
+class Classifier(nn.Module):
+    def __init__(self,
+                 traj_lstm_hidden_size: int,
+                 graph_lstm_hidden_size: int,
+                 num_envs: int,
+                 hidden_dims=None,
+                 **kwargs) -> None:
+        super(Classifier, self).__init__()
+
+        if hidden_dims is None:
+            hidden_dims = [32, 32]
+
+        modules = []
+        in_channels = traj_lstm_hidden_size + graph_lstm_hidden_size
+        for h_dim in hidden_dims:
+            modules.append(
+                nn.Sequential(
+                    nn.Linear(in_channels, h_dim),
+                    nn.LeakyReLU())
+            )
+            in_channels = h_dim
+
+        self.mapping = nn.Sequential(*modules)
+
+        self.final = nn.Linear(hidden_dims[-1], num_envs)
+
+        self._initialize_weights()
+
+    def _initialize_weights(self):
+        for m in self.modules():
+            if isinstance(m, nn.LSTMCell):
+                m.weight_hh.data.normal_(0, 0.1)
+                m.weight_ih.data.normal_(0, 0.1)
+                m.bias_hh.data.zero_()
+                m.bias_ih.data.zero_()
+            elif isinstance(m, nn.Linear):
+                m.weight.data.normal_(0, 0.1)
+                m.bias.data.zero_()
+
+    def forward(self, hidden_states):
+
+        logits = self.final(self.mapping(hidden_states))
+
+        ps = Categorical(logits=logits)
+
+        return ps
+
+
 class SimpleEncoder(nn.Module):
     def __init__(
             self,
@@ -606,50 +732,50 @@ class SimpleEncoder(nn.Module):
         return ps
 
 
-class Classifier(nn.Module):
-    def __init__(
-            self,
-            obs_len,
-            hidden_size,
-            number_agents,
-            num_samples,
-            num_envs,
-            add_confidence,
-    ):
-        super(Classifier, self).__init__()
-
-        # num of frames per sequence
-        self.obs_len = obs_len
-        self.num_samples = num_samples
-        self.number_agents = number_agents
-
-        self.mlp = nn.Sequential(
-            nn.Linear(obs_len * number_agents * (2 + add_confidence), hidden_size * number_agents * 2),
-            nn.LeakyReLU(),
-            nn.Linear(hidden_size * number_agents * 2, hidden_size * number_agents * 2),
-            nn.LeakyReLU(),
-            nn.Linear(hidden_size * number_agents * 2, hidden_size * number_agents),
-        )
-
-        self.final = nn.Linear(hidden_size, num_envs)
-
-    def forward(self, obs_traj_rel):
-        splits = obs_traj_rel.split(self.number_agents, dim=1)
-        if splits[-1].shape[1] != splits[0].shape[1]:
-            splits = splits[:-1]
-        obs_traj_rel = torch.stack(splits, dim=1)
-        obs_traj_rel = torch.permute(obs_traj_rel, (1, 2, 0, 3))
-        obs_traj_rel = obs_traj_rel.flatten(start_dim=1)
-
-        encoded = self.mlp(obs_traj_rel)
-
-        encoded = torch.stack(encoded.split(encoded.shape[1] // self.number_agents, dim=1), dim=1)
-        encoded = encoded.flatten(start_dim=0, end_dim=1)
-
-        logits = self.final(encoded)
-        p = Categorical(logits=logits)
-
-        return p
+# class Classifier(nn.Module):
+#     def __init__(
+#             self,
+#             obs_len,
+#             hidden_size,
+#             number_agents,
+#             num_samples,
+#             num_envs,
+#             add_confidence,
+#     ):
+#         super(Classifier, self).__init__()
+#
+#         # num of frames per sequence
+#         self.obs_len = obs_len
+#         self.num_samples = num_samples
+#         self.number_agents = number_agents
+#
+#         self.mlp = nn.Sequential(
+#             nn.Linear(obs_len * number_agents * (2 + add_confidence), hidden_size * number_agents * 2),
+#             nn.LeakyReLU(),
+#             nn.Linear(hidden_size * number_agents * 2, hidden_size * number_agents * 2),
+#             nn.LeakyReLU(),
+#             nn.Linear(hidden_size * number_agents * 2, hidden_size * number_agents),
+#         )
+#
+#         self.final = nn.Linear(hidden_size, num_envs)
+#
+#     def forward(self, obs_traj_rel):
+#         splits = obs_traj_rel.split(self.number_agents, dim=1)
+#         if splits[-1].shape[1] != splits[0].shape[1]:
+#             splits = splits[:-1]
+#         obs_traj_rel = torch.stack(splits, dim=1)
+#         obs_traj_rel = torch.permute(obs_traj_rel, (1, 2, 0, 3))
+#         obs_traj_rel = obs_traj_rel.flatten(start_dim=1)
+#
+#         encoded = self.mlp(obs_traj_rel)
+#
+#         encoded = torch.stack(encoded.split(encoded.shape[1] // self.number_agents, dim=1), dim=1)
+#         encoded = encoded.flatten(start_dim=0, end_dim=1)
+#
+#         logits = self.final(encoded)
+#         p = Categorical(logits=logits)
+#
+#         return p
 
 
 class SimpleDecoder(nn.Module):
@@ -709,6 +835,8 @@ class CRMF(nn.Module):
 
         self.num_envs = args.num_envs
         self.pi_priore = nn.Parameter(-1 * torch.ones(args.num_envs))
+        self.logvar_priors = nn.Parameter(torch.randn(args.num_envs, args.s_dim))
+        self.mean_priors = nn.Parameter(torch.zeros(args.num_envs, args.s_dim))
 
         self.coupling_layers_z = nn.ModuleList([
             CouplingLayer(args.z_dim, reverse_mask=False),
@@ -726,7 +854,7 @@ class CRMF(nn.Module):
 
         self.ps = []
         for i in range(self.num_envs):
-            self.ps += [MultivariateNormal(i * torch.zeros(args.s_dim).cuda(), torch.diag(torch.ones(args.s_dim).cuda()))]
+            self.ps += [MultivariateNormal(torch.randn(args.s_dim).cuda(), torch.diag(torch.ones(args.s_dim).cuda()))]
 
         self.encoder = Encoder(args.obs_len, args.fut_len, args.n_coordinates,
                                args.traj_lstm_hidden_size, args.n_units, args.n_heads,
@@ -734,6 +862,7 @@ class CRMF(nn.Module):
                                args.graph_lstm_hidden_size, args.add_confidence)
         self.x_to_z = Mapping(args.traj_lstm_hidden_size, args.graph_lstm_hidden_size, args.z_dim)
         self.x_to_s = Mapping(args.traj_lstm_hidden_size, args.graph_lstm_hidden_size, args.s_dim)
+        self.x_to_e = Classifier(args.traj_lstm_hidden_size, args.graph_lstm_hidden_size, args.num_envs)
 
         self.past_decoder = Decoder(args.obs_len, args.n_coordinates, args.z_dim, args.s_dim)
 
@@ -761,29 +890,35 @@ class CRMF(nn.Module):
         obs_traj, fut_traj, obs_traj_rel, fut_traj_rel, seq_start_end, = batch
 
         if self.training:
-            if training_step == "P1":
+            if training_step in ["P1", "P2"]:
+                pred_past_rel = self.encoder(batch, training_step)
+
+                return pred_past_rel
+
+            else:
                 pe = Categorical(logits=self.pi_priore)
                 concat_hidden_states = self.encoder(batch, training_step)
                 q_zgx = self.x_to_z(concat_hidden_states)
                 q_sgx = self.x_to_s(concat_hidden_states)
+                q_egx = self.x_to_e(concat_hidden_states)
 
                 # calculate q(y|theta, x)
                 s_vec = q_sgx.rsample([self.num_samples, ])
                 z_vec = q_zgx.rsample([self.num_samples, ])
 
                 # calculate q(y|x)
-                q = self.future_decoder(batch, torch.cat((z_vec, s_vec), dim=2))
+                q, _ = self.future_decoder(batch, torch.cat((z_vec, s_vec), dim=2))
 
-                sldj = torch.zeros((self.num_samples, s_vec.shape[1]), device=s_vec.device)
-                s_vec_c = s_vec
-                for coupling in self.coupling_layers_s:
-                    s_vec_c, sldj = coupling(s_vec_c, sldj)
-
-                # # calculate p(s|e)
-                norm_factor = torch.zeros(s_vec.shape[0], s_vec.shape[1], device=s_vec.device)
+                # calculate p(s|e)
+                Et = []
                 for j in range(self.num_envs):
-                    psge = self.ps[j]
-                    norm_factor += torch.exp(psge.log_prob(s_vec_c) + sldj) * torch.exp(pe.log_prob(torch.tensor(j).cuda()))
+                    psge = MultivariateNormal(self.mean_priors[j], torch.diag(torch.exp(self.logvar_priors[j])))
+                    log_ps = psge.log_prob(s_vec)
+                    log_pe = pe.log_prob(torch.tensor(j).cuda())
+                    log_qe = q_egx.log_prob(torch.tensor(j).cuda())
+                    Et.append(torch.multiply(torch.exp(log_qe), log_ps + log_pe - log_qe))
+
+                Et = torch.stack(Et).sum(0)
 
                 # calculate log(q(z|x))
                 log_qzgx = q_zgx.log_prob(z_vec)
@@ -800,102 +935,26 @@ class CRMF(nn.Module):
                 log_pz = self.pw.log_prob(z_vec_c) + sldj
 
                 # calculate p(y|z,s,x)
-                p = self.future_decoder(batch, torch.cat((z_vec, s_vec), dim=2))
-                log_py = torch.zeros((self.num_samples, fut_traj_rel.shape[1])).cuda()
-                for i in range(self.fut_len):
-                    log_py += p[i].log_prob(fut_traj_rel[i, :, :2])
+                _, p = self.future_decoder(batch, torch.cat((z_vec, s_vec), dim=2))
+                # log_py = torch.zeros((self.num_samples, fut_traj_rel.shape[1])).cuda()
+                # for i in range(self.fut_len):
+                #     log_py += p[i].log_prob(fut_traj_rel[i, :, :2])
+                # p_ygzs = torch.exp(log_py)
 
+                log_py = - l2_loss(p, fut_traj_rel, mode="raw")
                 p_ygzs = torch.exp(log_py)
 
                 # calculate log(p(x|z,s))
                 p = self.past_decoder(batch, torch.cat((z_vec, s_vec), dim=2))
-                log_px = torch.zeros((self.num_samples, fut_traj_rel.shape[1])).cuda()
-                for i in range(self.obs_len):
-                    log_px += p[i].log_prob(obs_traj_rel[i, :, :2])
+                # log_px = torch.zeros((self.num_samples, fut_traj_rel.shape[1])).cuda()
+                # for i in range(self.obs_len):
+                #     log_px += p[i].log_prob(obs_traj_rel[i, :, :2])
 
-                E = torch.multiply(p_ygzs, log_px + torch.log(norm_factor) + log_pz - log_qzgx - log_qsgx).mean(dim=0)
+                log_px = - l2_loss(p, obs_traj_rel, mode="raw")
+
+                E = torch.multiply(p_ygzs, log_px + Et + log_pz - log_qzgx - log_qsgx).mean(0)
 
                 return q, E
-
-            elif training_step == "P4":
-                pred_theta = self.mapping(obs_traj_rel)
-
-                return pred_theta
-
-            else:
-                pred_theta = self.mapping(obs_traj_rel)
-                concat_hidden_states = self.variant_encoder(batch, training_step)
-
-                q_zgx = self.x_to_z(concat_hidden_states, training_step)
-                q_sgthetax = self.x_to_s(concat_hidden_states, training_step, pred_theta)
-
-                # calculate q(y|theta, x)
-                s_vec = []
-                z_vec = []
-                for _ in range(self.num_samples):
-                    z_vec += [q_zgx.rsample()]
-                    s_vec += [q_sgthetax.rsample()]
-
-                z_vec = torch.stack(z_vec)
-                s_vec = torch.stack(s_vec)
-                qygx = self.future_decoder(batch, torch.cat((z_vec, s_vec), dim=2))
-
-                first_E = []
-                for _ in range(self.num_samples):
-                    z_vec = q_zgx.rsample()
-                    s_vec = q_sgthetax.rsample()
-
-                    # calculate log(q(z|x))
-                    log_qzgx = q_zgx.log_prob(z_vec)
-
-                    # calculate log(q(s|theta, x))
-                    log_qsgthetax = q_sgthetax.log_prob(s_vec)
-
-                    # calculate log(p(z))
-                    sldj = torch.zeros(z_vec.shape[0], device=z_vec.device)
-                    z_vec_c = z_vec
-                    for coupling in self.coupling_layers_z:
-                        z_vec_c, sldj = coupling(z_vec_c, sldj)
-
-                    log_pz = self.pw.log_prob(z_vec_c) + sldj
-
-                    # calculate log(p(s|theta))
-                    sldj_s = torch.zeros(s_vec.shape[0], device=z_vec.device)
-                    s_vec_c = s_vec
-                    for coupling in self.coupling_layers_s:
-                        s_vec_c, sldj_s = coupling(s_vec_c, sldj_s)
-
-                    sldj_t = torch.zeros(s_vec.shape[0], device=z_vec.device)
-                    t_vec_c = pred_theta
-                    for coupling in self.coupling_layers_theta:
-                        t_vec_c, sldj_t = coupling(t_vec_c, sldj_t)
-
-                    mean = torch.matmul(torch.matmul(self.covwe, torch.inverse(self.covee)), torch.mean(t_vec_c, dim=0))
-                    covmat = self.covww - torch.matmul(torch.matmul(self.covwe, torch.inverse(self.covee)), self.covwe)
-                    pwe = MultivariateNormal(mean, covmat)
-                    log_psgtheta = pwe.log_prob(s_vec_c) + sldj_s
-
-                    # calculate p(y|z,s,x)
-                    p = self.future_decoder(batch, torch.cat((z_vec.unsqueeze(0), s_vec.unsqueeze(0)), dim=2))
-                    log_py = torch.zeros(fut_traj_rel.shape[1]).cuda()
-                    for i in range(self.fut_len):
-                        log_py += p[i].log_prob(fut_traj_rel[i])
-
-                    p_ygzs = torch.exp(log_py)
-
-                    # calculate log(p(x|s,z))
-                    pred_past_rel = self.past_decoder(batch, torch.cat((z_vec, s_vec), dim=1))
-                    reconstruction_loss = - l2_loss(pred_past_rel, obs_traj_rel, mode="raw") - 0.5 * 1 / \
-                                          obs_traj_rel.shape[0] * torch.log(torch.tensor(2 * math.pi * 0.5))
-
-                    A1 = torch.multiply(p_ygzs, reconstruction_loss)
-                    A2 = torch.multiply(p_ygzs, log_pz + log_psgtheta - log_qzgx - log_qsgthetax)
-
-                    first_E.append(A1 + A2)
-
-                E = torch.mean(torch.stack(first_E), dim=0)
-
-                return qygx, E
 
         else:
             if training_step == "P7":
@@ -911,8 +970,8 @@ class CRMF(nn.Module):
                 q_sgx = self.x_to_s(concat_hidden_states)
 
                 # calculate q(y|theta, x)
-                z_vec = q_zgx.rsample([100, ])
-                s_vec = q_sgx.rsample([100, ])
+                z_vec = q_zgx.rsample([self.num_samples, ])
+                s_vec = q_sgx.rsample([self.num_samples, ])
 
                 q = self.future_decoder(batch, torch.cat((z_vec, s_vec), dim=2))
 
