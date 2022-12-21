@@ -456,7 +456,7 @@ class Predictor(nn.Module):
                 #     length = self.n_coordinates - j - 1
                 #     covmat[:, :, j + 1:, j] = cov[:, :, start: start + length]
                 #     start += length
-
+                dist = MultivariateNormal(mean, torch.diag(0.5 * torch.ones(self.n_coordinates).cuda()))
                 output = mean
                 p += [mean]
                 pred_q_rel += [mean.mean(0)]
@@ -577,7 +577,7 @@ class Decoder(nn.Module):
             #     covmat[:, :, j + 1:, j] = cov[:, :, start: start + length]
             #     start += length
 
-            # dist = MultivariateNormal(mean, scale_tril=covmat)
+            dist = MultivariateNormal(mean, torch.diag(0.5 * torch.ones(self.n_coordinates).cuda()))
             p += [mean]
 
         return torch.stack(p)
@@ -905,7 +905,7 @@ class CRMF(nn.Module):
                 z_vec = q_zgx.rsample([self.num_samples, ])
 
                 # calculate q(y|x)
-                pred_q_rel, _ = self.future_decoder(batch, torch.cat((z_vec, s_vec), dim=2))
+                q, _ = self.future_decoder(batch, torch.cat((z_vec, s_vec), dim=2))
 
                 # calculate p(s|e)
                 Et = []
@@ -933,18 +933,26 @@ class CRMF(nn.Module):
                 log_pz = self.pw.log_prob(z_vec_c) + sldj
 
                 # calculate p(y|z,s,x)
-                _, pred_fut_rel = self.future_decoder(batch, torch.cat((z_vec, s_vec), dim=2))
+                _, py = self.future_decoder(batch, torch.cat((z_vec, s_vec), dim=2))
+                # log_py = torch.zeros(self.num_samples, fut_traj_rel.shape[1], device=fut_traj.device)
+                # for i in range(len(py)):
+                #     log_py += py[i].log_prob(fut_traj_rel[i, :, :2])
+                # p_ygzs = torch.exp(log_py)
 
-                log_py = - l2_loss(pred_fut_rel, fut_traj_rel, mode="raw") - self.fut_len * torch.log(torch.tensor(math.pi))
+                log_py = - l2_loss(py, fut_traj_rel, mode="raw") - self.fut_len * torch.log(torch.tensor(math.pi))
                 p_ygzs = torch.exp(log_py)
 
                 # calculate log(p(x|z,s))
-                pred_past_rel = self.past_decoder(batch, torch.cat((z_vec, s_vec), dim=2))
-                log_px = - l2_loss(pred_past_rel, obs_traj_rel, mode="raw") - self.obs_len * torch.log(torch.tensor(math.pi))
+                px = self.past_decoder(batch, torch.cat((z_vec, s_vec), dim=2))
+                # log_px = torch.zeros(self.num_samples, fut_traj_rel.shape[1], device=fut_traj.device)
+                # for i in range(len(px)):
+                #     log_px += px[i].log_prob(obs_traj_rel[i, :, :2])
+
+                log_px = - l2_loss(px, obs_traj_rel, mode="raw") - self.obs_len * torch.log(torch.tensor(math.pi))
 
                 E = torch.multiply(p_ygzs, log_px + Et + log_pz - log_qzgx - log_qsgx).mean(0)
 
-                return pred_q_rel, E
+                return q, E
 
         else:
             if training_step == "P7":

@@ -5,13 +5,13 @@ from utils import int_tuple
 def get_parser():
     parser = argparse.ArgumentParser()
     parser.add_argument("--log_dir", default="./log/", help="Directory containing logging file")
-    parser.add_argument("--model_dir", default="./models/E2/", help="Directory containing logging file")
+    parser.add_argument("--model_dir", default="./models/E3/", help="Directory containing logging file")
     parser.add_argument("--dataset_name", default="eth", type=str)
     parser.add_argument("--resume", default="./models/E20tvsample_noise//P2/CRMF_epoch_250.pth.tar",
                         type=str, metavar="PATH", help="path to latest checkpoint (default: none)")
 
     # randomness
-    parser.add_argument("--num_samples", type=int, default=10, help="Number of samples to calculate MC expectations")
+    parser.add_argument("--num_samples", type=int, default=1, help="Number of samples to calculate MC expectations")
     parser.add_argument("--seed", type=int, default=1, help="Random seed")
 
     # computation
@@ -70,7 +70,7 @@ def get_evaluation_parser():
 
 def get_training_parser():
     parser = get_parser()
-    parser.add_argument("--tfdir", default='./runs/E2/', type=str)
+    parser.add_argument("--tfdir", default='./runs/E3/', type=str)
 
     # dataset
     parser.add_argument("--filter_envs_pretrain", type=str, default="",

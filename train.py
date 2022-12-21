@@ -284,6 +284,10 @@ def train_all(args, model, optimizers, train_dataset, epoch, training_step, trai
 
                 pred_loss = - l2_loss(pred_q_rel, fut_traj_rel, mode="raw")
 
+                # log_qygx = torch.zeros(fut_traj_rel.shape[1], device=fut_traj.device)
+                # for i in range(len(q)):
+                #     log_qygx += torch.log(torch.exp(q[i].log_prob(fut_traj_rel[i, :, :2])).mean(0))
+
                 l2_loss_rel.append(pred_loss)
                 l2_loss_elbo.append(E / torch.exp(log_qygx))
 
