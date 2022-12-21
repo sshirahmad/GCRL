@@ -421,6 +421,7 @@ class Predictor(nn.Module):
         pred_lstm_c_t = torch.zeros_like(pred_lstm_hidden).cuda()
         p = []
         q = []
+        pred_q_rel = []
         if self.training:
             for i in range(self.fut_len):
                 if i >= 1:
@@ -456,13 +457,11 @@ class Predictor(nn.Module):
                 #     covmat[:, :, j + 1:, j] = cov[:, :, start: start + length]
                 #     start += length
 
-                dist = MultivariateNormal(mean, torch.diag(0.5 * torch.ones(self.n_coordinates).cuda()))
                 output = mean
                 p += [mean]
+                pred_q_rel += [mean.mean(0)]
 
-                q += [mean.mean(0)]
-
-            return torch.stack(q), torch.stack(p)
+            return torch.stack(pred_q_rel), torch.stack(p)
 
         else:
             q = []
@@ -544,7 +543,7 @@ class Decoder(nn.Module):
 
         (_, _, obs_traj_rel, _, seq_start_end) = batch
 
-        pred_traj_rel = []
+        p = []
         pred_lstm_c_t = torch.zeros_like(pred_lstm_hidden).cuda()
         for i in range(self.obs_len):
             if i >= 1:
@@ -579,10 +578,9 @@ class Decoder(nn.Module):
             #     start += length
 
             # dist = MultivariateNormal(mean, scale_tril=covmat)
-            dist = MultivariateNormal(mean, torch.diag(0.5 * torch.ones(self.n_coordinates).cuda()))
-            pred_traj_rel += [mean]
+            p += [mean]
 
-        return torch.stack(pred_traj_rel)
+        return torch.stack(p)
 
 
 class Mapping(nn.Module):
@@ -907,7 +905,7 @@ class CRMF(nn.Module):
                 z_vec = q_zgx.rsample([self.num_samples, ])
 
                 # calculate q(y|x)
-                q, _ = self.future_decoder(batch, torch.cat((z_vec, s_vec), dim=2))
+                pred_q_rel, _ = self.future_decoder(batch, torch.cat((z_vec, s_vec), dim=2))
 
                 # calculate p(s|e)
                 Et = []
@@ -935,26 +933,18 @@ class CRMF(nn.Module):
                 log_pz = self.pw.log_prob(z_vec_c) + sldj
 
                 # calculate p(y|z,s,x)
-                _, p = self.future_decoder(batch, torch.cat((z_vec, s_vec), dim=2))
-                # log_py = torch.zeros((self.num_samples, fut_traj_rel.shape[1])).cuda()
-                # for i in range(self.fut_len):
-                #     log_py += p[i].log_prob(fut_traj_rel[i, :, :2])
-                # p_ygzs = torch.exp(log_py)
+                _, pred_fut_rel = self.future_decoder(batch, torch.cat((z_vec, s_vec), dim=2))
 
-                log_py = - l2_loss(p, fut_traj_rel, mode="raw")
+                log_py = - l2_loss(pred_fut_rel, fut_traj_rel, mode="raw") - self.fut_len * torch.log(torch.tensor(math.pi))
                 p_ygzs = torch.exp(log_py)
 
                 # calculate log(p(x|z,s))
-                p = self.past_decoder(batch, torch.cat((z_vec, s_vec), dim=2))
-                # log_px = torch.zeros((self.num_samples, fut_traj_rel.shape[1])).cuda()
-                # for i in range(self.obs_len):
-                #     log_px += p[i].log_prob(obs_traj_rel[i, :, :2])
-
-                log_px = - l2_loss(p, obs_traj_rel, mode="raw")
+                pred_past_rel = self.past_decoder(batch, torch.cat((z_vec, s_vec), dim=2))
+                log_px = - l2_loss(pred_past_rel, obs_traj_rel, mode="raw") - self.obs_len * torch.log(torch.tensor(math.pi))
 
                 E = torch.multiply(p_ygzs, log_px + Et + log_pz - log_qzgx - log_qsgx).mean(0)
 
-                return q, E
+                return pred_q_rel, E
 
         else:
             if training_step == "P7":

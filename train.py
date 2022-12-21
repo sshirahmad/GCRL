@@ -215,7 +215,7 @@ def main(args):
             elif training_step == "P4":
                 metric = validate_ade(args, model, valido_dataset, epoch, training_step, writer, stage='validation o')
 
-        if training_step == "P4":
+        if training_step in ["P3", "P4"]:
             if metric < min_metric:
                 min_metric = metric
                 save_all_model(args, model, model_name, optimizers, metric, epoch, training_step)
@@ -272,32 +272,27 @@ def train_all(args, model, optimizers, train_dataset, epoch, training_step, trai
                 l2_loss_rel.append(l2_loss(pred_past_rel, obs_traj_rel, mode="raw"))
                 l2_loss_rel = torch.stack(l2_loss_rel, dim=1)
 
-                loss = erm_loss(l2_loss_rel, seq_start_end, fut_traj_rel.shape[0])
+                loss = erm_loss(l2_loss_rel, seq_start_end)
 
             else:
                 beta = beta_scheduler.beta_val(epoch)
                 l2_loss_rel = []
                 l2_loss_elbo = []
-                l2_loss_exp = []
-                qygx, E = model(batch, training_step, env_idx=train_idx)
-                # log_qygx = torch.zeros(fut_traj_rel.shape[1]).cuda()
-                # for i in range(len(qygx)):
-                #     log_qygx += - l2_loss(qygx, fut_traj_rel, mode="raw")
 
-                log_qygx = - l2_loss(qygx, fut_traj_rel, mode="raw")
+                pred_q_rel, E = model(batch, training_step, env_idx=train_idx)
+                log_qygx = - l2_loss(pred_q_rel, fut_traj_rel, mode="raw") - fut_traj_rel.shape[0] * torch.log(torch.tensor(math.pi))
 
-                l2_loss_rel.append(log_qygx)
-                l2_loss_exp.append(torch.exp(log_qygx))
-                l2_loss_elbo.append(E)
+                pred_loss = - l2_loss(pred_q_rel, fut_traj_rel, mode="raw")
+
+                l2_loss_rel.append(pred_loss)
+                l2_loss_elbo.append(E / torch.exp(log_qygx))
 
                 l2_loss_rel = torch.stack(l2_loss_rel, dim=1)
                 l2_loss_elbo = torch.stack(l2_loss_elbo, dim=1)
-                l2_loss_exp = torch.stack(l2_loss_exp, dim=1)
-                predict_loss = erm_loss(l2_loss_rel, seq_start_end, fut_traj_rel.shape[0])
-                exp_loss = erm_loss(l2_loss_exp, seq_start_end, fut_traj_rel.shape[0])
-                elbo_loss = erm_loss(l2_loss_elbo, seq_start_end, fut_traj_rel.shape[0])
+                predict_loss = erm_loss(l2_loss_rel, seq_start_end)
+                elbo_loss = erm_loss(l2_loss_elbo, seq_start_end)
 
-                loss = (- predict_loss) + 1 / exp_loss * (- elbo_loss)  # - sign position is important!
+                loss = - (predict_loss + elbo_loss)
 
                 e_loss_meter.update(elbo_loss.item(), obs_traj.shape[1])
                 p_loss_meter.update(predict_loss.item(), obs_traj.shape[1])

@@ -7,11 +7,11 @@ def get_parser():
     parser.add_argument("--log_dir", default="./log/", help="Directory containing logging file")
     parser.add_argument("--model_dir", default="./models/E2/", help="Directory containing logging file")
     parser.add_argument("--dataset_name", default="eth", type=str)
-    parser.add_argument("--resume", default="./models/E2//P3/CRMF_epoch_277.pth.tar",
+    parser.add_argument("--resume", default="./models/E20tvsample_noise//P2/CRMF_epoch_250.pth.tar",
                         type=str, metavar="PATH", help="path to latest checkpoint (default: none)")
 
     # randomness
-    parser.add_argument("--num_samples", type=int, default=50, help="Number of samples to calculate MC expectations")
+    parser.add_argument("--num_samples", type=int, default=10, help="Number of samples to calculate MC expectations")
     parser.add_argument("--seed", type=int, default=1, help="Random seed")
 
     # computation
@@ -88,7 +88,7 @@ def get_training_parser():
 
     # general training
     parser.add_argument("--finetune", default="", type=str)
-    parser.add_argument("--num_epochs", default='150-100-150-100', type=lambda x: int_tuple(x, '-'))  # '150-100-150',
+    parser.add_argument("--num_epochs", default='150-100-250-100', type=lambda x: int_tuple(x, '-'))  # '150-100-150',
 
     # learning rates
     parser.add_argument("--lrvar", default=1e-3, type=float,
