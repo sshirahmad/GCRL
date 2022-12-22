@@ -7,7 +7,7 @@ def get_parser():
     parser.add_argument("--log_dir", default="./log/", help="Directory containing logging file")
     parser.add_argument("--model_dir", default="./models/E4/", help="Directory containing logging file")
     parser.add_argument("--tfdir", default='./runs/E4/', type=str)
-    parser.add_argument("--dataset_name", default="eth", type=str)
+    parser.add_argument("--dataset_name", default="v4", type=str)
     parser.add_argument("--resume", default="",
                         type=str, metavar="PATH", help="path to latest checkpoint (default: none)")
 
@@ -36,7 +36,7 @@ def get_parser():
     parser.add_argument("--obs_len", default=8, type=int)
     parser.add_argument("--fut_len", default=12, type=int)
     parser.add_argument("--n_coordinates", type=int, default=2, help="Number of coordinates")
-    parser.add_argument("--filter_envs", type=str, default="",
+    parser.add_argument("--filter_envs", type=str, default="0.1-0.3-0.5",
                         help="Filter only certain environments (i.e 0.1-0.3-0.5)")
     parser.add_argument("--skip", default=1, type=int)
     parser.add_argument("--delim", default="\t")
@@ -52,8 +52,8 @@ def get_parser():
     parser.add_argument("--num_envs", default=5, type=int, help="Number of environments in the dataset")
 
     # spurious feature
-    parser.add_argument("--add_confidence", default=True, type=bool)
-    parser.add_argument("--domain_shifts", default='1-2-4-8-64', type=str,
+    parser.add_argument("--add_confidence", default=False, type=bool)
+    parser.add_argument("--domain_shifts", default='0', type=str,
                         help='domain_shifts per environment: hotel,univ,zara1,zara2,eth')
 
     return parser
@@ -77,8 +77,6 @@ def get_training_parser():
                         help="Say which env were used during pretraining (for contrastive loss) (i.e 0.1-0.3-0.5)")
     parser.add_argument('--reduce', default=0, type=int)
     parser.add_argument('--reduceall', default=0, type=int)
-    parser.add_argument('--testonly', default=0, type=int,
-                        help='Only test model. 0 -> training, 1 -> testing, 3 -> testing with refinement')  # 0 is normal train, 1 is test, 2 is test with k, 3 is ttr
 
     # training
     parser.add_argument("--best_k", default=1, type=int)

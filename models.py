@@ -302,10 +302,11 @@ class Encoder(nn.Module):
 
     def forward(
             self,
-            batch,
+            obs_traj_rel,
+            seq_start_end,
             training_step=3,
     ):
-        (_, _, obs_traj_rel, _, seq_start_end) = batch
+
         num_peds = obs_traj_rel.shape[1]
         traj_lstm_h_t, traj_lstm_c_t = self.init_hidden_traj_lstm(num_peds)
         graph_lstm_h_t, graph_lstm_c_t = self.init_hidden_graph_lstm(num_peds)
@@ -408,11 +409,11 @@ class Predictor(nn.Module):
 
     def forward(
             self,
-            batch,
+            obs_traj_rel,
+            fut_traj_rel,
+            seq_start_end,
             pred_lstm_hidden,
     ):
-
-        (_, _, obs_traj_rel, fut_traj_rel, seq_start_end) = batch
 
         input_t = obs_traj_rel[self.obs_len - 1, :, :self.n_coordinates]
         output = input_t
@@ -479,11 +480,9 @@ class Decoder(nn.Module):
 
     def forward(
             self,
-            batch,
+            obs_traj_rel,
             pred_lstm_hidden,
     ):
-
-        (_, _, obs_traj_rel, _, seq_start_end) = batch
 
         pred_traj_rel = []
         pred_lstm_c_t = torch.zeros_like(pred_lstm_hidden).cuda()
@@ -752,6 +751,7 @@ class CRMF(nn.Module):
     def __init__(self, args):
         super(CRMF, self).__init__()
 
+        self.dataset_name = args.dataset_name
         self.obs_len = args.obs_len
         self.z_dim = args.z_dim
         self.fut_len = args.fut_len
@@ -811,18 +811,23 @@ class CRMF(nn.Module):
         # )
 
     def forward(self, batch, training_step, **kwargs):
+        if self.dataset_name in ('eth', 'hotel', 'univ', 'zara1', 'zara2'):
+            obs_traj, fut_traj, obs_traj_rel, fut_traj_rel, seq_start_end, = batch
 
-        obs_traj, fut_traj, obs_traj_rel, fut_traj_rel, seq_start_end, = batch
+        elif 'synthetic' in self.dataset_name or self.dataset_name in ['synthetic', 'v2', 'v2full', 'v4']:
+            obs_traj, fut_traj, obs_traj_rel, fut_traj_rel, seq_start_end, augm_data, seq_start_end_augm = batch
+        else:
+            raise ValueError('Unrecognized dataset name "%s"' % self.dataset_name)
 
         if self.training:
             if training_step in ["P1", "P2"]:
-                pred_past_rel = self.encoder(batch, training_step)
+                pred_past_rel = self.encoder(obs_traj_rel, seq_start_end, training_step)
 
                 return pred_past_rel
 
             else:
                 pe = Categorical(logits=self.pi_priore)
-                concat_hidden_states = self.encoder(batch, training_step)
+                concat_hidden_states = self.encoder(obs_traj_rel, seq_start_end, training_step)
                 q_zgx = self.x_to_z(concat_hidden_states)
                 q_sgx = self.x_to_s(concat_hidden_states)
 
@@ -859,7 +864,7 @@ class CRMF(nn.Module):
                 log_pz = self.pw.log_prob(z_vec_c) + sldj
 
                 # calculate log(p(x|z,s))
-                px = self.past_decoder(batch, torch.cat((z_vec, s_vec), dim=2))
+                px = self.past_decoder(obs_traj_rel, torch.cat((z_vec, s_vec), dim=2))
                 log_px = - l2_loss(px, obs_traj_rel, mode="raw") - 0.5 * 2 * self.obs_len * torch.log(torch.tensor(2 * math.pi)) - 0.5 * self.obs_len * torch.log(torch.tensor(0.25))
 
                 E = (log_px + log_ps + log_pz - log_qzgx - log_qsgx).mean(0)
@@ -867,7 +872,7 @@ class CRMF(nn.Module):
                 # calculate q(y|x)
                 s_vec = q_sgx.rsample()
                 z_vec = q_zgx.rsample()
-                p = self.future_decoder(batch, torch.cat((z_vec, s_vec), dim=1))
+                p = self.future_decoder(obs_traj_rel, fut_traj_rel, seq_start_end, torch.cat((z_vec, s_vec), dim=1))
 
                 return p, E
 
@@ -880,7 +885,7 @@ class CRMF(nn.Module):
                 return q_zgx, q_sgx
 
             else:
-                concat_hidden_states = self.encoder(batch, training_step)
+                concat_hidden_states = self.encoder(obs_traj_rel, seq_start_end, training_step)
                 q_zgx = self.x_to_z(concat_hidden_states)
                 q_sgx = self.x_to_s(concat_hidden_states)
 
@@ -888,6 +893,6 @@ class CRMF(nn.Module):
                 z_vec = q_zgx.rsample()
                 s_vec = q_sgx.rsample()
 
-                q = self.future_decoder(batch, torch.cat((z_vec, s_vec), dim=1))
+                q = self.future_decoder(obs_traj_rel, fut_traj_rel, seq_start_end, torch.cat((z_vec, s_vec), dim=1))
 
                 return q

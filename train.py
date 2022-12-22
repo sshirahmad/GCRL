@@ -28,13 +28,12 @@ def main(args):
                      zip(train_envs_path, train_envs_name)]
 
     logging.info("Initializing Validation Set")
-    val_envs_path, val_envs_name = get_envs_path(args.dataset_name, "val",
-                                                 args.filter_envs)  # +'-'+args.filter_envs_pretrain)
+    val_envs_path, val_envs_name = get_envs_path(args.dataset_name, "val", args.filter_envs)
     val_loaders = [data_loader(args, val_env_path, val_env_name) for val_env_path, val_env_name in
                    zip(val_envs_path, val_envs_name)]
 
     logging.info("Initializing Validation O Set")
-    valo_envs_path, valo_envs_name = get_envs_path(args.dataset_name, "test", args.filter_envs)
+    valo_envs_path, valo_envs_name = get_envs_path(args.dataset_name, "test", '0.6')
 
     valo_loaders = [data_loader(args, valo_env_path, valo_env_name, test=True) for valo_env_path, valo_env_name in
                     zip(valo_envs_path, valo_envs_name)]
@@ -72,8 +71,6 @@ def main(args):
         'par': torch.optim.Adam(
             [
                 {"params": model.pi_priore, 'lr': args.lrpar},
-                # {"params": model.mean_priors, 'lr': args.lrpar},
-                # {"params": model.logvar_priors, 'lr': args.lrpar},
                 {"params": model.coupling_layers_s.parameters(), 'lr': args.lrpar},
                 {"params": model.x_to_s.parameters(), 'lr': args.lrpar},
             ]
@@ -255,13 +252,27 @@ def train_all(args, model, optimizers, train_dataset, epoch, training_step, trai
                                  prefix="Dataset: {:<20}".format(train_envs_name[train_idx]))
         for batch_idx, batch in enumerate(train_loader):
             batch = [tensor.cuda() for tensor in batch]
-            (
-                obs_traj,
-                fut_traj,
-                obs_traj_rel,
-                fut_traj_rel,
-                seq_start_end,
-            ) = batch
+
+            if args.dataset_name in ('eth', 'hotel', 'univ', 'zara1', 'zara2'):
+                (
+                    obs_traj,
+                    fut_traj,
+                    obs_traj_rel,
+                    fut_traj_rel,
+                    seq_start_end,
+                ) = batch
+            elif 'synthetic' in args.dataset_name or args.dataset_name in ['synthetic', 'v2', 'v2full', 'v4']:
+                (
+                    obs_traj,
+                    _,
+                    obs_traj_rel,
+                    fut_traj_rel,
+                    seq_start_end,
+                    _,
+                    _
+                ) = batch
+            else:
+                raise ValueError('Unrecognized dataset name "%s"' % args.dataset_name)
 
             # reset gradients
             for opt in optimizers.values():
@@ -360,7 +371,26 @@ def validate_ade(args, model, valid_dataset, epoch, training_step, writer, stage
             total_traj_i = 0
             for batch_idx, batch in enumerate(loader):
                 batch = [tensor.cuda() for tensor in batch]
-                (obs_traj, fut_traj, _, _, seq_start_end) = batch
+                if args.dataset_name in ('eth', 'hotel', 'univ', 'zara1', 'zara2'):
+                    (
+                        obs_traj,
+                        fut_traj,
+                        obs_traj_rel,
+                        fut_traj_rel,
+                        seq_start_end,
+                    ) = batch
+                elif 'synthetic' in args.dataset_name or args.dataset_name in ['synthetic', 'v2', 'v2full', 'v4']:
+                    (
+                        obs_traj,
+                        fut_traj,
+                        obs_traj_rel,
+                        fut_traj_rel,
+                        seq_start_end,
+                        _,
+                        _
+                    ) = batch
+                else:
+                    raise ValueError('Unrecognized dataset name "%s"' % args.dataset_name)
 
                 ade_list, fde_list = [], []
                 total_traj_i += fut_traj.size(1)
