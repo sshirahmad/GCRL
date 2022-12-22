@@ -614,14 +614,12 @@ class SimpleEncoder(nn.Module):
             obs_len,
             hidden_size,
             number_agents,
-            num_samples,
             add_confidence,
     ):
         super(SimpleEncoder, self).__init__()
 
         # num of frames per sequence
         self.obs_len = obs_len
-        self.num_samples = num_samples
         self.number_agents = number_agents
 
         self.mlp = nn.Sequential(
@@ -648,12 +646,7 @@ class SimpleEncoder(nn.Module):
         encoded = torch.stack(encoded.split(encoded.shape[1] // self.number_agents, dim=1), dim=1)
         encoded = encoded.flatten(start_dim=0, end_dim=1)
 
-        mu = self.mu(encoded)
-        logvar = self.logvar(encoded)
-
-        ps = MultivariateNormal(mu, torch.diag_embed(torch.exp(logvar)))
-
-        return ps
+        return encoded
 
 
 # class Classifier(nn.Module):
@@ -742,7 +735,7 @@ class SimpleDecoder(nn.Module):
 
         out = out.flatten(start_dim=1, end_dim=2)
 
-        out = torch.permute(out, (0, 2, 1, 3))
+        out = torch.permute(out, (2, 0, 1, 3))
 
         return out
 
@@ -752,6 +745,7 @@ class CRMF(nn.Module):
         super(CRMF, self).__init__()
 
         self.dataset_name = args.dataset_name
+        self.model_name = args.model_name
         self.obs_len = args.obs_len
         self.z_dim = args.z_dim
         self.fut_len = args.fut_len
@@ -781,34 +775,39 @@ class CRMF(nn.Module):
         for i in range(self.num_envs):
             self.ps += [MultivariateNormal(i * torch.ones(args.s_dim).cuda(), torch.diag((i + 1) * torch.ones(args.s_dim).cuda()))]
 
-        self.encoder = Encoder(args.obs_len, args.fut_len, args.n_coordinates,
-                               args.traj_lstm_hidden_size, args.n_units, args.n_heads,
-                               args.graph_network_out_dims, args.dropout, args.alpha,
-                               args.graph_lstm_hidden_size, args.add_confidence)
-
         self.x_to_z = Mapping(args.traj_lstm_hidden_size, args.graph_lstm_hidden_size, args.z_dim)
         self.x_to_s = Mapping(args.traj_lstm_hidden_size, args.graph_lstm_hidden_size, args.s_dim)
 
-        self.past_decoder = Decoder(args.obs_len, args.n_coordinates, args.z_dim, args.s_dim)
+        if args.model_name == "lstm":
 
-        self.future_decoder = Predictor(args.obs_len, args.fut_len, args.n_coordinates, args.s_dim,
-                                        args.z_dim, args.teachingratio)
+            self.encoder = Encoder(args.obs_len, args.fut_len, args.n_coordinates,
+                                   args.traj_lstm_hidden_size, args.n_units, args.n_heads,
+                                   args.graph_network_out_dims, args.dropout, args.alpha,
+                                   args.graph_lstm_hidden_size, args.add_confidence)
 
-        # self.invariant_encoder = SimpleEncoder(args.obs_len, args.z_dim, NUMBER_PERSONS, args.num_samples, args.add_confidence)
-        # self.variant_encoder = SimpleEncoder(args.obs_len, args.s_dim, NUMBER_PERSONS, args.num_samples, args.add_confidence)
-        # self.e_encoder = Classifier(args.obs_len, args.s_dim, NUMBER_PERSONS, args.num_samples, args.num_envs, args.add_confidence)
-        #
-        # self.past_decoder = SimpleDecoder(
-        #     args.obs_len,
-        #     args.s_dim + args.z_dim,
-        #     NUMBER_PERSONS,
-        # )
-        #
-        # self.future_decoder = SimpleDecoder(
-        #     args.fut_len,
-        #     args.s_dim + args.z_dim,
-        #     NUMBER_PERSONS,
-        # )
+            self.past_decoder = Decoder(args.obs_len, args.n_coordinates, args.z_dim, args.s_dim)
+
+            self.future_decoder = Predictor(args.obs_len, args.fut_len, args.n_coordinates, args.s_dim,
+                                            args.z_dim, args.teachingratio)
+
+        elif args.model_name == "mlp":
+            self.encoder = SimpleEncoder(args.obs_len, args.traj_lstm_hidden_size + args.graph_lstm_hidden_size,
+                                         NUMBER_PERSONS, args.add_confidence)
+
+            self.past_decoder = SimpleDecoder(
+                args.obs_len,
+                args.s_dim + args.z_dim,
+                NUMBER_PERSONS,
+            )
+
+            self.future_decoder = SimpleDecoder(
+                args.fut_len,
+                args.s_dim + args.z_dim,
+                NUMBER_PERSONS,
+            )
+
+        else:
+            raise ValueError('Unrecognized model name "%s"' % args.model_name)
 
     def forward(self, batch, training_step, **kwargs):
         if self.dataset_name in ('eth', 'hotel', 'univ', 'zara1', 'zara2'):
@@ -827,7 +826,11 @@ class CRMF(nn.Module):
 
             else:
                 pe = Categorical(logits=self.pi_priore)
-                concat_hidden_states = self.encoder(obs_traj_rel, seq_start_end, training_step)
+                if self.model_name == "lstm":
+                    concat_hidden_states = self.encoder(obs_traj_rel, seq_start_end, training_step)
+                elif self.model_name == "mlp":
+                    concat_hidden_states = self.encoder(obs_traj_rel)
+
                 q_zgx = self.x_to_z(concat_hidden_states)
                 q_sgx = self.x_to_s(concat_hidden_states)
 
@@ -864,7 +867,11 @@ class CRMF(nn.Module):
                 log_pz = self.pw.log_prob(z_vec_c) + sldj
 
                 # calculate log(p(x|z,s))
-                px = self.past_decoder(obs_traj_rel, torch.cat((z_vec, s_vec), dim=2))
+                if self.model_name == "lstm":
+                    px = self.past_decoder(obs_traj_rel, torch.cat((z_vec, s_vec), dim=2))
+                elif self.model_name == "mlp":
+                    px = self.past_decoder(torch.cat((z_vec, s_vec), dim=2))
+
                 log_px = - l2_loss(px, obs_traj_rel, mode="raw") - 0.5 * 2 * self.obs_len * torch.log(torch.tensor(2 * math.pi)) - 0.5 * self.obs_len * torch.log(torch.tensor(0.25))
 
                 E = (log_px + log_ps + log_pz - log_qzgx - log_qsgx).mean(0)
@@ -872,7 +879,10 @@ class CRMF(nn.Module):
                 # calculate q(y|x)
                 s_vec = q_sgx.rsample()
                 z_vec = q_zgx.rsample()
-                p = self.future_decoder(obs_traj_rel, fut_traj_rel, seq_start_end, torch.cat((z_vec, s_vec), dim=1))
+                if self.model_name == "lstm":
+                    p = self.future_decoder(obs_traj_rel, fut_traj_rel, seq_start_end, torch.cat((z_vec, s_vec), dim=1))
+                if self.model_name == "mlp":
+                    p = self.future_decoder(torch.cat((z_vec.unsqueeze(0), s_vec.unsqueeze(0)), dim=2)).squeeze(1)
 
                 return p, E
 
@@ -885,14 +895,20 @@ class CRMF(nn.Module):
                 return q_zgx, q_sgx
 
             else:
-                concat_hidden_states = self.encoder(obs_traj_rel, seq_start_end, training_step)
+                if self.model_name == "lstm":
+                    concat_hidden_states = self.encoder(obs_traj_rel, seq_start_end, training_step)
+                elif self.model_name == "mlp":
+                    concat_hidden_states = self.encoder(obs_traj_rel)
+
                 q_zgx = self.x_to_z(concat_hidden_states)
                 q_sgx = self.x_to_s(concat_hidden_states)
 
                 # calculate q(y|theta, x)
                 z_vec = q_zgx.rsample()
                 s_vec = q_sgx.rsample()
-
-                q = self.future_decoder(obs_traj_rel, fut_traj_rel, seq_start_end, torch.cat((z_vec, s_vec), dim=1))
+                if self.model_name == "lstm":
+                    q = self.future_decoder(obs_traj_rel, fut_traj_rel, seq_start_end, torch.cat((z_vec, s_vec), dim=1))
+                elif self.model_name == "mlp":
+                    q = self.future_decoder(torch.cat((z_vec.unsqueeze(0), s_vec.unsqueeze(0)), dim=2)).squeeze(1)
 
                 return q

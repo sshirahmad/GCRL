@@ -8,6 +8,7 @@ def get_parser():
     parser.add_argument("--model_dir", default="./models/E4/", help="Directory containing logging file")
     parser.add_argument("--tfdir", default='./runs/E4/', type=str)
     parser.add_argument("--dataset_name", default="v4", type=str)
+    parser.add_argument("--model_name", default="mlp", type=str)
     parser.add_argument("--resume", default="",
                         type=str, metavar="PATH", help="path to latest checkpoint (default: none)")
 
@@ -76,7 +77,7 @@ def get_training_parser():
     parser.add_argument("--filter_envs_pretrain", type=str, default="",
                         help="Say which env were used during pretraining (for contrastive loss) (i.e 0.1-0.3-0.5)")
     parser.add_argument('--reduce', default=0, type=int)
-    parser.add_argument('--reduceall', default=0, type=int)
+    parser.add_argument('--reduceall', default=10, type=int)
 
     # training
     parser.add_argument("--best_k", default=1, type=int)

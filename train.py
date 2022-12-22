@@ -162,18 +162,6 @@ def main(args):
             if r[0] < epoch <= r[1]:
                 return step
 
-    # SOME TEST
-    if args.testonly == 1:
-        print('SIMPLY VALIDATE MODEL:')
-        validate_ade(args, model, valid_dataset, 300, 'P3', writer, 'validation', write=False)
-    elif args.testonly == 2:
-        print('TEST TIME MODIF:')
-        validate_ade(args, model, valid_dataset, 500, 'P4', writer, 'training', write=False)
-
-    if args.testonly != 0:
-        writer.close()
-        return
-
     min_metric = 1e10
     metric = min_metric
     beta_scheduler = get_beta(training_steps["P3"][0], 100, 1e-6)
