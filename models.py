@@ -769,11 +769,17 @@ class CRMF(nn.Module):
             CouplingLayer(args.z_dim, reverse_mask=False)
         ])
 
+        self.coupling_layers_s = nn.ModuleList([
+            CouplingLayer(args.s_dim, reverse_mask=False),
+            CouplingLayer(args.s_dim, reverse_mask=True),
+            CouplingLayer(args.s_dim, reverse_mask=False)
+        ])
+
         self.pw = MultivariateNormal(torch.zeros(args.z_dim).cuda(), torch.diag(torch.ones(args.z_dim).cuda()))
 
         self.ps = []
         for i in range(self.num_envs):
-            self.ps += [MultivariateNormal(i * torch.ones(args.s_dim).cuda(), torch.diag(torch.ones(args.s_dim).cuda()))]
+            self.ps += [MultivariateNormal(i * torch.ones(args.s_dim).cuda(), torch.diag((i + 1) * torch.ones(args.s_dim).cuda()))]
 
         self.encoder = Encoder(args.obs_len, args.fut_len, args.n_coordinates,
                                args.traj_lstm_hidden_size, args.n_units, args.n_heads,
@@ -826,8 +832,13 @@ class CRMF(nn.Module):
                 # calculate p(s|e)
                 Et = []
                 for j in range(self.num_envs):
-                    psge = MultivariateNormal(self.mean_priors[j], torch.diag(torch.exp(self.logvar_priors[j])))
-                    log_psge = psge.log_prob(s_vec)
+                    sldj = torch.zeros((self.num_samples, s_vec.shape[1]), device=s_vec.device)
+                    s_vec_c = s_vec
+                    for coupling in self.coupling_layers_s:
+                        s_vec_c, sldj = coupling(s_vec_c, sldj)
+                    log_psge = self.ps[j].log_prob(s_vec_c) + sldj
+                    # psge = MultivariateNormal(self.mean_priors[j], torch.diag(torch.exp(self.logvar_priors[j])))
+                    # log_psge = psge.log_prob(s_vec)
 
                     log_pe = torch.exp(pe.log_prob(torch.tensor(j).cuda()))
                     Et.append(torch.exp(log_psge) * torch.exp(log_pe))

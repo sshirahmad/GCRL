@@ -72,10 +72,10 @@ def main(args):
         'par': torch.optim.Adam(
             [
                 {"params": model.pi_priore, 'lr': args.lrpar},
-                {"params": model.mean_priors, 'lr': args.lrpar},
-                {"params": model.logvar_priors, 'lr': args.lrpar},
+                # {"params": model.mean_priors, 'lr': args.lrpar},
+                # {"params": model.logvar_priors, 'lr': args.lrpar},
+                {"params": model.coupling_layers_s.parameters(), 'lr': args.lrpar},
                 {"params": model.x_to_s.parameters(), 'lr': args.lrpar},
-                {"params": model.x_to_e.parameters(), 'lr': args.lrpar},
             ]
         ),
         'var': torch.optim.Adam(
@@ -183,14 +183,16 @@ def main(args):
     for epoch in range(args.start_epoch, sum(args.num_epochs) + 1):
 
         training_step = get_training_step(epoch)
+        if training_step in ["P1", "P2"]:
+            continue
         logging.info(f"\n===> EPOCH: {epoch} ({training_step})")
 
         if training_step in ['P1', 'P2']:
-            freeze(True, (model.x_to_z, model.x_to_s, model.past_decoder, model.future_decoder, model.coupling_layers_z, model.coupling_layers_s))
+            freeze(True, (model.x_to_z, model.x_to_s, model.past_decoder, model.future_decoder, model.coupling_layers_z))
             freeze(False, (model.encoder,))
 
         if training_step == 'P3':
-            freeze(False, (model.encoder, model.x_to_z, model.x_to_s, model.past_decoder, model.future_decoder, model.coupling_layers_z, model.coupling_layers_s))
+            freeze(False, (model.encoder, model.x_to_z, model.x_to_s, model.past_decoder, model.future_decoder, model.coupling_layers_z))
 
         elif training_step == 'P4':
             freeze(True, (model.encoder, model.x_to_z, model.x_to_s, model.past_decoder, model.future_decoder, model.coupling_layers_z, model.coupling_layers_s))
@@ -271,32 +273,24 @@ def train_all(args, model, optimizers, train_dataset, epoch, training_step, trai
 
                 l2_loss_rel.append(l2_loss(pred_past_rel, obs_traj_rel, mode="raw"))
                 l2_loss_rel = torch.stack(l2_loss_rel, dim=1)
-
                 loss = erm_loss(l2_loss_rel, seq_start_end)
 
             else:
-                beta = beta_scheduler.beta_val(epoch)
                 l2_loss_rel = []
                 l2_loss_elbo = []
 
-                pred_q_rel, E = model(batch, training_step, env_idx=train_idx)
-                log_qygx = - l2_loss(pred_q_rel, fut_traj_rel, mode="raw") - fut_traj_rel.shape[0] * torch.log(torch.tensor(math.pi))
-
-                pred_loss = - l2_loss(pred_q_rel, fut_traj_rel, mode="raw")
-
-                # log_qygx = torch.zeros(fut_traj_rel.shape[1], device=fut_traj.device)
-                # for i in range(len(q)):
-                #     log_qygx += torch.log(torch.exp(q[i].log_prob(fut_traj_rel[i, :, :2])).mean(0))
+                pred_q_rel, E = model(batch, training_step)
+                pred_loss = l2_loss(pred_q_rel, fut_traj_rel, mode="raw")
 
                 l2_loss_rel.append(pred_loss)
-                l2_loss_elbo.append(E / torch.exp(log_qygx))
+                l2_loss_elbo.append(E)
 
                 l2_loss_rel = torch.stack(l2_loss_rel, dim=1)
                 l2_loss_elbo = torch.stack(l2_loss_elbo, dim=1)
                 predict_loss = erm_loss(l2_loss_rel, seq_start_end)
                 elbo_loss = erm_loss(l2_loss_elbo, seq_start_end)
 
-                loss = - (predict_loss + elbo_loss)
+                loss = predict_loss + (- elbo_loss)
 
                 e_loss_meter.update(elbo_loss.item(), obs_traj.shape[1])
                 p_loss_meter.update(predict_loss.item(), obs_traj.shape[1])
@@ -304,9 +298,6 @@ def train_all(args, model, optimizers, train_dataset, epoch, training_step, trai
             # backpropagate if needed
             if stage == 'training' and update:
                 loss.backward()
-
-                # Gradient clipping
-                # clip_grad.clip_grad_norm_(filter(lambda p: p.requires_grad, model.parameters()), max_norm=20)
 
                 lr_scheduler_optims = lr_schedulers[training_step]
                 # choose which optimizer to use depending on the training step

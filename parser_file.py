@@ -5,8 +5,8 @@ from utils import int_tuple
 def get_parser():
     parser = argparse.ArgumentParser()
     parser.add_argument("--log_dir", default="./log/", help="Directory containing logging file")
-    parser.add_argument("--model_dir", default="./models/E3/", help="Directory containing logging file")
-    parser.add_argument("--tfdir", default='./runs/E3/', type=str)
+    parser.add_argument("--model_dir", default="./models/E4/", help="Directory containing logging file")
+    parser.add_argument("--tfdir", default='./runs/E4/', type=str)
     parser.add_argument("--dataset_name", default="eth", type=str)
     parser.add_argument("--resume", default="",
                         type=str, metavar="PATH", help="path to latest checkpoint (default: none)")
