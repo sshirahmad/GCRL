@@ -6,12 +6,13 @@ def get_parser():
     parser = argparse.ArgumentParser()
     parser.add_argument("--log_dir", default="./log/", help="Directory containing logging file")
     parser.add_argument("--model_dir", default="./models/E3/", help="Directory containing logging file")
+    parser.add_argument("--tfdir", default='./runs/E3/', type=str)
     parser.add_argument("--dataset_name", default="eth", type=str)
-    parser.add_argument("--resume", default="./models/E20tvsample_noise//P2/CRMF_epoch_250.pth.tar",
+    parser.add_argument("--resume", default="",
                         type=str, metavar="PATH", help="path to latest checkpoint (default: none)")
 
     # randomness
-    parser.add_argument("--num_samples", type=int, default=1, help="Number of samples to calculate MC expectations")
+    parser.add_argument("--num_samples", type=int, default=10, help="Number of samples to calculate MC expectations")
     parser.add_argument("--seed", type=int, default=1, help="Random seed")
 
     # computation
@@ -46,9 +47,9 @@ def get_parser():
     parser.add_argument("--shuffle", default=True, type=bool)
 
     # architecture (VE)
-    parser.add_argument("--z_dim", type=int, default=16, help="Dimension of z latent variable")
-    parser.add_argument("--s_dim", type=int, default=16, help="Dimension of s latent variable")
-    parser.add_argument("--num_envs", default=7, type=int, help="Number of environments in the dataset")
+    parser.add_argument("--z_dim", type=int, default=4, help="Dimension of z latent variable")
+    parser.add_argument("--s_dim", type=int, default=4, help="Dimension of s latent variable")
+    parser.add_argument("--num_envs", default=5, type=int, help="Number of environments in the dataset")
 
     # spurious feature
     parser.add_argument("--add_confidence", default=True, type=bool)
@@ -70,7 +71,6 @@ def get_evaluation_parser():
 
 def get_training_parser():
     parser = get_parser()
-    parser.add_argument("--tfdir", default='./runs/E3/', type=str)
 
     # dataset
     parser.add_argument("--filter_envs_pretrain", type=str, default="",

@@ -439,7 +439,6 @@ def save_all_model(args, model, model_name, optimizers, metric, epoch, training_
             'encoder': model.encoder.state_dict(),
             'x_to_z': model.x_to_z.state_dict(),
             'x_to_s': model.x_to_s.state_dict(),
-            'x_to_e': model.x_to_e.state_dict(),
             'future_decoder': model.future_decoder.state_dict(),
             'past_decoder': model.past_decoder.state_dict(),
             'coupling_layers_z': model.coupling_layers_z.state_dict(),
@@ -491,33 +490,32 @@ def load_all_model(args, model, optimizers, lr_schedulers=None, training_steps=N
                         lr_scheduler.last_epoch = (args.start_epoch - start_p - 1) * num_batches
 
         # future decoder
-        # model.future_decoder.load_state_dict(models_checkpoint['future_decoder'])
-        # if optimizers != None:
-        #     optimizers['future_decoder'].load_state_dict(checkpoint['optimizers']['future_decoder'])
-        #     update_lr(optimizers['future_decoder'], args.lrfut)
-        #
-        # # past decoder
-        # model.past_decoder.load_state_dict(models_checkpoint['past_decoder'])
-        # if optimizers != None:
-        #     optimizers['past_decoder'].load_state_dict(checkpoint['optimizers']['past_decoder'])
-        #     update_lr(optimizers['past_decoder'], args.lrpast)
-        #
-        # # invariant encoder
-        # model.coupling_layers_z.load_state_dict(models_checkpoint['coupling_layers_z'])
-        # model.x_to_z.load_state_dict(models_checkpoint['x_to_z'])
-        # if optimizers != None:
-        #     optimizers['inv'].load_state_dict(checkpoint['optimizers']['inv'])
-        #     update_lr(optimizers['inv'], args.lrinv)
-        #
-        # # variational models
-        # model.pi_priore.data = models_checkpoint['pi_priore'].data.cuda()
-        # model.mean_priors.data = models_checkpoint['mean_priors'].data.cuda()
-        # model.logvar_priors.data = models_checkpoint['logvar_priors'].data.cuda()
-        # model.x_to_s.load_state_dict(models_checkpoint['x_to_s'])
-        # model.x_to_e.load_state_dict(models_checkpoint['x_to_e'])
-        # if optimizers != None:
-        #     optimizers['par'].load_state_dict(checkpoint['optimizers']['par'])
-        #     update_lr(optimizers['par'], args.lrpar)
+        model.future_decoder.load_state_dict(models_checkpoint['future_decoder'])
+        if optimizers != None:
+            optimizers['future_decoder'].load_state_dict(checkpoint['optimizers']['future_decoder'])
+            update_lr(optimizers['future_decoder'], args.lrfut)
+
+        # past decoder
+        model.past_decoder.load_state_dict(models_checkpoint['past_decoder'])
+        if optimizers != None:
+            optimizers['past_decoder'].load_state_dict(checkpoint['optimizers']['past_decoder'])
+            update_lr(optimizers['past_decoder'], args.lrpast)
+
+        # invariant encoder
+        model.coupling_layers_z.load_state_dict(models_checkpoint['coupling_layers_z'])
+        model.x_to_z.load_state_dict(models_checkpoint['x_to_z'])
+        if optimizers != None:
+            optimizers['inv'].load_state_dict(checkpoint['optimizers']['inv'])
+            update_lr(optimizers['inv'], args.lrinv)
+
+        # variational models
+        model.pi_priore.data = models_checkpoint['pi_priore'].data.cuda()
+        model.mean_priors.data = models_checkpoint['mean_priors'].data.cuda()
+        model.logvar_priors.data = models_checkpoint['logvar_priors'].data.cuda()
+        model.x_to_s.load_state_dict(models_checkpoint['x_to_s'])
+        if optimizers != None:
+            optimizers['par'].load_state_dict(checkpoint['optimizers']['par'])
+            update_lr(optimizers['par'], args.lrpar)
 
         # variant encoder
         model.encoder.load_state_dict(models_checkpoint['encoder'])
