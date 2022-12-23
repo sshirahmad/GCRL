@@ -436,13 +436,15 @@ def save_all_model(args, model, model_name, optimizers, metric, epoch, training_
     checkpoint = {
         'epoch': epoch + 1,
         'state_dicts': {
-            'encoder': model.encoder.state_dict(),
+            'variant_encoder': model.variant_encoder.state_dict(),
+            'invariant_encoder': model.invariant_encoder.state_dict(),
             'x_to_z': model.x_to_z.state_dict(),
             'x_to_s': model.x_to_s.state_dict(),
             'future_decoder': model.future_decoder.state_dict(),
             'past_decoder': model.past_decoder.state_dict(),
             'coupling_layers_z': model.coupling_layers_z.state_dict(),
-            'coupling_layers_s': model.coupling_layers_s.state_dict(),
+            'logvar_priors': model.logvar_priors,
+            'mean_priors': model.mean_priors,
             'pi_priore': model.pi_priore,
         },
         'optimizers': {
@@ -509,14 +511,16 @@ def load_all_model(args, model, optimizers, lr_schedulers=None, training_steps=N
 
         # variational models
         model.pi_priore.data = models_checkpoint['pi_priore'].data.cuda()
-        model.coupling_layers_s.load_state_dict(models_checkpoint['coupling_layers_s'])
+        model.logvar_priors.data = models_checkpoint['logvar_priors'].data.cuda()
+        model.mean_priors.data = models_checkpoint['mean_priors'].data.cuda()
         model.x_to_s.load_state_dict(models_checkpoint['x_to_s'])
         if optimizers != None:
             optimizers['par'].load_state_dict(checkpoint['optimizers']['par'])
             update_lr(optimizers['par'], args.lrpar)
 
         # variant encoder
-        model.encoder.load_state_dict(models_checkpoint['encoder'])
+        model.variant_encoder.load_state_dict(models_checkpoint['variant_encoder'])
+        model.invariant_encoder.load_state_dict(models_checkpoint['invariant_encoder'])
         if optimizers != None:
             optimizers['var'].load_state_dict(checkpoint['optimizers']['var'])
             update_lr(optimizers['var'], args.lrvar)

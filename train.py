@@ -71,19 +71,22 @@ def main(args):
         'par': torch.optim.Adam(
             [
                 {"params": model.pi_priore, 'lr': args.lrpar},
-                {"params": model.coupling_layers_s.parameters(), 'lr': args.lrpar},
-                {"params": model.x_to_s.parameters(), 'lr': args.lrpar},
             ]
         ),
         'var': torch.optim.Adam(
             [
-                {"params": model.encoder.parameters(), 'lr': args.lrvar},
+                {"params": model.variant_encoder.parameters(), 'lr': args.lrvar},
+                {"params": model.x_to_s.parameters(), 'lr': args.lrvar},
+                {"params": model.logvar_priors, 'lr': args.lrvar},
+                {"params": model.mean_priors, 'lr': args.lrvar},
+
             ]
         ),
         'inv': torch.optim.Adam(
             [
                 {"params": model.coupling_layers_z.parameters(), 'lr': args.lrinv},
                 {"params": model.x_to_z.parameters(), 'lr': args.lrinv},
+                {"params": model.invariant_encoder.parameters(), 'lr': args.lrinv},
             ]
         ),
         'future_decoder': torch.optim.Adam(
@@ -144,10 +147,11 @@ def main(args):
         "P2": None,
         "P3": None,
         "P4": None,
+        "P5": None,
     }
 
     # TRAINING HAPPENS IN 4 STEPS:
-    assert (len(args.num_epochs) == 4)
+    assert (len(args.num_epochs) == 5)
     # 1. Train the invariant encoder along with the future decoder to learn z
     # 2. Train everything except invariant encoder to learn the other variant latent variables
     training_steps = {f'P{i}': [sum(args.num_epochs[:i - 1]), sum(args.num_epochs[:i])] for i in range(1, 6)}
@@ -177,13 +181,18 @@ def main(args):
             freeze(False, (model.encoder,))
 
         if training_step == 'P3':
-            freeze(False, (model.encoder, model.x_to_z, model.x_to_s, model.past_decoder, model.future_decoder, model.coupling_layers_z, model.coupling_layers_s))
+            freeze(False, (model.invariant_encoder, model.x_to_z, model.past_decoder, model.future_decoder, model.coupling_layers_z))
+            freeze(True, (model.variant_encoder, model.x_to_s, model.coupling_layers_s))
 
-        elif training_step == 'P4':
+        if training_step == 'P4':
+            freeze(False, (model.variant_encoder, model.x_to_s, model.past_decoder, model.future_decoder, model.coupling_layers_s))
+            freeze(True, (model.invariant_encoder, model.x_to_z, model.coupling_layers_z))
+
+        elif training_step == 'P5':
             freeze(True, (model.encoder, model.x_to_z, model.x_to_s, model.past_decoder, model.future_decoder, model.coupling_layers_z))
             freeze(False, (model.x_to_s, ))
 
-        if training_step == "P4":
+        if training_step == "P5":
             train_all(args, model, optimizers, finetune_dataset, epoch, training_step, valo_envs_name, writer, beta_scheduler,
                       lr_schedulers,
                       stage='training')
@@ -198,10 +207,15 @@ def main(args):
                 validate_ade(args, model, valid_dataset, epoch, training_step, writer, stage='validation')
                 metric = validate_ade(args, model, valido_dataset, epoch, training_step, writer, stage='validation o')
 
-            elif training_step == "P4":
+            if training_step == "P4":
+                validate_ade(args, model, train_dataset, epoch, training_step, writer, stage='training')
+                validate_ade(args, model, valid_dataset, epoch, training_step, writer, stage='validation')
                 metric = validate_ade(args, model, valido_dataset, epoch, training_step, writer, stage='validation o')
 
-        if training_step in ["P3", "P4"]:
+            elif training_step == "P5":
+                metric = validate_ade(args, model, valido_dataset, epoch, training_step, writer, stage='validation o')
+
+        if training_step in ["P3", "P4", "P5"]:
             if metric < min_metric:
                 min_metric = metric
                 save_all_model(args, model, model_name, optimizers, metric, epoch, training_step)
@@ -299,27 +313,27 @@ def train_all(args, model, optimizers, train_dataset, epoch, training_step, trai
 
                 lr_scheduler_optims = lr_schedulers[training_step]
                 # choose which optimizer to use depending on the training step
-                if training_step in ['P3']:
+                if training_step in ['P1', 'P2', 'P3']:
                     if lr_scheduler_optims is not None:
                         lr_scheduler_optims['inv'].step()
                     optimizers['inv'].step()
 
-                if training_step in ['P3']:
+                if training_step in ['P3', 'P4']:
                     if lr_scheduler_optims is not None:
                         lr_scheduler_optims['future_decoder'].step()
                     optimizers['future_decoder'].step()
 
-                if training_step in ['P3']:
+                if training_step in ['P3', 'P4']:
                     if lr_scheduler_optims is not None:
                         lr_scheduler_optims['past_decoder'].step()
                     optimizers['past_decoder'].step()
 
-                if training_step in ['P1', 'P2', 'P3']:
+                if training_step in ['P1', 'P2', 'P4', 'P5']:
                     if lr_scheduler_optims is not None:
                         lr_scheduler_optims['var'].step()
                     optimizers['var'].step()
 
-                if training_step in ['P3', 'P4']:
+                if training_step in ['P4', 'P5']:
                     if lr_scheduler_optims is not None:
                         lr_scheduler_optims['par'].step()
                     optimizers['par'].step()
