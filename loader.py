@@ -19,8 +19,8 @@ def data_loader(args, paths, name, finetune=False, test=False, pt=False):
                 skip=args.skip,
                 delim=args.delim,
                 n_coordinates=args.n_coordinates,
-                finetune_ratio=args.finetune_ratio,
                 add_confidence=args.add_confidence,
+                finetune_ratio=args.finetune_ratio,
                 finetune=finetune,
                 test=test
             ))
@@ -52,6 +52,9 @@ def data_loader(args, paths, name, finetune=False, test=False, pt=False):
             add_confidence=args.add_confidence,
             alpha_e=alpha_e,
             reduce=reduce,
+            finetune_ratio=args.finetune_ratio,
+            finetune=finetune,
+            test=test
         )
 
         batch_size = set_batch_size(args.batch_method, args.batch_size, name)

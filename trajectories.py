@@ -180,6 +180,9 @@ class SynTrajectoryDataset(Dataset):
                  add_confidence=False,
                  alpha_e=0,
                  reduce=0,
+                 finetune_ratio=0.1,
+                 finetune=False,
+                 test=False
                  ):
         """
         Args:
@@ -198,6 +201,14 @@ class SynTrajectoryDataset(Dataset):
         # make the dataset short to experiment fast, uncomment if you want to restrict amount of data
         if reduce:
             data = data[:reduce]
+
+        if finetune:
+            num_batches = round(finetune_ratio * len(data))
+            data = data[:num_batches]
+
+        if test:
+            num_batches = round(finetune_ratio * len(data))
+            data = data[num_batches:]
 
         # Compute social encoding
         # Use relative distance between agents instead of coordinates of each agent

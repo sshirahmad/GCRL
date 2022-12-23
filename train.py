@@ -173,16 +173,15 @@ def main(args):
         logging.info(f"\n===> EPOCH: {epoch} ({training_step})")
 
         if training_step in ['P1', 'P2']:
-            freeze(True, (model.x_to_z, model.x_to_s, model.past_decoder, model.future_decoder, model.coupling_layers_z))
+            freeze(True, (model.x_to_z, model.x_to_s, model.past_decoder, model.future_decoder, model.coupling_layers_z, model.coupling_layers_s))
             freeze(False, (model.encoder,))
 
         if training_step == 'P3':
-            freeze(False, (model.encoder, model.x_to_z, model.x_to_s, model.past_decoder, model.future_decoder, model.coupling_layers_z))
+            freeze(False, (model.encoder, model.x_to_z, model.x_to_s, model.past_decoder, model.future_decoder, model.coupling_layers_z, model.coupling_layers_s))
 
         elif training_step == 'P4':
-            freeze(True, (model.encoder, model.x_to_z, model.x_to_s, model.past_decoder, model.future_decoder, model.coupling_layers_z, model.coupling_layers_s))
+            freeze(True, (model.encoder, model.x_to_z, model.x_to_s, model.past_decoder, model.future_decoder, model.coupling_layers_z))
             freeze(False, (model.x_to_s, ))
-
 
         if training_step == "P4":
             train_all(args, model, optimizers, finetune_dataset, epoch, training_step, valo_envs_name, writer, beta_scheduler,

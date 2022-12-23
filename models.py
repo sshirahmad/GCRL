@@ -32,7 +32,7 @@ class CouplingLayer(nn.Module):
 
         # Build scale and translate network
         if hidden_dims is None:
-            hidden_dims = [8]
+            hidden_dims = [32]
 
         modules = []
         in_channels = latent_dim // 2
@@ -519,7 +519,7 @@ class Mapping(nn.Module):
         super(Mapping, self).__init__()
 
         if hidden_dims is None:
-            hidden_dims = [8, 8]
+            hidden_dims = [32, 32]
 
         modules = []
         in_channels = traj_lstm_hidden_size + graph_lstm_hidden_size
@@ -570,7 +570,7 @@ class Classifier(nn.Module):
         super(Classifier, self).__init__()
 
         if hidden_dims is None:
-            hidden_dims = [32, 32]
+            hidden_dims = [64, 64]
 
         modules = []
         in_channels = traj_lstm_hidden_size + graph_lstm_hidden_size
@@ -606,47 +606,6 @@ class Classifier(nn.Module):
         ps = Categorical(logits=logits)
 
         return ps
-
-
-class SimpleEncoder(nn.Module):
-    def __init__(
-            self,
-            obs_len,
-            hidden_size,
-            number_agents,
-            add_confidence,
-    ):
-        super(SimpleEncoder, self).__init__()
-
-        # num of frames per sequence
-        self.obs_len = obs_len
-        self.number_agents = number_agents
-
-        self.mlp = nn.Sequential(
-            nn.Linear(obs_len * number_agents * (2 + add_confidence), hidden_size * number_agents * 2),
-            nn.LeakyReLU(),
-            nn.Linear(hidden_size * number_agents * 2, hidden_size * number_agents * 2),
-            nn.LeakyReLU(),
-            nn.Linear(hidden_size * number_agents * 2, hidden_size * number_agents),
-        )
-
-        self.mu = nn.Linear(hidden_size, hidden_size)
-        self.logvar = nn.Linear(hidden_size, hidden_size)
-
-    def forward(self, obs_traj_rel):
-        splits = obs_traj_rel.split(self.number_agents, dim=1)
-        if splits[-1].shape[1] != splits[0].shape[1]:
-            splits = splits[:-1]
-        obs_traj_rel = torch.stack(splits, dim=1)
-        obs_traj_rel = torch.permute(obs_traj_rel, (1, 2, 0, 3))
-        obs_traj_rel = obs_traj_rel.flatten(start_dim=1)
-
-        encoded = self.mlp(obs_traj_rel)
-
-        encoded = torch.stack(encoded.split(encoded.shape[1] // self.number_agents, dim=1), dim=1)
-        encoded = encoded.flatten(start_dim=0, end_dim=1)
-
-        return encoded
 
 
 # class Classifier(nn.Module):
@@ -693,6 +652,73 @@ class SimpleEncoder(nn.Module):
 #         p = Categorical(logits=logits)
 #
 #         return p
+
+class SimpleStyleEncoder(nn.Module):
+    def __init__(self, hidden_size):
+        super(SimpleStyleEncoder, self).__init__()
+
+        # style encoder
+        self.encoder = nn.Sequential(
+            nn.Linear(40, hidden_size * 4),
+            nn.ReLU(),
+            nn.Linear(hidden_size * 4, hidden_size * 2)
+        )
+
+    def forward(self, style_input):
+        # for batch size 68
+        # style 20 x 128 x 2
+        style_input = torch.stack(style_input.split(2, dim=1), dim=1)[:, :, 1, :]  # 20 x 64 x 2
+        style_input = torch.permute(style_input, (1, 0, 2))  # 64 x 20 x 2
+        style_input = torch.flatten(style_input, 1)  # 64 x 40
+
+        # MLP
+        style_seq = self.encoder(style_input)
+        encoded = torch.stack(style_seq.split(style_seq.shape[1] // 2, dim=1), dim=1)
+        encoded = encoded.flatten(start_dim=0, end_dim=1)
+
+        return encoded
+
+
+class SimpleEncoder(nn.Module):
+    def __init__(
+            self,
+            obs_len,
+            hidden_size,
+            number_agents,
+            add_confidence,
+    ):
+        super(SimpleEncoder, self).__init__()
+
+        # num of frames per sequence
+        self.obs_len = obs_len
+        self.number_agents = number_agents
+
+        self.mlp = nn.Sequential(
+            nn.Linear(obs_len * number_agents * (2 + add_confidence), hidden_size * 4),
+            nn.LeakyReLU(),
+            nn.Linear(hidden_size * 4, hidden_size * 4),
+            nn.LeakyReLU(),
+            nn.Linear(hidden_size * 4, hidden_size * number_agents),
+        )
+
+        self.mu = nn.Linear(hidden_size, hidden_size)
+        self.logvar = nn.Linear(hidden_size, hidden_size)
+
+    def forward(self, obs_traj_rel):
+        splits = obs_traj_rel.split(self.number_agents, dim=1)
+        if splits[-1].shape[1] != splits[0].shape[1]:
+            splits = splits[:-1]
+        obs_traj_rel = torch.stack(splits, dim=1)
+        obs_traj_rel = torch.permute(obs_traj_rel, (1, 2, 0, 3))
+        obs_traj_rel = obs_traj_rel.flatten(start_dim=1)
+
+        encoded = self.mlp(obs_traj_rel)
+
+        encoded = torch.stack(encoded.split(encoded.shape[1] // self.number_agents, dim=1), dim=1)
+        encoded = encoded.flatten(start_dim=0, end_dim=1)
+
+        return encoded
+
 
 
 class SimpleDecoder(nn.Module):
@@ -791,7 +817,9 @@ class CRMF(nn.Module):
                                             args.z_dim, args.teachingratio)
 
         elif args.model_name == "mlp":
-            self.encoder = SimpleEncoder(args.obs_len, args.traj_lstm_hidden_size + args.graph_lstm_hidden_size,
+            self.variant_encoder = SimpleStyleEncoder(args.traj_lstm_hidden_size + args.graph_lstm_hidden_size)
+
+            self.invariant_encoder = SimpleEncoder(args.obs_len, args.traj_lstm_hidden_size + args.graph_lstm_hidden_size,
                                          NUMBER_PERSONS, args.add_confidence)
 
             self.past_decoder = SimpleDecoder(
@@ -828,11 +856,11 @@ class CRMF(nn.Module):
                 pe = Categorical(logits=self.pi_priore)
                 if self.model_name == "lstm":
                     concat_hidden_states = self.encoder(obs_traj_rel, seq_start_end, training_step)
+                    q_zgx = self.x_to_z(concat_hidden_states)
+                    q_sgx = self.x_to_s(concat_hidden_states)
                 elif self.model_name == "mlp":
-                    concat_hidden_states = self.encoder(obs_traj_rel)
-
-                q_zgx = self.x_to_z(concat_hidden_states)
-                q_sgx = self.x_to_s(concat_hidden_states)
+                    q_zgx = self.x_to_z(self.invariant_encoder(obs_traj_rel))
+                    q_sgx = self.x_to_s(self.variant_encoder(augm_data))
 
                 s_vec = q_sgx.rsample([self.num_samples, ])
                 z_vec = q_zgx.rsample([self.num_samples, ])
@@ -897,11 +925,11 @@ class CRMF(nn.Module):
             else:
                 if self.model_name == "lstm":
                     concat_hidden_states = self.encoder(obs_traj_rel, seq_start_end, training_step)
+                    q_zgx = self.x_to_z(concat_hidden_states)
+                    q_sgx = self.x_to_s(concat_hidden_states)
                 elif self.model_name == "mlp":
-                    concat_hidden_states = self.encoder(obs_traj_rel)
-
-                q_zgx = self.x_to_z(concat_hidden_states)
-                q_sgx = self.x_to_s(concat_hidden_states)
+                    q_zgx = self.x_to_z(self.invariant_encoder(obs_traj_rel))
+                    q_sgx = self.x_to_s(self.variant_encoder(augm_data))
 
                 # calculate q(y|theta, x)
                 z_vec = q_zgx.rsample()

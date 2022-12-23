@@ -442,9 +442,8 @@ def save_all_model(args, model, model_name, optimizers, metric, epoch, training_
             'future_decoder': model.future_decoder.state_dict(),
             'past_decoder': model.past_decoder.state_dict(),
             'coupling_layers_z': model.coupling_layers_z.state_dict(),
+            'coupling_layers_s': model.coupling_layers_s.state_dict(),
             'pi_priore': model.pi_priore,
-            'mean_priors': model.mean_priors,
-            'logvar_priors': model.logvar_priors,
         },
         'optimizers': {
             key: val.state_dict() for key, val in optimizers.items()
@@ -510,8 +509,7 @@ def load_all_model(args, model, optimizers, lr_schedulers=None, training_steps=N
 
         # variational models
         model.pi_priore.data = models_checkpoint['pi_priore'].data.cuda()
-        model.mean_priors.data = models_checkpoint['mean_priors'].data.cuda()
-        model.logvar_priors.data = models_checkpoint['logvar_priors'].data.cuda()
+        model.coupling_layers_s.load_state_dict(models_checkpoint['coupling_layers_s'])
         model.x_to_s.load_state_dict(models_checkpoint['x_to_s'])
         if optimizers != None:
             optimizers['par'].load_state_dict(checkpoint['optimizers']['par'])
