@@ -7,9 +7,9 @@ def get_parser():
     parser.add_argument("--log_dir", default="./log/", help="Directory containing logging file")
     parser.add_argument("--model_dir", default="./models/E1/", help="Directory containing logging file")
     parser.add_argument("--tfdir", default='./runs/E1/', type=str)
-    parser.add_argument("--dataset_name", default="eth", type=str)
+    parser.add_argument("--dataset_name", default="v4", type=str)
     parser.add_argument("--model_name", default="lstm", type=str)
-    parser.add_argument("--resume", default="./models/E1//P4/CRMF_epoch_349.pth.tar",
+    parser.add_argument("--resume", default="./models/E1//P6/CRMF_epoch_119.pth.tar",
                         type=str, metavar="PATH", help="path to latest checkpoint (default: none)")
 
     # randomness
@@ -41,23 +41,23 @@ def get_parser():
                         help="Filter only certain environments (i.e 0.1-0.3-0.5)")
     parser.add_argument("--skip", default=1, type=int)
     parser.add_argument("--delim", default="\t")
-    parser.add_argument("--finetune_ratio", default=0.3, type=float, help="Number of batches to be used in finetuning")
+    parser.add_argument("--finetune_ratio", default=0.1, type=float, help="Number of batches to be used in finetuning")
     parser.add_argument("--batch_method", default='hom', type=str,
                         help='Use Homogeneous (hom), Heterogeneous (het) or alternated homogeneous (alt) batches during training')
     parser.add_argument("--batch_size", default='64', type=str)
     parser.add_argument("--shuffle", default=True, type=bool)
     parser.add_argument('--reduce', default=0, type=int)
-    parser.add_argument('--reduceall', default=0, type=int)
+    parser.add_argument('--reduceall', default=9000, type=int)
 
 
     # architecture (VE)
-    parser.add_argument("--z_dim", type=int, default=16, help="Dimension of z latent variable")
-    parser.add_argument("--s_dim", type=int, default=16, help="Dimension of s latent variable")
-    parser.add_argument("--num_envs", default=5, type=int, help="Number of environments in the dataset")
+    parser.add_argument("--z_dim", type=int, default=8, help="Dimension of z latent variable")
+    parser.add_argument("--s_dim", type=int, default=8, help="Dimension of s latent variable")
+    parser.add_argument("--num_envs", default=3, type=int, help="Number of environments in the dataset")
 
     # spurious feature
-    parser.add_argument("--add_confidence", default=True, type=bool)
-    parser.add_argument("--domain_shifts", default='1-2-4-8-64', type=str,
+    parser.add_argument("--add_confidence", default=False, type=bool)
+    parser.add_argument("--domain_shifts", default='0', type=str,
                         help='domain_shifts per environment: hotel,univ,zara1,zara2,eth')
 
     return parser
@@ -88,7 +88,7 @@ def get_training_parser():
 
     # general training
     parser.add_argument("--finetune", default="", type=str)
-    parser.add_argument("--num_epochs", default='150-100-50-100-100', type=lambda x: int_tuple(x, '-'))  # '150-100-150',
+    parser.add_argument("--num_epochs", default='50-20-20-1-20-50', type=lambda x: int_tuple(x, '-'))  # '150-100-150',
 
     # learning rates
     parser.add_argument("--lrvar", default=1e-3, type=float,

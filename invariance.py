@@ -62,6 +62,10 @@ def main(args):
 
     # create the model
     model = CRMF(args).cuda()
+    if args.resume:
+        load_all_model(args, model, None)
+        model.cuda()
+
     if training_step == "P7":
         calculate_distance_posteriors(model, valid_dataset, valido_dataset)
     else:
@@ -120,7 +124,7 @@ def calculate_distance_posteriors(model, valid_dataset, valido_dataset=None):
         for val_idx, (loader, loader_name) in enumerate(zip(valid_dataset['loaders'], valid_dataset['names'])):
             for batch_idx, batch in enumerate(loader):
                 batch = [tensor.cuda() for tensor in batch]
-                (obs_traj, fut_traj, _, _, _) = batch
+                (obs_traj, fut_traj, _, _, _, _, _) = batch
 
                 z, s = model(batch, "P7", env_idx=val_idx)
                 z_vec += [z.rsample()]

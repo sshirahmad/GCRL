@@ -10,6 +10,8 @@ from losses import erm_loss, irm_loss
 import math
 from torch.optim.lr_scheduler import OneCycleLR
 from torch.nn.utils import clip_grad
+from scipy.optimize import linear_sum_assignment as linear_assignment
+
 
 def main(args):
     # Set environment variables
@@ -71,15 +73,14 @@ def main(args):
         'par': torch.optim.Adam(
             [
                 {"params": model.pi_priore, 'lr': args.lrpar},
+                {"params": model.logvar_priors, 'lr': args.lrpar},
+                {"params": model.mean_priors, 'lr': args.lrpar},
             ]
         ),
         'var': torch.optim.Adam(
             [
                 {"params": model.variant_encoder.parameters(), 'lr': args.lrvar},
                 {"params": model.x_to_s.parameters(), 'lr': args.lrvar},
-                {"params": model.logvar_priors, 'lr': args.lrvar},
-                {"params": model.mean_priors, 'lr': args.lrvar},
-
             ]
         ),
         'inv': torch.optim.Adam(
@@ -148,13 +149,14 @@ def main(args):
         "P3": None,
         "P4": None,
         "P5": None,
+        "P6": None
     }
 
     # TRAINING HAPPENS IN 4 STEPS:
-    assert (len(args.num_epochs) == 5)
+    assert (len(args.num_epochs) == 6)
     # 1. Train the invariant encoder along with the future decoder to learn z
     # 2. Train everything except invariant encoder to learn the other variant latent variables
-    training_steps = {f'P{i}': [sum(args.num_epochs[:i - 1]), sum(args.num_epochs[:i])] for i in range(1, 6)}
+    training_steps = {f'P{i}': [sum(args.num_epochs[:i - 1]), sum(args.num_epochs[:i])] for i in range(1, 7)}
     print(training_steps)
 
     if args.resume:
@@ -172,50 +174,55 @@ def main(args):
     for epoch in range(args.start_epoch, sum(args.num_epochs) + 1):
 
         training_step = get_training_step(epoch)
-        if training_step in ["P1", "P2"]:
-            continue
         logging.info(f"\n===> EPOCH: {epoch} ({training_step})")
 
         if training_step in ['P1', 'P2']:
-            freeze(True, (model.x_to_z, model.x_to_s, model.past_decoder, model.future_decoder, model.coupling_layers_z, model.coupling_layers_s))
-            freeze(False, (model.encoder,))
+            freeze(True, (model.x_to_z, model.x_to_s, model.past_decoder, model.future_decoder, model.coupling_layers_z))
+            freeze(False, (model.variant_encoder, model.invariant_encoder))
 
         if training_step == 'P3':
-            freeze(False, (model.invariant_encoder, model.x_to_z, model.past_decoder, model.future_decoder, model.coupling_layers_z))
-            freeze(True, (model.variant_encoder, model.x_to_s, model.coupling_layers_s))
+            freeze(True, (model.future_decoder, model.coupling_layers_z))
+            freeze(False, (model.variant_encoder, model.invariant_encoder, model.x_to_s, model.x_to_z, model.past_decoder))
 
         if training_step == 'P4':
-            freeze(False, (model.variant_encoder, model.x_to_s, model.past_decoder, model.future_decoder, model.coupling_layers_s))
-            freeze(True, (model.invariant_encoder, model.x_to_z, model.coupling_layers_z))
+            pass
 
         elif training_step == 'P5':
-            freeze(True, (model.encoder, model.x_to_z, model.x_to_s, model.past_decoder, model.future_decoder, model.coupling_layers_z))
-            freeze(False, (model.x_to_s, ))
+            freeze(True, (model.invariant_encoder, model.x_to_z, model.past_decoder, model.future_decoder, model.coupling_layers_z))
+            freeze(False, (model.variant_encoder, model.x_to_s))
 
-        if training_step == "P5":
-            train_all(args, model, optimizers, finetune_dataset, epoch, training_step, valo_envs_name, writer, beta_scheduler,
+        elif training_step == "P6":
+            freeze(False, (model.invariant_encoder, model.variant_encoder, model.x_to_s, model.x_to_z, model.past_decoder, model.future_decoder, model.coupling_layers_z))
+
+        if training_step in ["P1", "P2", "P3", "P5", "P6"]:
+            train_all(args, model, optimizers, train_dataset, epoch, training_step, train_envs_name, writer,
+                      beta_scheduler,
                       lr_schedulers,
                       stage='training')
-        else:
-            train_all(args, model, optimizers, train_dataset, epoch, training_step, train_envs_name, writer, beta_scheduler,
+
+        elif training_step == "P4":
+            with torch.no_grad():
+                train_all(args, model, optimizers, train_dataset, epoch, training_step, train_envs_name, writer,
+                          beta_scheduler,
+                          lr_schedulers,
+                          stage='training')
+
+        elif training_step == "P7":
+            train_all(args, model, optimizers, finetune_dataset, epoch, training_step, valo_envs_name, writer,
+                      beta_scheduler,
                       lr_schedulers,
                       stage='training')
 
         with torch.no_grad():
-            if training_step == "P3":
+            if training_step == "P6":
                 validate_ade(args, model, train_dataset, epoch, training_step, writer, stage='training')
                 validate_ade(args, model, valid_dataset, epoch, training_step, writer, stage='validation')
                 metric = validate_ade(args, model, valido_dataset, epoch, training_step, writer, stage='validation o')
 
-            if training_step == "P4":
-                validate_ade(args, model, train_dataset, epoch, training_step, writer, stage='training')
-                validate_ade(args, model, valid_dataset, epoch, training_step, writer, stage='validation')
+            elif training_step == "P7":
                 metric = validate_ade(args, model, valido_dataset, epoch, training_step, writer, stage='validation o')
 
-            elif training_step == "P5":
-                metric = validate_ade(args, model, valido_dataset, epoch, training_step, writer, stage='validation o')
-
-        if training_step in ["P3", "P4", "P5"]:
+        if training_step in ["P6", "P7"]:
             if metric < min_metric:
                 min_metric = metric
                 save_all_model(args, model, model_name, optimizers, metric, epoch, training_step)
@@ -226,7 +233,8 @@ def main(args):
     writer.close()
 
 
-def train_all(args, model, optimizers, train_dataset, epoch, training_step, train_envs_name, writer, beta_scheduler, lr_schedulers,
+def train_all(args, model, optimizers, train_dataset, epoch, training_step, train_envs_name, writer, beta_scheduler,
+              lr_schedulers,
               stage,
               update=True):
     """
@@ -245,8 +253,12 @@ def train_all(args, model, optimizers, train_dataset, epoch, training_step, trai
 
     # Homogenous batches
     total_loss_meter = AverageMeter("Total Loss", ":.4f")
-    e_loss_meter = AverageMeter("ELBO Loss", ":.4f")
+    e1_loss_meter = AverageMeter("ELBO Loss", ":.4f")
+    e2_loss_meter = AverageMeter("ELBO Loss", ":.4f")
+    e3_loss_meter = AverageMeter("ELBO Loss", ":.4f")
     p_loss_meter = AverageMeter("Prediction Loss", ":.4f")
+    s_vec = []
+    clusters = []
     for train_idx, train_loader in enumerate(train_dataset['loaders']):
         loss_meter = AverageMeter("Loss", ":.4f")
         progress = ProgressMeter(len(train_loader), [loss_meter],
@@ -280,31 +292,68 @@ def train_all(args, model, optimizers, train_dataset, epoch, training_step, trai
                 opt.zero_grad()
 
             if training_step in ["P1", "P2"]:
+                l2_loss_rel1 = []
+                l2_loss_rel2 = []
+                pred_past_rel1, pred_past_rel2 = model(batch, training_step)
+
+                l2_loss_rel1.append(l2_loss(pred_past_rel1, obs_traj_rel, mode="raw"))
+                l2_loss_rel2.append(l2_loss(pred_past_rel2, obs_traj_rel, mode="raw"))
+                l2_loss_rel1 = torch.stack(l2_loss_rel1, dim=1)
+                l2_loss_rel2 = torch.stack(l2_loss_rel2, dim=1)
+                loss = erm_loss(l2_loss_rel1, seq_start_end) + erm_loss(l2_loss_rel2, seq_start_end)
+
+            elif training_step == "P3":
                 l2_loss_rel = []
-                pred_past_rel = model(batch, training_step, env_idx=train_idx)
+                pred_past_rel = model(batch, training_step)
 
                 l2_loss_rel.append(l2_loss(pred_past_rel, obs_traj_rel, mode="raw"))
                 l2_loss_rel = torch.stack(l2_loss_rel, dim=1)
                 loss = erm_loss(l2_loss_rel, seq_start_end)
 
+            elif training_step == "P4":
+                s = model(batch, training_step)
+                s_vec += [s]
+                clusters += [torch.tensor(train_idx).repeat(s.shape[0])]
+                continue
+
+            elif training_step == "P5":
+                l2_loss_elbo = []
+                E = model(batch, training_step)
+                l2_loss_elbo.append(E)
+                l2_loss_elbo = torch.stack(l2_loss_elbo, dim=1)
+                elbo_loss = erm_loss(l2_loss_elbo, seq_start_end)
+                loss = - elbo_loss
+
             else:
                 l2_loss_rel = []
-                l2_loss_elbo = []
+                l2_loss_elbo1 = []
+                l2_loss_elbo2 = []
+                l2_loss_elbo3 = []
 
-                pred_q_rel, E = model(batch, training_step)
-                pred_loss = l2_loss(pred_q_rel, fut_traj_rel, mode="raw")
+                pred_q_rel, E1, E2, E3 = model(batch, training_step)
 
-                l2_loss_rel.append(pred_loss)
-                l2_loss_elbo.append(E)
+                for i in range(args.num_samples):
+                    pred_loss = - l2_loss(pred_q_rel[i], fut_traj_rel, mode="raw")
+                    l2_loss_rel.append(pred_loss)
+
+                l2_loss_elbo1.append(E1)
+                l2_loss_elbo2.append(E2)
+                l2_loss_elbo3.append(E3)
 
                 l2_loss_rel = torch.stack(l2_loss_rel, dim=1)
-                l2_loss_elbo = torch.stack(l2_loss_elbo, dim=1)
+                l2_loss_elbo1 = torch.stack(l2_loss_elbo1, dim=1)
+                l2_loss_elbo2 = torch.stack(l2_loss_elbo2, dim=1)
+                l2_loss_elbo3 = torch.stack(l2_loss_elbo3, dim=1)
                 predict_loss = erm_loss(l2_loss_rel, seq_start_end)
-                elbo_loss = erm_loss(l2_loss_elbo, seq_start_end)
+                elbo_loss1 = erm_loss(l2_loss_elbo1, seq_start_end)
+                elbo_loss2 = erm_loss(l2_loss_elbo2, seq_start_end)
+                elbo_loss3 = erm_loss(l2_loss_elbo3, seq_start_end)
 
-                loss = predict_loss + (- elbo_loss)
+                loss = (- predict_loss) + (- elbo_loss1) + (- elbo_loss2) + (- elbo_loss3)
 
-                e_loss_meter.update(elbo_loss.item(), obs_traj.shape[1])
+                e1_loss_meter.update(elbo_loss1.item(), obs_traj.shape[1])
+                e2_loss_meter.update(elbo_loss2.item(), obs_traj.shape[1])
+                e3_loss_meter.update(elbo_loss3.item(), obs_traj.shape[1])
                 p_loss_meter.update(predict_loss.item(), obs_traj.shape[1])
 
             # backpropagate if needed
@@ -313,27 +362,27 @@ def train_all(args, model, optimizers, train_dataset, epoch, training_step, trai
 
                 lr_scheduler_optims = lr_schedulers[training_step]
                 # choose which optimizer to use depending on the training step
-                if training_step in ['P1', 'P2', 'P3']:
+                if training_step in ['P1', 'P2', 'P3', 'P6']:
                     if lr_scheduler_optims is not None:
                         lr_scheduler_optims['inv'].step()
                     optimizers['inv'].step()
 
-                if training_step in ['P3', 'P4']:
+                if training_step in ['P6']:
                     if lr_scheduler_optims is not None:
                         lr_scheduler_optims['future_decoder'].step()
                     optimizers['future_decoder'].step()
 
-                if training_step in ['P3', 'P4']:
+                if training_step in ['P3', 'P6']:
                     if lr_scheduler_optims is not None:
                         lr_scheduler_optims['past_decoder'].step()
                     optimizers['past_decoder'].step()
 
-                if training_step in ['P1', 'P2', 'P4', 'P5']:
+                if training_step in ['P1', 'P2', 'P3', 'P5', 'P6']:
                     if lr_scheduler_optims is not None:
                         lr_scheduler_optims['var'].step()
                     optimizers['var'].step()
 
-                if training_step in ['P4', 'P5']:
+                if training_step in ['P6']:
                     if lr_scheduler_optims is not None:
                         lr_scheduler_optims['par'].step()
                     optimizers['par'].step()
@@ -342,12 +391,28 @@ def train_all(args, model, optimizers, train_dataset, epoch, training_step, trai
             loss_meter.update(loss.item(), obs_traj.shape[1])
             progress.display(batch_idx + 1)
 
-    if training_step in ["P1", "P2"]:
-        writer.add_scalar(f"encoder_loss/{stage}", total_loss_meter.avg, epoch)
+    # train GMM
+    if training_step == "P4":
+        S = torch.cat(s_vec, 0)
+        S = torch.nn.functional.normalize(S, dim=1).detach().cpu().numpy()
+        Y = torch.cat(clusters, 0).numpy()
+        pre = model.gmm.fit_predict(S)
+        print('Acc={:.4f}%'.format(cluster_acc(pre, Y)[0] * 100))
 
-    else:
+    if training_step in ["P1", "P2"]:
+        writer.add_scalar(f"STGAT_loss/{stage}", total_loss_meter.avg, epoch)
+
+    elif training_step == "P3":
+        writer.add_scalar(f"reconstruction_loss/{stage}", total_loss_meter.avg, epoch)
+
+    elif training_step in ["P5"]:
         writer.add_scalar(f"variational_loss/{stage}", total_loss_meter.avg, epoch)
-        writer.add_scalar(f"elbo_loss/{stage}", e_loss_meter.avg, epoch)
+
+    elif training_step in ["P6"]:
+        writer.add_scalar(f"variational_loss/{stage}", total_loss_meter.avg, epoch)
+        writer.add_scalar(f"reconstruction_loss/{stage}", e1_loss_meter.avg, epoch)
+        writer.add_scalar(f"sreg/{stage}", e2_loss_meter.avg, epoch)
+        writer.add_scalar(f"zreg/{stage}", e3_loss_meter.avg, epoch)
         writer.add_scalar(f"pred_loss/{stage}", p_loss_meter.avg, epoch)
 
 
@@ -455,6 +520,18 @@ def cal_ade_fde(fut_traj, pred_fut_traj):
     ade = displacement_error(pred_fut_traj, fut_traj, mode="raw")
     fde = final_displacement_error(pred_fut_traj[-1], fut_traj[-1], mode="raw")
     return ade, fde
+
+
+def cluster_acc(Y_pred, Y):
+    assert Y_pred.size == Y.size
+
+    D = max(Y_pred.max(), Y.max()) + 1
+    w = np.zeros((D, D), dtype=np.int64)
+    for i in range(Y_pred.size):
+        w[Y_pred[i], Y[i]] += 1
+    row_ind, col_ind = linear_assignment(w.max() - w)
+
+    return sum(w[row_ind, col_ind]) * 1.0 / Y_pred.size, w
 
 
 def plot_grad_flow(named_parameters):

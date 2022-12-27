@@ -175,7 +175,7 @@ def l2_loss(pred_fut_traj, fut_traj, mode="average"):
     - loss: l2 loss depending on mode
     """
     if len(pred_fut_traj.size()) == 4:
-        loss = (fut_traj[:, :, :2].repeat(pred_fut_traj.shape[1], 1, 1, 1).permute(0, 2, 1, 3) - pred_fut_traj.permute(1, 2, 0, 3)) ** 2
+        loss = (fut_traj[:, :, :2].repeat(pred_fut_traj.shape[0], 1, 1, 1).permute(0, 2, 1, 3) - pred_fut_traj.permute(0, 2, 1, 3)) ** 2
     else:
         loss = (fut_traj[:, :, :2].permute(1, 0, 2) - pred_fut_traj.permute(1, 0, 2)) ** 2
 
@@ -433,25 +433,47 @@ def set_name_finetune(finetune):
 
 
 def save_all_model(args, model, model_name, optimizers, metric, epoch, training_step):
-    checkpoint = {
-        'epoch': epoch + 1,
-        'state_dicts': {
-            'variant_encoder': model.variant_encoder.state_dict(),
-            'invariant_encoder': model.invariant_encoder.state_dict(),
-            'x_to_z': model.x_to_z.state_dict(),
-            'x_to_s': model.x_to_s.state_dict(),
-            'future_decoder': model.future_decoder.state_dict(),
-            'past_decoder': model.past_decoder.state_dict(),
-            'coupling_layers_z': model.coupling_layers_z.state_dict(),
-            'logvar_priors': model.logvar_priors,
-            'mean_priors': model.mean_priors,
-            'pi_priore': model.pi_priore,
-        },
-        'optimizers': {
-            key: val.state_dict() for key, val in optimizers.items()
-        },
-        'metric': metric,
-    }
+
+    if training_step == "P4":
+        checkpoint = {
+            'epoch': epoch + 1,
+            'state_dicts': {
+                'variant_encoder': model.variant_encoder.state_dict(),
+                'invariant_encoder': model.invariant_encoder.state_dict(),
+                'x_to_z': model.x_to_z.state_dict(),
+                'x_to_s': model.x_to_s.state_dict(),
+                'future_decoder': model.future_decoder.state_dict(),
+                'past_decoder': model.past_decoder.state_dict(),
+                'coupling_layers_z': model.coupling_layers_z.state_dict(),
+                'logvar_priors': torch.log(torch.from_numpy(model.gmm.covariances_).cuda().float()),
+                'mean_priors':  torch.from_numpy(model.gmm.means_).cuda().float(),
+                'pi_priore': torch.log(torch.from_numpy(model.gmm.weights_).cuda().float()) + torch.log(torch.from_numpy(model.gmm.weights_).cuda().float().sum()),
+            },
+            'optimizers': {
+                key: val.state_dict() for key, val in optimizers.items()
+            },
+            'metric': metric,
+        }
+    else:
+        checkpoint = {
+            'epoch': epoch + 1,
+            'state_dicts': {
+                'variant_encoder': model.variant_encoder.state_dict(),
+                'invariant_encoder': model.invariant_encoder.state_dict(),
+                'x_to_z': model.x_to_z.state_dict(),
+                'x_to_s': model.x_to_s.state_dict(),
+                'future_decoder': model.future_decoder.state_dict(),
+                'past_decoder': model.past_decoder.state_dict(),
+                'coupling_layers_z': model.coupling_layers_z.state_dict(),
+                'logvar_priors': model.logvar_priors,
+                'mean_priors': model.mean_priors,
+                'pi_priore': model.pi_priore,
+            },
+            'optimizers': {
+                key: val.state_dict() for key, val in optimizers.items()
+            },
+            'metric': metric,
+        }
 
     if args.model_dir:
         filefolder = f'{args.model_dir}/{training_step}'
@@ -513,6 +535,9 @@ def load_all_model(args, model, optimizers, lr_schedulers=None, training_steps=N
         model.pi_priore.data = models_checkpoint['pi_priore'].data.cuda()
         model.logvar_priors.data = models_checkpoint['logvar_priors'].data.cuda()
         model.mean_priors.data = models_checkpoint['mean_priors'].data.cuda()
+        print(torch.exp(model.logvar_priors))
+        print(model.mean_priors)
+        print(torch.softmax(model.pi_priore, dim=0))
         model.x_to_s.load_state_dict(models_checkpoint['x_to_s'])
         if optimizers != None:
             optimizers['par'].load_state_dict(checkpoint['optimizers']['par'])
