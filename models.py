@@ -460,7 +460,6 @@ class Decoder(nn.Module):
 
         self.obs_len = obs_len
 
-        self.logvar = nn.Parameter(torch.zeros(n_coordinates))
         self.n_coordinates = n_coordinates
         self.pred_lstm_hidden_size = z_dim + s_dim
         self.pred_hidden2pos = nn.Linear(self.pred_lstm_hidden_size, n_coordinates)
@@ -496,7 +495,6 @@ class Decoder(nn.Module):
             # average over s and z
             pred_lstm_hidden, pred_lstm_c_t = self.pred_lstm_model(input_t, (pred_lstm_hidden, pred_lstm_c_t))
             output = self.pred_hidden2pos(pred_lstm_hidden)
-
             pred_traj_rel += [output]
 
         return torch.stack(pred_traj_rel)
@@ -512,7 +510,7 @@ class Mapping(nn.Module):
         super(Mapping, self).__init__()
 
         if hidden_dims is None:
-            hidden_dims = [32, 32]
+            hidden_dims = [2]
 
         modules = []
         in_channels = traj_lstm_hidden_size + graph_lstm_hidden_size
@@ -529,7 +527,6 @@ class Mapping(nn.Module):
         self.s_dim = s_dim
         self.fc_mu = nn.Linear(hidden_dims[-1], s_dim)
         self.fc_logvar = nn.Linear(hidden_dims[-1], s_dim)
-        self.final = nn.Linear(hidden_dims[-1], s_dim)
 
         self._initialize_weights()
 
@@ -546,7 +543,7 @@ class Mapping(nn.Module):
 
     def forward(self, hidden_states, mode="normal"):
         if mode == "normal":
-            s_vec = self.final(self.mapping(hidden_states))
+            s_vec = self.fc_mu(self.mapping(hidden_states))
 
             return s_vec
         else:
@@ -598,10 +595,14 @@ class SimpleEncoder(nn.Module):
         self.number_agents = number_agents
 
         self.mlp = nn.Sequential(
-            nn.Linear(obs_len * number_agents * (2 + add_confidence), hidden_size * 4),
-            nn.LeakyReLU(),
-            nn.Linear(hidden_size * 4, hidden_size * 4),
-            nn.LeakyReLU(),
+            nn.Linear(obs_len * number_agents * (2 + add_confidence), hidden_size * 32),
+            nn.ReLU(),
+            nn.Linear(hidden_size * 32, hidden_size * 16),
+            nn.ReLU(),
+            nn.Linear(hidden_size * 16, hidden_size * 8),
+            nn.ReLU(),
+            nn.Linear(hidden_size * 8, hidden_size * 4),
+            nn.ReLU(),
             nn.Linear(hidden_size * 4, hidden_size * number_agents),
         )
 
@@ -638,16 +639,16 @@ class SimpleDecoder(nn.Module):
 
         self.noise_fixed = False
 
-        self.mlp1 = nn.Sequential(
-            nn.Linear(hidden_size * number_of_agents, 2 * number_of_agents * hidden_size),
-            nn.LeakyReLU(),
-            nn.Linear(2 * number_of_agents * hidden_size, 2 * number_of_agents * hidden_size)
-        )
-
-        self.mlp2 = nn.Sequential(
-            nn.Linear(2 * number_of_agents * hidden_size, number_of_agents * 2 * seq_len),
-            nn.LeakyReLU(),
-            nn.Linear(number_of_agents * 2 * seq_len, number_of_agents * 2 * seq_len)
+        self.mlp = nn.Sequential(
+            nn.Linear(hidden_size * number_of_agents, hidden_size * 4),
+            nn.ReLU(),
+            nn.Linear(hidden_size * 4, hidden_size * 8),
+            nn.ReLU(),
+            nn.Linear(hidden_size * 8, hidden_size * 16),
+            nn.ReLU(),
+            nn.Linear(hidden_size * 16, hidden_size * 32),
+            nn.ReLU(),
+            nn.Linear(hidden_size * 32, 2 * seq_len * number_of_agents)
         )
 
         self.number_of_agents = number_of_agents
@@ -656,9 +657,7 @@ class SimpleDecoder(nn.Module):
         traj_lstm_hidden_state = torch.stack(latent_space.split(self.number_of_agents, dim=1), dim=1)
         out = traj_lstm_hidden_state.flatten(start_dim=2)
 
-        out = self.mlp1(out)
-
-        out = self.mlp2(out)
+        out = self.mlp(out)
 
         out = torch.reshape(out, (out.shape[0], out.shape[1], self.number_of_agents, self.seq_len, 2))
 
@@ -705,21 +704,23 @@ class CRMF(nn.Module):
 
         self.ps = []
         for i in range(self.num_envs):
-            self.ps += [MultivariateNormal(i * torch.ones(args.s_dim).cuda(), torch.diag((i + 1) * torch.ones(args.s_dim).cuda()))]
+            self.ps += [MultivariateNormal(i * torch.ones(args.s_dim).cuda(),
+                                           torch.diag((i + 1) * torch.ones(args.s_dim).cuda()))]
 
-        self.x_to_z = Mapping(args.traj_lstm_hidden_size, args.graph_lstm_hidden_size, args.z_dim)
-        self.x_to_s = Mapping(args.traj_lstm_hidden_size, args.graph_lstm_hidden_size, args.s_dim)
+        self.x_to_z = Mapping(2, 0, args.z_dim)
+        self.x_to_s = Mapping(2, 0, args.s_dim)
 
         if args.model_name == "lstm":
 
             self.variant_encoder = Encoder(args.obs_len, args.fut_len, args.n_coordinates,
-                                   args.traj_lstm_hidden_size, args.n_units, args.n_heads,
-                                   args.graph_network_out_dims, args.dropout, args.alpha,
-                                   args.graph_lstm_hidden_size, args.add_confidence)
+                                           args.traj_lstm_hidden_size, args.n_units, args.n_heads,
+                                           args.graph_network_out_dims, args.dropout, args.alpha,
+                                           args.graph_lstm_hidden_size, args.add_confidence)
+
             self.invariant_encoder = Encoder(args.obs_len, args.fut_len, args.n_coordinates,
-                                   args.traj_lstm_hidden_size, args.n_units, args.n_heads,
-                                   args.graph_network_out_dims, args.dropout, args.alpha,
-                                   args.graph_lstm_hidden_size, args.add_confidence)
+                                             args.traj_lstm_hidden_size, args.n_units, args.n_heads,
+                                             args.graph_network_out_dims, args.dropout, args.alpha,
+                                             args.graph_lstm_hidden_size, args.add_confidence)
 
             self.past_decoder = Decoder(args.obs_len, args.n_coordinates, args.z_dim, args.s_dim)
 
@@ -727,22 +728,28 @@ class CRMF(nn.Module):
                                             args.z_dim, args.teachingratio)
 
         elif args.model_name == "mlp":
-            self.variant_encoder = SimpleStyleEncoder(args.traj_lstm_hidden_size + args.graph_lstm_hidden_size)
+            self.variant_encoder = SimpleEncoder(args.obs_len, 2,
+                                                 NUMBER_PERSONS, args.add_confidence)
 
-            self.invariant_encoder = SimpleEncoder(args.obs_len, args.traj_lstm_hidden_size + args.graph_lstm_hidden_size,
-                                         NUMBER_PERSONS, args.add_confidence)
+            self.invariant_encoder = SimpleEncoder(args.obs_len, 2,
+                                                   NUMBER_PERSONS, args.add_confidence)
 
-            self.past_decoder = SimpleDecoder(
-                args.obs_len,
-                args.s_dim + args.z_dim,
-                NUMBER_PERSONS,
-            )
+            self.past_decoder = Decoder(args.obs_len, args.n_coordinates, args.z_dim, args.s_dim)
 
-            self.future_decoder = SimpleDecoder(
-                args.fut_len,
-                args.s_dim + args.z_dim,
-                NUMBER_PERSONS,
-            )
+            self.future_decoder = Predictor(args.obs_len, args.fut_len, args.n_coordinates, args.s_dim,
+                                            args.z_dim, args.teachingratio)
+
+            # self.past_decoder = SimpleDecoder(
+            #     args.obs_len,
+            #     args.s_dim,
+            #     NUMBER_PERSONS,
+            # )
+            #
+            # self.future_decoder = SimpleDecoder(
+            #     args.fut_len,
+            #     args.s_dim,
+            #     NUMBER_PERSONS,
+            # )
 
         else:
             raise ValueError('Unrecognized model name "%s"' % args.model_name)
@@ -764,55 +771,47 @@ class CRMF(nn.Module):
                 return pred_past_rel1, pred_past_rel2
 
             elif training_step == "P3":
+                if self.model_name == "lstm":
+                    z_vec = self.x_to_z(self.invariant_encoder(obs_traj_rel, seq_start_end, training_step),
+                                        mode="normal")
+                    s_vec = self.x_to_s(self.variant_encoder(obs_traj_rel, seq_start_end, training_step), mode="normal")
+                else:
+                    z_vec = self.x_to_z(self.invariant_encoder(obs_traj_rel), mode="normal")
+                    s_vec = self.x_to_s(self.variant_encoder(obs_traj_rel), mode="normal")
 
-                z_vec = self.x_to_z(self.invariant_encoder(obs_traj_rel, seq_start_end, training_step), mode="normal")
-                s_vec = self.x_to_s(self.variant_encoder(obs_traj_rel, seq_start_end, training_step), mode="normal")
+                if self.model_name == "lstm":
+                    pred_past_rel = self.past_decoder(obs_traj_rel, torch.cat((z_vec, s_vec), dim=1))
+                elif self.model_name == "mlp":
+                    # pred_past_rel = self.past_decoder(torch.cat((z_vec.unsqueeze(0), s_vec.unsqueeze(0)), dim=2)).squeeze(1)
+                    pred_past_rel= self.past_decoder(obs_traj_rel, torch.cat((z_vec, s_vec), dim=1))
 
-                pred_past_rel = self.past_decoder(obs_traj_rel, torch.cat((s_vec, z_vec), dim=1))
+                if self.model_name == "lstm":
+                    pred_fut_rel = self.future_decoder(obs_traj_rel, fut_traj_rel, seq_start_end,
+                                                       torch.cat((z_vec, s_vec), dim=1))
+                if self.model_name == "mlp":
+                    pred_fut_rel= self.future_decoder(obs_traj_rel, fut_traj_rel, seq_start_end,
+                                                       torch.cat((z_vec, s_vec), dim=1))
 
-                return pred_past_rel
+                return pred_past_rel, pred_fut_rel
 
             elif training_step == "P4":
-                s_vec = self.x_to_s(self.variant_encoder(obs_traj_rel, seq_start_end, training_step), mode="normal")
+                if self.model_name == "lstm":
+                    s_vec = self.x_to_s(self.variant_encoder(obs_traj_rel, seq_start_end, training_step), mode="normal")
+                else:
+                    s_vec = self.x_to_s(self.variant_encoder(obs_traj_rel), mode="normal")
 
                 return s_vec
-
-            elif training_step == "P5":
-                temp = self.beta_scheduler.beta_val(self.iter)
-                self.iter += 1
-                pe = Categorical(logits=self.pi_priore)
-                if self.model_name == "lstm":
-                    q_sgx = self.x_to_s(self.variant_encoder(obs_traj_rel, seq_start_end, training_step), mode="variational")
-                elif self.model_name == "mlp":
-                    q_sgx = self.x_to_s(self.variant_encoder(augm_data))
-
-                s_vec = q_sgx.rsample([self.num_samples, ])
-
-                # calculate p(s|e)
-                Et = []
-                for j in range(self.num_envs):
-                    psge = MultivariateNormal(self.mean_priors[j], torch.diag(torch.exp(self.logvar_priors[j])))
-                    log_psge = psge.log_prob(s_vec) / temp
-                    log_pe = pe.log_prob(torch.tensor(j).cuda())
-                    Et.append(torch.exp(log_psge + log_pe))
-
-                log_ps = torch.log(torch.stack(Et).sum(0))
-
-                # calculate log(q(s|x))
-                log_qsgx = q_sgx.log_prob(s_vec)
-
-                E2 = (log_ps - log_qsgx).mean(0)
-
-                return E2
 
             else:
                 pe = Categorical(logits=self.pi_priore)
                 if self.model_name == "lstm":
-                    q_zgx = self.x_to_z(self.invariant_encoder(obs_traj_rel, seq_start_end, training_step), mode="variational")
-                    q_sgx = self.x_to_s(self.variant_encoder(obs_traj_rel, seq_start_end, training_step), mode="variational")
+                    q_zgx = self.x_to_z(self.invariant_encoder(obs_traj_rel, seq_start_end, training_step),
+                                        mode="variational")
+                    q_sgx = self.x_to_s(self.variant_encoder(obs_traj_rel, seq_start_end, training_step),
+                                        mode="variational")
                 elif self.model_name == "mlp":
-                    q_zgx = self.x_to_z(self.invariant_encoder(obs_traj_rel))
-                    q_sgx = self.x_to_s(self.variant_encoder(augm_data))
+                    q_zgx = self.x_to_z(self.invariant_encoder(obs_traj_rel), mode="variational")
+                    q_sgx = self.x_to_s(self.variant_encoder(obs_traj_rel), mode="variational")
 
                 s_vec = q_sgx.rsample([self.num_samples, ])
                 z_vec = q_zgx.rsample([self.num_samples, ])
@@ -823,7 +822,7 @@ class CRMF(nn.Module):
                     psge = MultivariateNormal(self.mean_priors[j], torch.diag(torch.exp(self.logvar_priors[j])))
                     log_psge = psge.log_prob(s_vec)
                     log_pe = pe.log_prob(torch.tensor(j).cuda())
-                    Et.append(torch.exp(log_psge + log_pe))
+                    Et.append(torch.exp(log_psge) * torch.exp(log_pe) + 1e-16)
 
                 log_ps = torch.log(torch.stack(Et).sum(0))
 
@@ -846,41 +845,56 @@ class CRMF(nn.Module):
                     for i in range(self.num_samples):
                         px += [self.past_decoder(obs_traj_rel, torch.cat((z_vec[i], s_vec[i]), dim=1))]
                 elif self.model_name == "mlp":
-                    px = self.past_decoder(torch.cat((z_vec, s_vec), dim=2))
+                    for i in range(self.num_samples):
+                        px += [self.past_decoder(obs_traj_rel, torch.cat((z_vec[i], s_vec[i]), dim=1))]
 
                 px = torch.stack(px)
-                log_px = - l2_loss(px, obs_traj_rel, mode="raw")
+                log_px = - l2_loss(px, obs_traj_rel, mode="raw") - 0.5 * 2 * self.obs_len * torch.log(
+                    torch.tensor(2 * math.pi)) - 0.5 * self.obs_len * torch.log(torch.tensor(0.25))
 
                 # calculate q(y|x)
                 py = []
                 if self.model_name == "lstm":
                     for i in range(self.num_samples):
-                        py += [self.future_decoder(obs_traj_rel, fut_traj_rel, seq_start_end, torch.cat((z_vec[i], s_vec[i]), dim=1))]
+                        py += [self.future_decoder(obs_traj_rel, fut_traj_rel, seq_start_end,
+                                                   torch.cat((z_vec[i], s_vec[i]), dim=1))]
                 if self.model_name == "mlp":
-                    p = self.future_decoder(torch.cat((z_vec.unsqueeze(0), s_vec.unsqueeze(0)), dim=2)).squeeze(1)
+                    for i in range(self.num_samples):
+                        py += [self.future_decoder(obs_traj_rel, fut_traj_rel, seq_start_end,
+                                                   torch.cat((z_vec[i], s_vec[i]), dim=1))]
 
-                E1 = (log_px).mean(0)
-                E2 = (log_ps - log_qsgx).mean(0)
-                E3 = (log_pz - log_qzgx).mean(0)
+                py = torch.stack(py)
+                log_py = - l2_loss(py, fut_traj_rel, mode="raw") - 0.5 * 2 * self.fut_len * torch.log(
+                    torch.tensor(2 * math.pi)) - 0.5 * self.fut_len * torch.log(torch.tensor(0.25))
 
-                return torch.stack(py), E1, E2, E3
+                E1 = torch.multiply(torch.exp(log_py), log_px).mean(0)
+                E2 = torch.multiply(torch.exp(log_py), log_ps - log_qsgx).mean(0)
+                E3 = torch.multiply(torch.exp(log_py), log_pz - log_qzgx).mean(0)
+
+                return log_py, E1, E2, E3
 
         else:
             if training_step == "P7":
-                q_zgx = self.x_to_z(self.invariant_encoder(obs_traj_rel, seq_start_end, training_step),
-                                    mode="variational")
-                q_sgx = self.x_to_s(self.variant_encoder(obs_traj_rel, seq_start_end, training_step),
-                                    mode="variational")
+                if self.model_name == "lstm":
+                    q_zgx = self.x_to_z(self.invariant_encoder(obs_traj_rel, seq_start_end, training_step),
+                                        mode="variational")
+                    q_sgx = self.x_to_s(self.variant_encoder(obs_traj_rel, seq_start_end, training_step),
+                                        mode="variational")
+                elif self.model_name == "mlp":
+                    q_zgx = self.x_to_z(self.invariant_encoder(obs_traj_rel), mode="variational")
+                    q_sgx = self.x_to_s(self.variant_encoder(obs_traj_rel), mode="variational")
 
                 return q_zgx, q_sgx
 
             else:
                 if self.model_name == "lstm":
-                    q_zgx = self.x_to_z(self.invariant_encoder(obs_traj_rel, seq_start_end, training_step), mode="variational")
-                    q_sgx = self.x_to_s(self.variant_encoder(obs_traj_rel, seq_start_end, training_step), mode="variational")
+                    q_zgx = self.x_to_z(self.invariant_encoder(obs_traj_rel, seq_start_end, training_step),
+                                        mode="variational")
+                    q_sgx = self.x_to_s(self.variant_encoder(obs_traj_rel, seq_start_end, training_step),
+                                        mode="variational")
                 elif self.model_name == "mlp":
-                    q_zgx = self.x_to_z(self.invariant_encoder(obs_traj_rel))
-                    q_sgx = self.x_to_s(self.variant_encoder(augm_data))
+                    q_zgx = self.x_to_z(self.invariant_encoder(obs_traj_rel), mode="variational")
+                    q_sgx = self.x_to_s(self.variant_encoder(obs_traj_rel), mode="variational")
 
                 # calculate q(y|theta, x)
                 z_vec = q_zgx.rsample()
@@ -888,6 +902,6 @@ class CRMF(nn.Module):
                 if self.model_name == "lstm":
                     q = self.future_decoder(obs_traj_rel, fut_traj_rel, seq_start_end, torch.cat((z_vec, s_vec), dim=1))
                 elif self.model_name == "mlp":
-                    q = self.future_decoder(torch.cat((z_vec.unsqueeze(0), s_vec.unsqueeze(0)), dim=2)).squeeze(1)
+                    q = self.future_decoder(obs_traj_rel, fut_traj_rel, seq_start_end, torch.cat((z_vec, s_vec), dim=1))
 
                 return q

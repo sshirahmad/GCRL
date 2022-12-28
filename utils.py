@@ -513,16 +513,16 @@ def load_all_model(args, model, optimizers, lr_schedulers=None, training_steps=N
                         lr_scheduler.last_epoch = (args.start_epoch - start_p - 1) * num_batches
 
         # future decoder
-        model.future_decoder.load_state_dict(models_checkpoint['future_decoder'])
-        if optimizers != None:
-            optimizers['future_decoder'].load_state_dict(checkpoint['optimizers']['future_decoder'])
-            update_lr(optimizers['future_decoder'], args.lrfut)
-
-        # past decoder
-        model.past_decoder.load_state_dict(models_checkpoint['past_decoder'])
-        if optimizers != None:
-            optimizers['past_decoder'].load_state_dict(checkpoint['optimizers']['past_decoder'])
-            update_lr(optimizers['past_decoder'], args.lrpast)
+        # model.future_decoder.load_state_dict(models_checkpoint['future_decoder'])
+        # if optimizers != None:
+        #     optimizers['future_decoder'].load_state_dict(checkpoint['optimizers']['future_decoder'])
+        #     update_lr(optimizers['future_decoder'], args.lrfut)
+        #
+        # # past decoder
+        # model.past_decoder.load_state_dict(models_checkpoint['past_decoder'])
+        # if optimizers != None:
+        #     optimizers['past_decoder'].load_state_dict(checkpoint['optimizers']['past_decoder'])
+        #     update_lr(optimizers['past_decoder'], args.lrpast)
 
         # invariant encoder
         model.coupling_layers_z.load_state_dict(models_checkpoint['coupling_layers_z'])
@@ -539,6 +539,8 @@ def load_all_model(args, model, optimizers, lr_schedulers=None, training_steps=N
         print(model.mean_priors)
         print(torch.softmax(model.pi_priore, dim=0))
         model.x_to_s.load_state_dict(models_checkpoint['x_to_s'])
+        model.x_to_s.fc_logvar.weight.data = models_checkpoint['x_to_s']['fc_mu.weight']
+        model.x_to_s.fc_logvar.bias.data = models_checkpoint['x_to_s']['fc_mu.bias']
         if optimizers != None:
             optimizers['par'].load_state_dict(checkpoint['optimizers']['par'])
             update_lr(optimizers['par'], args.lrpar)

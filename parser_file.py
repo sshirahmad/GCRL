@@ -5,11 +5,11 @@ from utils import int_tuple
 def get_parser():
     parser = argparse.ArgumentParser()
     parser.add_argument("--log_dir", default="./log/", help="Directory containing logging file")
-    parser.add_argument("--model_dir", default="./models/E1/", help="Directory containing logging file")
-    parser.add_argument("--tfdir", default='./runs/E1/', type=str)
+    parser.add_argument("--model_dir", default="./models/E2/", help="Directory containing logging file")
+    parser.add_argument("--tfdir", default='./runs/E2/', type=str)
     parser.add_argument("--dataset_name", default="v4", type=str)
-    parser.add_argument("--model_name", default="lstm", type=str)
-    parser.add_argument("--resume", default="./models/E1//P6/CRMF_epoch_119.pth.tar",
+    parser.add_argument("--model_name", default="mlp", type=str)
+    parser.add_argument("--resume", default="./models/E2//P4/CRMF_epoch_91.pth.tar",
                         type=str, metavar="PATH", help="path to latest checkpoint (default: none)")
 
     # randomness
@@ -51,8 +51,8 @@ def get_parser():
 
 
     # architecture (VE)
-    parser.add_argument("--z_dim", type=int, default=8, help="Dimension of z latent variable")
-    parser.add_argument("--s_dim", type=int, default=8, help="Dimension of s latent variable")
+    parser.add_argument("--z_dim", type=int, default=2, help="Dimension of z latent variable")
+    parser.add_argument("--s_dim", type=int, default=2, help="Dimension of s latent variable")
     parser.add_argument("--num_envs", default=3, type=int, help="Number of environments in the dataset")
 
     # spurious feature

@@ -10,6 +10,7 @@ from losses import erm_loss, irm_loss
 from torch.nn.utils import clip_grad_norm_
 import matplotlib.pyplot as plt
 from sklearn.manifold import TSNE
+from sklearn.decomposition import PCA
 
 
 def main(args):
@@ -127,8 +128,8 @@ def calculate_distance_posteriors(model, valid_dataset, valido_dataset=None):
                 (obs_traj, fut_traj, _, _, _, _, _) = batch
 
                 z, s = model(batch, "P7", env_idx=val_idx)
-                z_vec += [z.rsample()]
-                s_vec += [s.rsample()]
+                z_vec += [z.rsample([20, ]).view(-1, 4)]
+                s_vec += [s.rsample([20, ]).view( -1, 4)]
 
                 mean_z = torch.mean(z.mean, dim=0)
                 covariance_z = torch.mean(z.covariance_matrix, dim=0)

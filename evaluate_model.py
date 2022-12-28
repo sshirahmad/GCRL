@@ -193,7 +193,7 @@ def main(args):
     print('Using GPU: ' + str(torch.cuda.is_available()))
     os.environ["CUDA_VISIBLE_DEVICES"] = args.gpu_num
     generator = get_generator(args)
-    valo_envs_path, valo_envs_name = get_envs_path(args.dataset_name, "test", '0.4')  # +'-'+args.filter_envs_pretrain)
+    valo_envs_path, valo_envs_name = get_envs_path(args.dataset_name, "test", '0.6')  # +'-'+args.filter_envs_pretrain)
     loaders = [data_loader(args, valo_env_path, valo_env_name) for valo_env_path, valo_env_name in zip(valo_envs_path, valo_envs_name)]
     logging.info('Model: {}'.format(args.resume))
     logging.info('Dataset: {}'.format(args.dataset_name))

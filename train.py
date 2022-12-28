@@ -174,6 +174,8 @@ def main(args):
     for epoch in range(args.start_epoch, sum(args.num_epochs) + 1):
 
         training_step = get_training_step(epoch)
+        if training_step in ["P1", "P2", "P5"]:
+            continue
         logging.info(f"\n===> EPOCH: {epoch} ({training_step})")
 
         if training_step in ['P1', 'P2']:
@@ -303,12 +305,15 @@ def train_all(args, model, optimizers, train_dataset, epoch, training_step, trai
                 loss = erm_loss(l2_loss_rel1, seq_start_end) + erm_loss(l2_loss_rel2, seq_start_end)
 
             elif training_step == "P3":
-                l2_loss_rel = []
-                pred_past_rel = model(batch, training_step)
+                l2_loss_rel1 = []
+                l2_loss_rel2 = []
+                pred_past_rel, pred_fut_rel = model(batch, training_step)
 
-                l2_loss_rel.append(l2_loss(pred_past_rel, obs_traj_rel, mode="raw"))
-                l2_loss_rel = torch.stack(l2_loss_rel, dim=1)
-                loss = erm_loss(l2_loss_rel, seq_start_end)
+                l2_loss_rel1.append(l2_loss(pred_past_rel, obs_traj_rel, mode="raw"))
+                l2_loss_rel2.append(l2_loss(pred_fut_rel, fut_traj_rel, mode="raw"))
+                l2_loss_rel1 = torch.stack(l2_loss_rel1, dim=1)
+                l2_loss_rel2 = torch.stack(l2_loss_rel2, dim=1)
+                loss = erm_loss(l2_loss_rel1, seq_start_end) + erm_loss(l2_loss_rel2, seq_start_end)
 
             elif training_step == "P4":
                 s = model(batch, training_step)
@@ -330,15 +335,17 @@ def train_all(args, model, optimizers, train_dataset, epoch, training_step, trai
                 l2_loss_elbo2 = []
                 l2_loss_elbo3 = []
 
-                pred_q_rel, E1, E2, E3 = model(batch, training_step)
+                log_py, E1, E2, E3 = model(batch, training_step)
 
-                for i in range(args.num_samples):
-                    pred_loss = - l2_loss(pred_q_rel[i], fut_traj_rel, mode="raw")
-                    l2_loss_rel.append(pred_loss)
+                # for i in range(args.num_samples):
+                #     pred_loss = - l2_loss(pred_q_rel[i], fut_traj_rel, mode="raw")
+                #     l2_loss_rel.append(pred_loss)
 
-                l2_loss_elbo1.append(E1)
-                l2_loss_elbo2.append(E2)
-                l2_loss_elbo3.append(E3)
+                log_qy = torch.log(torch.exp(log_py).mean(0))
+                l2_loss_rel.append(log_qy)
+                l2_loss_elbo1.append(E1 / torch.exp(log_qy))
+                l2_loss_elbo2.append(E2 / torch.exp(log_qy))
+                l2_loss_elbo3.append(E3 / torch.exp(log_qy))
 
                 l2_loss_rel = torch.stack(l2_loss_rel, dim=1)
                 l2_loss_elbo1 = torch.stack(l2_loss_elbo1, dim=1)
@@ -367,7 +374,7 @@ def train_all(args, model, optimizers, train_dataset, epoch, training_step, trai
                         lr_scheduler_optims['inv'].step()
                     optimizers['inv'].step()
 
-                if training_step in ['P6']:
+                if training_step in ['P3', 'P6']:
                     if lr_scheduler_optims is not None:
                         lr_scheduler_optims['future_decoder'].step()
                     optimizers['future_decoder'].step()
