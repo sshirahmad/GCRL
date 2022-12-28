@@ -390,7 +390,7 @@ class Predictor(nn.Module):
         self.teacher_forcing_ratio = teacher_forcing_ratio
 
         self.n_coordinates = n_coordinates
-        self.pred_lstm_hidden_size = z_dim + s_dim
+        self.pred_lstm_hidden_size = z_dim + s_dim + noise_dim[0]
         self.pred_hidden2pos = nn.Linear(self.pred_lstm_hidden_size, n_coordinates)
         self.pred_lstm_model = LSTMCell(n_coordinates, self.pred_lstm_hidden_size)
         self.noise_dim = noise_dim
@@ -411,7 +411,6 @@ class Predictor(nn.Module):
 
     def add_noise(self, _input, seq_start_end):
         noise_shape = (seq_start_end.size(0),) + self.noise_dim
-
         z_decoder = get_noise(noise_shape, self.noise_type)
 
         _list = []
@@ -419,9 +418,10 @@ class Predictor(nn.Module):
             start = start.item()
             end = end.item()
             _vec = z_decoder[idx].view(1, -1)
-            _to_cat = _vec.repeat(end - start, 1)
-            _list.append(torch.cat([_input[start:end], _to_cat], dim=1))
-        decoder_h = torch.cat(_list, dim=0)
+            _to_cat = _vec.repeat(_input.shape[0], end - start, 1)
+            _list_cat = torch.cat([_input[:, start:end, :], _to_cat], dim=2)
+            _list.append(_list_cat)
+        decoder_h = torch.cat(_list, dim=1)
 
         return decoder_h
 
@@ -436,7 +436,7 @@ class Predictor(nn.Module):
         input_t = obs_traj_rel[self.obs_len - 1, :, :self.n_coordinates].repeat(len(pred_lstm_hidden), 1, 1)
         output = input_t
         pred_lstm_hidden = self.mapping(pred_lstm_hidden)
-        # pred_lstm_hidden = self.add_noise(pred_lstm_hidden, seq_start_end)
+        pred_lstm_hidden = self.add_noise(pred_lstm_hidden, seq_start_end)
         pred_lstm_c_t = torch.zeros_like(pred_lstm_hidden).cuda()
         pred_q_rel = []
         if self.training:
@@ -962,4 +962,4 @@ class CRMF(nn.Module):
                 elif self.model_name == "mlp":
                     q = self.future_decoder(obs_traj_rel, fut_traj_rel, seq_start_end, torch.cat((z_vec, s_vec), dim=2))
 
-                return q.mean(1)
+                return q[:, 0, :, :]

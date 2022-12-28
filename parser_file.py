@@ -9,7 +9,7 @@ def get_parser():
     parser.add_argument("--tfdir", default='./runs/E1/', type=str)
     parser.add_argument("--dataset_name", default="v4", type=str)
     parser.add_argument("--model_name", default="mlp", type=str)
-    parser.add_argument("--resume", default="./models/E1//P6/CRMF_epoch_151.pth.tar",
+    parser.add_argument("--resume", default="",
                         type=str, metavar="PATH", help="path to latest checkpoint (default: none)")
 
     # randomness
@@ -81,7 +81,7 @@ def get_training_parser():
                         help="Say which env were used during pretraining (for contrastive loss) (i.e 0.1-0.3-0.5)")
 
     # training
-    parser.add_argument("--best_k", default=1, type=int)
+    parser.add_argument("--best_k", default=20, type=int)
     parser.add_argument("--start-epoch", default=1, type=int, metavar="N",
                         help="manual epoch number (useful on restarts)")
     parser.add_argument("--use_gpu", default=1, type=int)
