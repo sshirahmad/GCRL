@@ -446,6 +446,7 @@ def save_all_model(args, model, model_name, optimizers, metric, epoch, training_
         'epoch': epoch + 1,
         'state_dicts': {
             'variant_encoder': model.variant_encoder.state_dict(),
+            'invariant_encoder': model.invariant_encoder.state_dict(),
             'x_to_z': model.x_to_z.state_dict(),
             'coupling_layers_z': model.coupling_layers_z.state_dict(),
             'coupling_layers_s': model.coupling_layers_s.state_dict(),
@@ -500,10 +501,10 @@ def load_all_model(args, model, optimizers, lr_schedulers=None, training_steps=N
                         lr_scheduler.last_epoch = (args.start_epoch - start_p - 1) * num_batches
 
         # future decoder
-        # model.future_decoder.load_state_dict(models_checkpoint['future_decoder'])
-        # if optimizers != None:
-        #     optimizers['future_decoder'].load_state_dict(checkpoint['optimizers']['future_decoder'])
-        #     update_lr(optimizers['future_decoder'], args.lrfut)
+        model.future_decoder.load_state_dict(models_checkpoint['future_decoder'])
+        if optimizers != None:
+            optimizers['future_decoder'].load_state_dict(checkpoint['optimizers']['future_decoder'])
+            update_lr(optimizers['future_decoder'], args.lrfut)
 
         # past decoder
         model.past_decoder.load_state_dict(models_checkpoint['past_decoder'])
@@ -520,15 +521,16 @@ def load_all_model(args, model, optimizers, lr_schedulers=None, training_steps=N
 
         # variant encoder
         model.variant_encoder.load_state_dict(models_checkpoint['variant_encoder'])
+        model.invariant_encoder.load_state_dict(models_checkpoint['invariant_encoder'])
         if optimizers != None:
             optimizers['var'].load_state_dict(checkpoint['optimizers']['var'])
             update_lr(optimizers['var'], args.lrvar)
 
         # Regressor
-        # model.mapping.load_state_dict(models_checkpoint['mapping'])
-        # if optimizers != None:
-        #     optimizers['map'].load_state_dict(checkpoint['optimizers']['map'])
-        #     update_lr(optimizers['map'], args.lrmap)
+        model.mapping.load_state_dict(models_checkpoint['mapping'])
+        if optimizers != None:
+            optimizers['map'].load_state_dict(checkpoint['optimizers']['map'])
+            update_lr(optimizers['map'], args.lrmap)
 
         # variational models
         model.coupling_layers_s.load_state_dict(models_checkpoint['coupling_layers_s'])
