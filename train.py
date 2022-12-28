@@ -37,7 +37,7 @@ def main(args):
                    zip(val_envs_path, val_envs_name)]
 
     logging.info("Initializing Validation O Set")
-    valo_envs_path, valo_envs_name = get_envs_path(args.dataset_name, "test", args.filter_envs)
+    valo_envs_path, valo_envs_name = get_envs_path(args.dataset_name, "test", "0.6")
 
     valo_loaders = [data_loader(args, valo_env_path, valo_env_name, test=True) for valo_env_path, valo_env_name in
                     zip(valo_envs_path, valo_envs_name)]
@@ -93,6 +93,8 @@ def main(args):
             [
                 {"params": model.x_to_z.parameters(), 'lr': args.lrinv},
                 {"params": model.coupling_layers_z.parameters(), 'lr': args.lrinv},
+                {"params": model.invariant_encoder.parameters(), 'lr': args.lrinv},
+
             ]
         ),
         'future_decoder': torch.optim.Adam(
@@ -196,20 +198,22 @@ def main(args):
     for epoch in range(args.start_epoch, sum(args.num_epochs) + 1):
 
         training_step = get_training_step(epoch)
+        if training_step in ["P1", "P2"]:
+            continue
         logging.info(f"\n===> EPOCH: {epoch} ({training_step})")
 
         if training_step in ["P1", "P2"]:
             freeze(True, (model.future_decoder, model.variant_encoder, model.x_to_s, model.x_to_z, model.past_decoder, model.future_decoder,
                            model.coupling_layers_z, model.coupling_layers_s, model.coupling_layers_theta, model.mapping))
-            freeze(False, (model.variant_encoder,))
+            freeze(False, (model.variant_encoder, model.invariant_encoder))
 
         elif training_step == 'P3':
             freeze(True, (model.mapping,))
-            freeze(False, (model.variant_encoder, model.x_to_s, model.x_to_z, model.past_decoder, model.future_decoder,
+            freeze(False, (model.variant_encoder, model.invariant_encoder, model.x_to_s, model.x_to_z, model.past_decoder, model.future_decoder,
                            model.coupling_layers_z, model.coupling_layers_s, model.coupling_layers_theta))
 
         elif training_step == 'P4':
-            freeze(True, (model.variant_encoder, model.x_to_z, model.x_to_s, model.past_decoder, model.future_decoder,
+            freeze(True, (model.variant_encoder, model.invariant_encoder, model.x_to_z, model.x_to_s, model.past_decoder, model.future_decoder,
                           model.coupling_layers_z, model.coupling_layers_s, model.coupling_layers_theta))
             freeze(False, (model.mapping,))
 
@@ -244,7 +248,7 @@ def main(args):
                 metric = validate_ade(args, model, valido_dataset, epoch, training_step, writer,
                                       stage='validation o')
 
-        if training_step == "P5":
+        if training_step in ["P3", "P4", "P5"]:
             if metric < min_metric:
                 min_metric = metric
                 save_all_model(args, model, model_name, optimizers, metric, epoch, training_step)
@@ -275,6 +279,9 @@ def train_all(args, model, optimizers, train_dataset, epoch, training_step, trai
     # Homogenous batches
     total_loss_meter = AverageMeter("Total Loss", ":.4f")
     e_loss_meter = AverageMeter("ELBO Loss", ":.4f")
+    e1_loss_meter = AverageMeter("ELBO Loss", ":.4f")
+    e2_loss_meter = AverageMeter("ELBO Loss", ":.4f")
+    e3_loss_meter = AverageMeter("ELBO Loss", ":.4f")
     p_loss_meter = AverageMeter("Prediction Loss", ":.4f")
     for train_idx, train_loader in enumerate(train_dataset['loaders']):
         loss_meter = AverageMeter("Loss", ":.4f")
@@ -282,13 +289,27 @@ def train_all(args, model, optimizers, train_dataset, epoch, training_step, trai
                                  prefix="Dataset: {:<20}".format(train_envs_name[train_idx]))
         for batch_idx, batch in enumerate(train_loader):
             batch = [tensor.cuda() for tensor in batch]
-            (
-                obs_traj,
-                fut_traj,
-                obs_traj_rel,
-                fut_traj_rel,
-                seq_start_end,
-            ) = batch
+
+            if args.dataset_name in ('eth', 'hotel', 'univ', 'zara1', 'zara2'):
+                (
+                    obs_traj,
+                    fut_traj,
+                    obs_traj_rel,
+                    fut_traj_rel,
+                    seq_start_end,
+                ) = batch
+            elif 'synthetic' in args.dataset_name or args.dataset_name in ['synthetic', 'v2', 'v2full', 'v4']:
+                (
+                    obs_traj,
+                    _,
+                    obs_traj_rel,
+                    fut_traj_rel,
+                    seq_start_end,
+                    _,
+                    _
+                ) = batch
+            else:
+                raise ValueError('Unrecognized dataset name "%s"' % args.dataset_name)
 
             # reset gradients
             for opt in optimizers.values():
@@ -304,29 +325,37 @@ def train_all(args, model, optimizers, train_dataset, epoch, training_step, trai
                 loss = erm_loss(l2_loss_rel, seq_start_end)
 
             elif training_step == "P3":
-                qygx, E = model(batch, training_step, env_idx=train_idx)
+                log_py, E1, E2, E3 = model(batch, training_step, env_idx=train_idx)
 
                 l2_loss_rel = []
-                l2_loss_elbo = []
-                l2_loss_exp = []
+                l2_loss_elbo1 = []
+                l2_loss_elbo2 = []
+                l2_loss_elbo3 = []
 
-                log_qygx = -l2_loss(qygx, fut_traj_rel, mode="raw")
+                log_qygx = torch.log(torch.exp(log_py).mean(0))
 
                 l2_loss_rel.append(log_qygx)
-                l2_loss_exp.append(torch.exp(log_qygx))
-                l2_loss_elbo.append(E)
+                l2_loss_elbo1.append(E1 / torch.exp(log_qygx))
+                l2_loss_elbo2.append(E2 / torch.exp(log_qygx))
+                l2_loss_elbo3.append(E3 / torch.exp(log_qygx))
+
 
                 l2_loss_rel = torch.stack(l2_loss_rel, dim=1)
-                l2_loss_elbo = torch.stack(l2_loss_elbo, dim=1)
-                l2_loss_exp = torch.stack(l2_loss_exp, dim=1)
+                l2_loss_elbo1 = torch.stack(l2_loss_elbo1, dim=1)
+                l2_loss_elbo2 = torch.stack(l2_loss_elbo2, dim=1)
+                l2_loss_elbo3 = torch.stack(l2_loss_elbo3, dim=1)
+
 
                 predict_loss = erm_loss(l2_loss_rel, seq_start_end)
-                exp_loss = erm_loss(l2_loss_exp, seq_start_end)
-                elbo_loss = erm_loss(l2_loss_elbo, seq_start_end)
+                elbo_loss1 = erm_loss(l2_loss_elbo1, seq_start_end)
+                elbo_loss2 = erm_loss(l2_loss_elbo2, seq_start_end)
+                elbo_loss3 = erm_loss(l2_loss_elbo3, seq_start_end)
 
-                loss = - (predict_loss + 1 / exp_loss * elbo_loss)
+                loss = - (predict_loss + elbo_loss1 + elbo_loss2 + elbo_loss3)
 
-                e_loss_meter.update(elbo_loss.item(), obs_traj.shape[1])
+                e1_loss_meter.update(elbo_loss1.item(), obs_traj.shape[1])
+                e2_loss_meter.update(elbo_loss2.item(), obs_traj.shape[1])
+                e3_loss_meter.update(elbo_loss3.item(), obs_traj.shape[1])
                 p_loss_meter.update(predict_loss.item(), obs_traj.shape[1])
 
             elif training_step == "P4":
@@ -343,10 +372,9 @@ def train_all(args, model, optimizers, train_dataset, epoch, training_step, trai
                 for i in range(len(q_ygx)):
                     log_qygx += q_ygx[i].log_prob(fut_traj_rel[i])
 
-                predict_loss = erm_loss(log_qygx.unsqueeze(1), seq_start_end, fut_traj_rel.shape[0])
+                predict_loss = erm_loss(log_qygx.unsqueeze(1), seq_start_end)
 
-                elbo_loss = erm_loss(torch.divide(E, torch.exp(log_qygx) + 1e-6).unsqueeze(1), seq_start_end,
-                                     fut_traj_rel.shape[0])
+                elbo_loss = erm_loss(torch.divide(E, torch.exp(log_qygx) + 1e-6).unsqueeze(1), seq_start_end)
 
                 stacked_loss = torch.cat((-predict_loss, -elbo_loss))
 
@@ -401,7 +429,9 @@ def train_all(args, model, optimizers, train_dataset, epoch, training_step, trai
 
     elif training_step == "P3":
         writer.add_scalar(f"variational_loss/{stage}", total_loss_meter.avg, epoch)
-        writer.add_scalar(f"elbo_loss/{stage}", e_loss_meter.avg, epoch)
+        writer.add_scalar(f"reconstruction_loss/{stage}", e1_loss_meter.avg, epoch)
+        writer.add_scalar(f"sreg/{stage}", e2_loss_meter.avg, epoch)
+        writer.add_scalar(f"zreg/{stage}", e3_loss_meter.avg, epoch)
         writer.add_scalar(f"pred_loss/{stage}", p_loss_meter.avg, epoch)
         writer.add_scalar(f"theta_hotel/{stage}", torch.mean(model.theta[0]), epoch)
         writer.add_scalar(f"theta_univ/{stage}", torch.mean(model.theta[1]), epoch)
@@ -437,7 +467,26 @@ def validate_ade(args, model, valid_dataset, epoch, training_step, writer, stage
             total_traj_i = 0
             for batch_idx, batch in enumerate(loader):
                 batch = [tensor.cuda() for tensor in batch]
-                (obs_traj, fut_traj, _, _, seq_start_end) = batch
+                if args.dataset_name in ('eth', 'hotel', 'univ', 'zara1', 'zara2'):
+                    (
+                        obs_traj,
+                        fut_traj,
+                        obs_traj_rel,
+                        fut_traj_rel,
+                        seq_start_end,
+                    ) = batch
+                elif 'synthetic' in args.dataset_name or args.dataset_name in ['synthetic', 'v2', 'v2full', 'v4']:
+                    (
+                        obs_traj,
+                        fut_traj,
+                        obs_traj_rel,
+                        fut_traj_rel,
+                        seq_start_end,
+                        _,
+                        _
+                    ) = batch
+                else:
+                    raise ValueError('Unrecognized dataset name "%s"' % args.dataset_name)
 
                 ade_list, fde_list = [], []
                 total_traj_i += fut_traj.size(1)

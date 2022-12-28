@@ -32,7 +32,7 @@ class CouplingLayer(nn.Module):
 
         # Build scale and translate network
         if hidden_dims is None:
-            hidden_dims = [64]
+            hidden_dims = [8]
 
         modules = []
         in_channels = latent_dim // 2
@@ -528,11 +528,10 @@ class future_STGAT_decoder(nn.Module):
 
     def forward(
             self,
-            batch,
+            obs_traj_rel,
+            fut_traj_rel,
             pred_lstm_hidden,
     ):
-
-        (_, _, obs_traj_rel, fut_traj_rel, seq_start_end) = batch
 
         input_t = obs_traj_rel[self.obs_len - 1, :, :self.n_coordinates].repeat(len(pred_lstm_hidden), 1, 1)
         output = input_t
@@ -584,7 +583,7 @@ class future_STGAT_decoder(nn.Module):
                 pred_lstm_hidden = torch.stack(pred_lstm_hidden_list)
                 pred_lstm_c_t = torch.stack(pred_lstm_c_t_list)
                 output = torch.stack(output)
-                pred_traj_rel += [output.mean(dim=0)]
+                pred_traj_rel += [output[0]]
 
             return torch.stack(pred_traj_rel)
 
@@ -623,11 +622,9 @@ class past_decoder(nn.Module):
 
     def forward(
             self,
-            batch,
+            obs_traj_rel,
             pred_lstm_hidden,
     ):
-
-        (_, _, obs_traj_rel, _, seq_start_end) = batch
 
         p = []
         pred_lstm_c_t = torch.zeros_like(pred_lstm_hidden).cuda()
@@ -785,7 +782,7 @@ class simple_mapping(nn.Module):
         super(simple_mapping, self).__init__()
 
         if hidden_dims is None:
-            hidden_dims = [64, 64]
+            hidden_dims = [8, 8]
 
         modules = []
         in_channels = latent_dim + traj_lstm_hidden_size + graph_lstm_hidden_size
@@ -837,10 +834,126 @@ class simple_mapping(nn.Module):
         return ps
 
 
+class SimpleStyleEncoder(nn.Module):
+    def __init__(self, hidden_size):
+        super(SimpleStyleEncoder, self).__init__()
+
+        # style encoder
+        self.encoder = nn.Sequential(
+            nn.Linear(40, hidden_size * 4),
+            nn.ReLU(),
+            nn.Linear(hidden_size * 4, hidden_size * 2)
+        )
+
+    def forward(self, style_input):
+        # for batch size 68
+        # style 20 x 128 x 2
+        style_input = torch.stack(style_input.split(2, dim=1), dim=1)[:, :, 1, :]  # 20 x 64 x 2
+        style_input = torch.permute(style_input, (1, 0, 2))  # 64 x 20 x 2
+        style_input = torch.flatten(style_input, 1)  # 64 x 40
+
+        # MLP
+        style_seq = self.encoder(style_input)
+        encoded = torch.stack(style_seq.split(style_seq.shape[1] // 2, dim=1), dim=1)
+        encoded = encoded.flatten(start_dim=0, end_dim=1)
+
+        return encoded
+
+
+class SimpleEncoder(nn.Module):
+    def __init__(
+            self,
+            obs_len,
+            hidden_size,
+            number_agents,
+            add_confidence,
+    ):
+        super(SimpleEncoder, self).__init__()
+
+        # num of frames per sequence
+        self.obs_len = obs_len
+        self.number_agents = number_agents
+
+        self.mlp = nn.Sequential(
+            nn.Linear(obs_len * number_agents * (2 + add_confidence), hidden_size * 32),
+            nn.ReLU(),
+            nn.Linear(hidden_size * 32, hidden_size * 16),
+            nn.ReLU(),
+            nn.Linear(hidden_size * 16, hidden_size * 8),
+            nn.ReLU(),
+            nn.Linear(hidden_size * 8, hidden_size * 4),
+            nn.ReLU(),
+            nn.Linear(hidden_size * 4, hidden_size * number_agents),
+        )
+
+        self.mu = nn.Linear(hidden_size, hidden_size)
+        self.logvar = nn.Linear(hidden_size, hidden_size)
+
+    def forward(self, obs_traj_rel):
+        splits = obs_traj_rel.split(self.number_agents, dim=1)
+        if splits[-1].shape[1] != splits[0].shape[1]:
+            splits = splits[:-1]
+        obs_traj_rel = torch.stack(splits, dim=1)
+        obs_traj_rel = torch.permute(obs_traj_rel, (1, 2, 0, 3))
+        obs_traj_rel = obs_traj_rel.flatten(start_dim=1)
+
+        encoded = self.mlp(obs_traj_rel)
+
+        encoded = torch.stack(encoded.split(encoded.shape[1] // self.number_agents, dim=1), dim=1)
+        encoded = encoded.flatten(start_dim=0, end_dim=1)
+
+        return encoded
+
+
+class SimpleDecoder(nn.Module):
+    def __init__(
+            self,
+            seq_len,
+            hidden_size,
+            number_of_agents,
+    ):
+        super(SimpleDecoder, self).__init__()
+
+        # num of frames per sequence
+        self.seq_len = seq_len
+
+        self.noise_fixed = False
+
+        self.mlp = nn.Sequential(
+            nn.Linear(hidden_size * number_of_agents, hidden_size * 4),
+            nn.ReLU(),
+            nn.Linear(hidden_size * 4, hidden_size * 8),
+            nn.ReLU(),
+            nn.Linear(hidden_size * 8, hidden_size * 16),
+            nn.ReLU(),
+            nn.Linear(hidden_size * 16, hidden_size * 32),
+            nn.ReLU(),
+            nn.Linear(hidden_size * 32, 2 * seq_len * number_of_agents)
+        )
+
+        self.number_of_agents = number_of_agents
+
+    def forward(self, latent_space):
+        traj_lstm_hidden_state = torch.stack(latent_space.split(self.number_of_agents, dim=1), dim=1)
+        out = traj_lstm_hidden_state.flatten(start_dim=2)
+
+        out = self.mlp(out)
+
+        out = torch.reshape(out, (out.shape[0], out.shape[1], self.number_of_agents, self.seq_len, 2))
+
+        out = out.flatten(start_dim=1, end_dim=2)
+
+        out = torch.permute(out, (2, 0, 1, 3))
+
+        return out
+
+
 class CRMF(nn.Module):
     def __init__(self, args):
         super(CRMF, self).__init__()
 
+        self.dataset_name = args.dataset_name
+        self.model_name = args.model_name
         self.obs_len = args.obs_len
         self.z_dim = args.z_dim
         self.latent_dim = args.latent_dim
@@ -875,20 +988,29 @@ class CRMF(nn.Module):
         covmat = torch.cat((temp1, temp2), dim=0)
         self.pwe = MultivariateNormal(torch.zeros(args.s_dim + args.latent_dim).cuda(), covmat)
 
-        # self.invariant_encoder = STGAT_encoder_inv(args.obs_len, args.fut_len, args.n_coordinates,
-        #                                          args.traj_lstm_hidden_size, args.n_units, args.n_heads,
-        #                                          args.graph_network_out_dims, args.dropout, args.alpha,
-        #                                          args.graph_lstm_hidden_size, args.z_dim, None, args.add_confidence)
+        if args.model_name == "lstm":
 
-        self.variant_encoder = STGAT_encoder_var(args.obs_len, args.fut_len, args.n_coordinates,
-                                                 args.traj_lstm_hidden_size, args.n_units, args.n_heads,
-                                                 args.graph_network_out_dims, args.dropout, args.alpha,
-                                                 args.graph_lstm_hidden_size, args.add_confidence)
+            # self.invariant_encoder = STGAT_encoder_inv(args.obs_len, args.fut_len, args.n_coordinates,
+            #                                          args.traj_lstm_hidden_size, args.n_units, args.n_heads,
+            #                                          args.graph_network_out_dims, args.dropout, args.alpha,
+            #                                          args.graph_lstm_hidden_size, args.z_dim, None, args.add_confidence)
 
-        self.x_to_s = simple_mapping(args.traj_lstm_hidden_size, args.graph_lstm_hidden_size, args.latent_dim,
+            self.variant_encoder = STGAT_encoder_var(args.obs_len, args.fut_len, args.n_coordinates,
+                                                     args.traj_lstm_hidden_size, args.n_units, args.n_heads,
+                                                     args.graph_network_out_dims, args.dropout, args.alpha,
+                                                     args.graph_lstm_hidden_size, args.add_confidence)
+
+        elif args.model_name == "mlp":
+            self.variant_encoder = SimpleEncoder(args.obs_len, 8,
+                                                 NUMBER_PERSONS, args.add_confidence)
+
+            self.invariant_encoder = SimpleEncoder(args.obs_len, 8,
+                                                   NUMBER_PERSONS, args.add_confidence)
+
+        self.x_to_s = simple_mapping(8, 0, args.latent_dim,
                                      args.s_dim, self.obs_len, args.num_samples)
 
-        self.x_to_z = simple_mapping(args.traj_lstm_hidden_size, args.graph_lstm_hidden_size, 0,
+        self.x_to_z = simple_mapping(8, 0, 0,
                                      args.z_dim, self.obs_len, args.num_samples)
 
         self.mapping = regressor(args.obs_len, args.fut_len, args.n_coordinates,
@@ -902,8 +1024,13 @@ class CRMF(nn.Module):
                                                    args.z_dim, args.teachingratio)
 
     def forward(self, batch, training_step, **kwargs):
+        if self.dataset_name in ('eth', 'hotel', 'univ', 'zara1', 'zara2'):
+            obs_traj, fut_traj, obs_traj_rel, fut_traj_rel, seq_start_end, = batch
 
-        obs_traj, fut_traj, obs_traj_rel, fut_traj_rel, seq_start_end, = batch
+        elif 'synthetic' in self.dataset_name or self.dataset_name in ['synthetic', 'v2', 'v2full', 'v4']:
+            obs_traj, fut_traj, obs_traj_rel, fut_traj_rel, seq_start_end, augm_data, seq_start_end_augm = batch
+        else:
+            raise ValueError('Unrecognized dataset name "%s"' % self.dataset_name)
 
         if self.training:
             if training_step in ["P1", "P2"]:
@@ -913,15 +1040,19 @@ class CRMF(nn.Module):
 
             elif training_step == "P3":
                 env_idx = kwargs.get("env_idx")
-                concat_hidden_states = self.variant_encoder(batch, training_step)
-                q_zgx = self.x_to_z(concat_hidden_states)
-                q_sgtx = self.x_to_s(concat_hidden_states, self.theta[env_idx])
+                if self.model_name == "lstm":
+                    concat_hidden_states = self.variant_encoder(batch, training_step)
+                    q_zgx = self.x_to_z(concat_hidden_states)
+                    q_sgtx = self.x_to_s(concat_hidden_states, self.theta[env_idx])
+                elif self.model_name == "mlp":
+                    q_zgx = self.x_to_z(self.invariant_encoder(obs_traj_rel))
+                    q_sgtx = self.x_to_s(self.variant_encoder(obs_traj_rel), self.theta[env_idx])
 
                 s_vec = q_sgtx.rsample([self.num_samples, ])
                 z_vec = q_zgx.rsample([self.num_samples, ])
 
                 # calculate q(y|theta, x)
-                q, _ = self.future_decoder(batch, torch.cat((z_vec, s_vec), dim=2))
+                q, _ = self.future_decoder(obs_traj_rel, fut_traj_rel, torch.cat((z_vec, s_vec), dim=2))
 
                 # calculate log(q(z|x))
                 log_qzgx = q_zgx.log_prob(z_vec)
@@ -954,16 +1085,18 @@ class CRMF(nn.Module):
                 log_psgt = pwe.log_prob(s_vec_c) + sldj_s
 
                 # calculate p(y|z,s,x)
-                _, py = self.future_decoder(batch, torch.cat((z_vec, s_vec), dim=2))
-                p_ygzs = torch.exp(- l2_loss(py, fut_traj_rel, mode="raw"))
+                _, py = self.future_decoder(obs_traj_rel, fut_traj_rel, torch.cat((z_vec, s_vec), dim=2))
+                log_py = - l2_loss(py, fut_traj_rel, mode="raw") - 0.5 * 2 * self.fut_len * torch.log(torch.tensor(2 * math.pi)) - 0.5 * self.fut_len * torch.log(torch.tensor(0.25))
 
                 # calculate log(p(x|z,s))
-                px = self.past_decoder(batch, torch.cat((z_vec, s_vec), dim=2))
-                log_px = - l2_loss(px, obs_traj_rel, mode="raw")
+                px = self.past_decoder(obs_traj_rel, torch.cat((z_vec, s_vec), dim=2))
+                log_px = - l2_loss(px, obs_traj_rel, mode="raw") - 0.5 * 2 * self.obs_len * torch.log(torch.tensor(2 * math.pi)) - 0.5 * self.obs_len * torch.log(torch.tensor(0.25))
 
-                E = torch.multiply(p_ygzs, log_px + log_psgt + log_pz - log_qzgx - log_qsgtx).mean(0)
+                E1 = torch.multiply(torch.exp(log_py), log_px).mean(0)
+                E2 = torch.multiply(torch.exp(log_py), log_psgt - log_qsgtx).mean(0)
+                E3 = torch.multiply(torch.exp(log_py), log_pz - log_qzgx).mean(0)
 
-                return q, E
+                return log_py, E1, E2, E3
 
             elif training_step == "P4":
                 pred_theta = self.mapping(obs_traj_rel)
@@ -1049,41 +1182,57 @@ class CRMF(nn.Module):
             if training_step == "P7":
                 env_idx = kwargs.get("env_idx")
                 if env_idx is None:
-                    concat_hidden_states = self.variant_encoder(batch, training_step)
-                    pred_theta = self.mapping(batch)
-                    ps = self.x_to_s(concat_hidden_states, pred_theta)
-                    q_zgx = self.x_to_z(concat_hidden_states)
+                    pred_theta = self.mapping(obs_traj_rel)
+
+                    if self.model_name == "lstm":
+                        concat_hidden_states = self.variant_encoder(batch, training_step)
+                        q_zgx = self.x_to_z(concat_hidden_states)
+                        q_sgtx = self.x_to_s(concat_hidden_states, pred_theta)
+                    elif self.model_name == "mlp":
+                        q_zgx = self.x_to_z(self.invariant_encoder(obs_traj_rel))
+                        q_sgtx = self.x_to_s(self.variant_encoder(obs_traj_rel), pred_theta)
 
                 else:
-                    concat_hidden_states = self.variant_encoder(batch, training_step)
-                    ps = self.x_to_s(concat_hidden_states, self.theta[env_idx])
-                    q_zgx = self.x_to_z(concat_hidden_states)
+                    if self.model_name == "lstm":
+                        concat_hidden_states = self.variant_encoder(batch, training_step)
+                        q_zgx = self.x_to_z(concat_hidden_states)
+                        q_sgtx = self.x_to_s(concat_hidden_states, self.theta[env_idx])
+                    elif self.model_name == "mlp":
+                        q_zgx = self.x_to_z(self.invariant_encoder(obs_traj_rel))
+                        q_sgtx = self.x_to_s(self.variant_encoder(obs_traj_rel), self.theta[env_idx])
 
-                return q_zgx, ps
+                return q_zgx, q_sgtx
 
             else:
                 env_idx = kwargs.get("env_idx")
                 if env_idx is None:
-                    concat_hidden_states = self.variant_encoder(batch, training_step)
                     theta = self.mapping(obs_traj_rel)
-                    q_sgthetax = self.x_to_s(concat_hidden_states, theta)
-                    q_zgx = self.x_to_z(concat_hidden_states)
+                    if self.model_name == "lstm":
+                        concat_hidden_states = self.variant_encoder(batch, training_step)
+                        q_zgx = self.x_to_z(concat_hidden_states)
+                        q_sgtx = self.x_to_s(concat_hidden_states, theta)
+                    elif self.model_name == "mlp":
+                        q_zgx = self.x_to_z(self.invariant_encoder(obs_traj_rel))
+                        q_sgtx = self.x_to_s(self.variant_encoder(obs_traj_rel), theta)
 
                     # calculate q(y|theta, x)
                     z_vec = q_zgx.rsample([self.num_samples, ])
-                    s_vec = q_sgthetax.rsample([self.num_samples, ])
+                    s_vec = q_sgtx.rsample([self.num_samples, ])
 
-                    pred_q_rel = self.future_decoder(batch, torch.cat((z_vec, s_vec), dim=2))
+                    pred_q_rel = self.future_decoder(obs_traj_rel, fut_traj_rel, torch.cat((z_vec, s_vec), dim=2))
                 else:
-                    concat_hidden_states = self.variant_encoder(batch, training_step)
-                    theta = self.theta[env_idx]
-                    q_sgthetax = self.x_to_s(concat_hidden_states, theta)
-                    q_zgx = self.x_to_z(concat_hidden_states)
+                    if self.model_name == "lstm":
+                        concat_hidden_states = self.variant_encoder(batch, training_step)
+                        q_zgx = self.x_to_z(concat_hidden_states)
+                        q_sgtx = self.x_to_s(concat_hidden_states, self.theta[env_idx])
+                    elif self.model_name == "mlp":
+                        q_zgx = self.x_to_z(self.invariant_encoder(obs_traj_rel))
+                        q_sgtx = self.x_to_s(self.variant_encoder(obs_traj_rel), self.theta[env_idx])
 
                     # calculate q(y|theta, x)
                     z_vec = q_zgx.rsample([self.num_samples, ])
-                    s_vec = q_sgthetax.rsample([self.num_samples, ])
+                    s_vec = q_sgtx.rsample([self.num_samples, ])
 
-                    pred_q_rel = self.future_decoder(batch, torch.cat((z_vec, s_vec), dim=2))
+                    pred_q_rel = self.future_decoder(obs_traj_rel, fut_traj_rel, torch.cat((z_vec, s_vec), dim=2))
 
-            return pred_q_rel
+                return pred_q_rel

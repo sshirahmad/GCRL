@@ -14,11 +14,12 @@ def get_evaluation_parser():
 def get_training_parser():
     parser = argparse.ArgumentParser()
     parser.add_argument("--log_dir", default="./log/", help="Directory containing logging file")
-    parser.add_argument("--model_dir", default="./models/E3/", help="Directory containing logging file")
-    parser.add_argument("--tfdir", default='./runs/E3/', type=str)
+    parser.add_argument("--model_dir", default="./models/E1/", help="Directory containing logging file")
+    parser.add_argument("--tfdir", default='./runs/E1/', type=str)
 
     # dataset
-    parser.add_argument("--dataset_name", default="eth", type=str)
+    parser.add_argument("--model_name", default="mlp", type=str)
+    parser.add_argument("--dataset_name", default="v4", type=str)
     parser.add_argument("--num_envs", default=4, type=int, help="Number of environments in the dataset")
     parser.add_argument("--finetune_ratio", default=0.5, type=float, help="Number of batches to be used in finetuning")
     parser.add_argument("--delim", default="\t")
@@ -26,12 +27,12 @@ def get_training_parser():
     parser.add_argument("--fut_len", default=12, type=int)
     parser.add_argument("--skip", default=1, type=int)
     parser.add_argument("--n_coordinates", type=int, default=2, help="Number of coordinates")
-    parser.add_argument("--filter_envs", type=str, default="",
+    parser.add_argument("--filter_envs", type=str, default="0.1-0.3-0.5",
                         help="Filter only certain environments (i.e 0.1-0.3-0.5)")
     parser.add_argument("--filter_envs_pretrain", type=str, default="",
                         help="Say which env were used during pretraining (for contrastive loss) (i.e 0.1-0.3-0.5)")
     parser.add_argument('--reduce', default=0, type=int)
-    parser.add_argument('--reduceall', default=0, type=int)
+    parser.add_argument('--reduceall', default=9000, type=int)
     parser.add_argument('--testonly', default=0, type=int,
                         help='Only test model. 0 -> training, 1 -> testing, 3 -> testing with refinement')  # 0 is normal train, 1 is test, 2 is test with k, 3 is ttr
     # randomness
@@ -51,9 +52,9 @@ def get_training_parser():
     parser.add_argument('--teachingratio', default=0.0, type=float,
                         help="The probability of using ground truth future trajectories instead of model predictions during training")
     # architecture (VE)
-    parser.add_argument('--latent_dim', type=int, default=32, help="Dimension of latent selection variables")
-    parser.add_argument("--z_dim", type=int, default=32, help="Dimension of z latent variable")
-    parser.add_argument("--s_dim", type=int, default=32, help="Dimension of s latent variable")
+    parser.add_argument('--latent_dim', type=int, default=2, help="Dimension of latent selection variables")
+    parser.add_argument("--z_dim", type=int, default=2, help="Dimension of z latent variable")
+    parser.add_argument("--s_dim", type=int, default=2, help="Dimension of s latent variable")
 
     # computation
     parser.add_argument("--loader_num_workers", default=6, type=int)
@@ -66,8 +67,8 @@ def get_training_parser():
                         help='Use Homogeneous (hom), Heterogeneous (het) or alternated homogeneous (alt) batches during training')
     parser.add_argument("--shuffle", default=True, type=bool)
     # spurious feature
-    parser.add_argument("--add_confidence", default=True, type=bool)
-    parser.add_argument("--domain_shifts", default='1-2-4-8-64', type=str,
+    parser.add_argument("--add_confidence", default=False, type=bool)
+    parser.add_argument("--domain_shifts", default='0', type=str,
                         help='domain_shifts per environment: hotel,univ,zara1,zara2,eth')
 
     parser.add_argument("--start-epoch", default=1, type=int, metavar="N",
@@ -77,7 +78,7 @@ def get_training_parser():
     # general training
     parser.add_argument("--finetune", default="", type=str)
     parser.add_argument("--num_epochs", default='150-100-150-200', type=lambda x: int_tuple(x, '-'))  # '150-100-150',
-    parser.add_argument("--resume", default="./models/E3/P2/CRMF_epoch_250.pth.tar",
+    parser.add_argument("--resume", default="./models/E1//P3/CRMF_epoch_264.pth.tar",
                         type=str, metavar="PATH", help="path to latest checkpoint (default: none)")
 
     # learning rates

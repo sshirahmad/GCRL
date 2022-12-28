@@ -167,6 +167,149 @@ class TrajectoryDataset(Dataset):
         return out
 
 
+class SynTrajectoryDataset(Dataset):
+    """
+    Dataloader for the Synthetic Trajectory datasets
+    """
+
+    def __init__(self,
+                 data_dir='datasets/synthetic/train/orca_circle_crossing_4_ped_10000_scenes_0.2_radius_2.0_horizon.npz',
+                 obs_len=8,
+                 fut_len=12,
+                 n_coordinates=2,
+                 add_confidence=False,
+                 alpha_e=0,
+                 reduce=0,
+                 finetune_ratio=0.1,
+                 finetune=False,
+                 test=False
+                 ):
+        """
+        Args:
+        - data_dir: Directory containing dataset file in the format
+        <seq_id> <ped_id> <x> <y>
+        - obs_len: : Number of time-steps in input trajectories
+        """
+        super(SynTrajectoryDataset, self).__init__()
+
+        # load synthetic data (seq, ped, coord, frame)
+        if 'synthetic2' in data_dir:
+            data = torch.from_numpy(np.load(data_dir)['arr_0']).type(torch.float).permute(0, 1, 3, 2)
+        else:
+            data = torch.from_numpy(np.load(data_dir)['raw']).type(torch.float).permute(0, 1, 3, 2)
+
+        # make the dataset short to experiment fast, uncomment if you want to restrict amount of data
+        if reduce:
+            data = data[:reduce]
+
+        if finetune:
+            num_batches = round(finetune_ratio * len(data))
+            data = data[:num_batches]
+
+        if test:
+            num_batches = round(finetune_ratio * len(data))
+            data = data[num_batches:]
+
+        # Compute social encoding
+        # Use relative distance between agents instead of coordinates of each agent
+        augm_data = torch.zeros((data.shape[0], NUMBER_COUPLES, data.shape[2], data.shape[3]))
+        for idx in tqdm(range(data.shape[0])):  # in each scene
+            for k in range(20):  # in each frame
+                count = 0
+                for i in range(NUMBER_PERSONS):
+                    for j in range(NUMBER_PERSONS):  # each possible couple i,j
+                        if i == j:
+                            continue
+                        for x in range(2):  # each coordinate
+                            augm_data[idx, count, x, k] = data[idx, i, x, k] - data[idx, j, x, k]
+                        count += 1
+
+        self.augm_data = augm_data
+
+        # relative coordinates
+        data_rel = torch.zeros_like(data)
+        data_rel[:, :, :, 1:] = data[:, :, :, 1:] - data[:, :, :, :-1]
+
+        # Split observed trajectory (features) and future trajectory (target)
+        self.obs_traj = data[:, :, :, :obs_len]
+        self.fut_traj = data[:, :, :, obs_len:]
+
+        # add confidence (spurious variable)
+        if add_confidence:
+            n_scene = data.shape[0]
+            n_ped = data.shape[1]
+            self.obs_traj_rel = torch.zeros(n_scene, n_ped, n_coordinates + 1, obs_len)
+            self.fut_traj_rel = torch.zeros(n_scene, n_ped, n_coordinates + 1, fut_len)
+            self.obs_traj_rel[:, :, :n_coordinates, :] = data_rel[:, :, :, :obs_len]
+            self.fut_traj_rel[:, :, :n_coordinates, :] = data_rel[:, :, :, obs_len:]
+            diff = self.obs_traj_rel[:, :, :n_coordinates, :] - self.fut_traj_rel[:, :, :n_coordinates, :obs_len]
+            self.obs_traj_rel[:, :, n_coordinates, :] = alpha_e * (torch.norm(diff, p=2, dim=2) + 1)
+        else:
+            self.obs_traj_rel = data_rel[:, :, :, :obs_len]
+            self.fut_traj_rel = data_rel[:, :, :, obs_len:]
+
+    def __len__(self):
+        return self.obs_traj.shape[0]
+
+    def __getitem__(self, index):  # index of the sequence
+        out = [
+            self.obs_traj[index],  # 3d tensor: ped X coord X frame
+            self.fut_traj[index],  # 3d tensor: ped X coord X frame
+            self.obs_traj_rel[index],  # 3d tensor: ped X rel_coord X frame
+            self.fut_traj_rel[index],  # 3d tensor: ped X rel_coord X frame
+            self.augm_data[index],  # social encoding coordinates
+        ]
+        return out
+
+
+def seq_collate_social(data):
+    """
+    Input:
+        Data format: batch of groups of pedestrians X coord X frame
+    Output:
+        LSTM input format: frame X batch of groups of pedestrians X coord
+    """
+    (
+        obs_seq_list,
+        fut_seq_list,
+        obs_seq_rel_list,
+        fut_seq_rel_list,
+        augm_data_list
+    ) = zip(*data)
+
+    _len = [len(seq) for seq in obs_seq_list]  # lists of n_ped
+    cum_start_idx = [0] + np.cumsum(_len).tolist()
+    seq_start_end = [
+        [start, end] for start, end in zip(cum_start_idx, cum_start_idx[1:])
+    ]
+
+    _len = [len(seq) for seq in augm_data_list]  # lists of n_ped
+    cum_start_idx = [0] + np.cumsum(_len).tolist()
+    seq_start_end_augm = [
+        [start, end] for start, end in zip(cum_start_idx, cum_start_idx[1:])
+    ]
+
+    obs_traj = torch.cat(obs_seq_list, dim=0).permute(2, 0, 1)
+    fut_traj = torch.cat(fut_seq_list, dim=0).permute(2, 0, 1)
+    obs_traj_rel = torch.cat(obs_seq_rel_list, dim=0).permute(2, 0, 1)
+    fut_traj_rel = torch.cat(fut_seq_rel_list, dim=0).permute(2, 0, 1)
+    augm_data = torch.cat(augm_data_list, dim=0).permute(2, 0, 1)
+    seq_start_end = torch.LongTensor(seq_start_end)
+    seq_start_end_augm = torch.LongTensor(seq_start_end_augm)
+
+    out = [
+        obs_traj,
+        fut_traj,
+        obs_traj_rel,
+        fut_traj_rel,
+        seq_start_end,
+        augm_data,
+        seq_start_end_augm,
+    ]
+
+    return tuple(out)
+
+
 def seq_collate(data):
     '''
     Input:

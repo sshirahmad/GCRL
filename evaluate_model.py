@@ -54,13 +54,27 @@ def evaluate(args, loader, generator, training_step):
     with torch.no_grad():
         for batch in loader:
             batch = [tensor.cuda() for tensor in batch]
-            (
-                obs_traj,
-                fut_traj,
-                obs_traj_rel,
-                _,
-                seq_start_end,
-            ) = batch
+
+            if args.dataset_name in ('eth', 'hotel', 'univ', 'zara1', 'zara2'):
+                (
+                    obs_traj,
+                    fut_traj,
+                    obs_traj_rel,
+                    fut_traj_rel,
+                    seq_start_end,
+                ) = batch
+            elif 'synthetic' in args.dataset_name or args.dataset_name in ['synthetic', 'v2', 'v2full', 'v4']:
+                (
+                    obs_traj,
+                    fut_traj,
+                    obs_traj_rel,
+                    fut_traj_rel,
+                    seq_start_end,
+                    _,
+                    _
+                ) = batch
+            else:
+                raise ValueError('Unrecognized dataset name "%s"' % args.dataset_name)
 
             step += seq_start_end.shape[0]
             ade, fde = [], []
@@ -174,7 +188,7 @@ def main(args):
     print('Using GPU: ' + str(torch.cuda.is_available()))
     os.environ["CUDA_VISIBLE_DEVICES"] = args.gpu_num
     generator = get_generator(args)
-    valo_envs_path, valo_envs_name = get_envs_path(args.dataset_name, "test", args.filter_envs)  # +'-'+args.filter_envs_pretrain)
+    valo_envs_path, valo_envs_name = get_envs_path(args.dataset_name, "test", "0.6")  # +'-'+args.filter_envs_pretrain)
     loaders = [data_loader(args, valo_env_path, valo_env_name) for valo_env_path, valo_env_name in zip(valo_envs_path, valo_envs_name)]
     logging.info('Model: {}'.format(args.resume))
     logging.info('Dataset: {}'.format(args.dataset_name))
@@ -187,7 +201,7 @@ def main(args):
         fde = 0
         total_traj = 0
         for loader in loaders:
-            ade_sum_i, fde_sum_i, total_traj_i = evaluate(args, loader, generator, training_step="P6")
+            ade_sum_i, fde_sum_i, total_traj_i = evaluate(args, loader, generator, training_step="P3")
             ade += ade_sum_i
             fde += fde_sum_i
             total_traj += total_traj_i
