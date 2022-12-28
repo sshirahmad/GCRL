@@ -175,7 +175,7 @@ def l2_loss(pred_fut_traj, fut_traj, mode="average"):
     - loss: l2 loss depending on mode
     """
     if len(pred_fut_traj.size()) == 4:
-        loss = (fut_traj[:, :, :2].repeat(pred_fut_traj.shape[0], 1, 1, 1).permute(0, 2, 1, 3) - pred_fut_traj.permute(0, 2, 1, 3)) ** 2
+        loss = (fut_traj[:, :, :2].repeat(pred_fut_traj.shape[1], 1, 1, 1).permute(0, 2, 1, 3) - pred_fut_traj.permute(1, 2, 0, 3)) ** 2
     else:
         loss = (fut_traj[:, :, :2].permute(1, 0, 2) - pred_fut_traj.permute(1, 0, 2)) ** 2
 
@@ -465,8 +465,7 @@ def save_all_model(args, model, model_name, optimizers, metric, epoch, training_
                 'future_decoder': model.future_decoder.state_dict(),
                 'past_decoder': model.past_decoder.state_dict(),
                 'coupling_layers_z': model.coupling_layers_z.state_dict(),
-                'logvar_priors': model.logvar_priors,
-                'mean_priors': model.mean_priors,
+                'coupling_layers_s': model.coupling_layers_s.state_dict(),
                 'pi_priore': model.pi_priore,
             },
             'optimizers': {
@@ -513,16 +512,16 @@ def load_all_model(args, model, optimizers, lr_schedulers=None, training_steps=N
                         lr_scheduler.last_epoch = (args.start_epoch - start_p - 1) * num_batches
 
         # future decoder
-        # model.future_decoder.load_state_dict(models_checkpoint['future_decoder'])
-        # if optimizers != None:
-        #     optimizers['future_decoder'].load_state_dict(checkpoint['optimizers']['future_decoder'])
-        #     update_lr(optimizers['future_decoder'], args.lrfut)
-        #
-        # # past decoder
-        # model.past_decoder.load_state_dict(models_checkpoint['past_decoder'])
-        # if optimizers != None:
-        #     optimizers['past_decoder'].load_state_dict(checkpoint['optimizers']['past_decoder'])
-        #     update_lr(optimizers['past_decoder'], args.lrpast)
+        model.future_decoder.load_state_dict(models_checkpoint['future_decoder'])
+        if optimizers != None:
+            optimizers['future_decoder'].load_state_dict(checkpoint['optimizers']['future_decoder'])
+            update_lr(optimizers['future_decoder'], args.lrfut)
+
+        # past decoder
+        model.past_decoder.load_state_dict(models_checkpoint['past_decoder'])
+        if optimizers != None:
+            optimizers['past_decoder'].load_state_dict(checkpoint['optimizers']['past_decoder'])
+            update_lr(optimizers['past_decoder'], args.lrpast)
 
         # invariant encoder
         model.coupling_layers_z.load_state_dict(models_checkpoint['coupling_layers_z'])
@@ -533,14 +532,11 @@ def load_all_model(args, model, optimizers, lr_schedulers=None, training_steps=N
 
         # variational models
         model.pi_priore.data = models_checkpoint['pi_priore'].data.cuda()
-        model.logvar_priors.data = models_checkpoint['logvar_priors'].data.cuda()
-        model.mean_priors.data = models_checkpoint['mean_priors'].data.cuda()
-        print(torch.exp(model.logvar_priors))
-        print(model.mean_priors)
         print(torch.softmax(model.pi_priore, dim=0))
         model.x_to_s.load_state_dict(models_checkpoint['x_to_s'])
-        model.x_to_s.fc_logvar.weight.data = models_checkpoint['x_to_s']['fc_mu.weight']
-        model.x_to_s.fc_logvar.bias.data = models_checkpoint['x_to_s']['fc_mu.bias']
+        model.coupling_layers_s.load_state_dict(models_checkpoint['coupling_layers_s'])
+        # model.x_to_s.fc_logvar.weight.data = models_checkpoint['x_to_s']['fc_mu.weight']
+        # model.x_to_s.fc_logvar.bias.data = models_checkpoint['x_to_s']['fc_mu.bias']
         if optimizers != None:
             optimizers['par'].load_state_dict(checkpoint['optimizers']['par'])
             update_lr(optimizers['par'], args.lrpar)

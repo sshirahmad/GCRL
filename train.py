@@ -73,8 +73,9 @@ def main(args):
         'par': torch.optim.Adam(
             [
                 {"params": model.pi_priore, 'lr': args.lrpar},
-                {"params": model.logvar_priors, 'lr': args.lrpar},
-                {"params": model.mean_priors, 'lr': args.lrpar},
+                {"params": model.coupling_layers_s.parameters(), 'lr': args.lrpar},
+                # {"params": model.logvar_priors, 'lr': args.lrpar},
+                # {"params": model.mean_priors, 'lr': args.lrpar},
             ]
         ),
         'var': torch.optim.Adam(
@@ -174,7 +175,7 @@ def main(args):
     for epoch in range(args.start_epoch, sum(args.num_epochs) + 1):
 
         training_step = get_training_step(epoch)
-        if training_step in ["P1", "P2", "P5"]:
+        if training_step in ["P1", "P2", "P3", "P4", "P5"]:
             continue
         logging.info(f"\n===> EPOCH: {epoch} ({training_step})")
 
@@ -193,8 +194,8 @@ def main(args):
             freeze(True, (model.invariant_encoder, model.x_to_z, model.past_decoder, model.future_decoder, model.coupling_layers_z))
             freeze(False, (model.variant_encoder, model.x_to_s))
 
-        elif training_step == "P6":
-            freeze(False, (model.invariant_encoder, model.variant_encoder, model.x_to_s, model.x_to_z, model.past_decoder, model.future_decoder, model.coupling_layers_z))
+        # elif training_step == "P6":
+        #     freeze(False, (model.invariant_encoder, model.variant_encoder, model.x_to_s, model.x_to_z, model.past_decoder, model.future_decoder, model.coupling_layers_z))
 
         if training_step in ["P1", "P2", "P3", "P5", "P6"]:
             train_all(args, model, optimizers, train_dataset, epoch, training_step, train_envs_name, writer,

@@ -37,7 +37,7 @@ def main(args):
                    zip(val_envs_path, val_envs_name)]
 
     logging.info("Initializing Validation O Set")
-    valo_envs_path, valo_envs_name = get_envs_path(args.dataset_name, "test", args.filter_envs)
+    valo_envs_path, valo_envs_name = get_envs_path(args.dataset_name, "test", "0.6")
     valo_loaders = [data_loader(args, valo_env_path, valo_env_name) for valo_env_path, valo_env_name in zip(valo_envs_path, valo_envs_name)]
 
     # training routine length
@@ -128,8 +128,8 @@ def calculate_distance_posteriors(model, valid_dataset, valido_dataset=None):
                 (obs_traj, fut_traj, _, _, _, _, _) = batch
 
                 z, s = model(batch, "P7", env_idx=val_idx)
-                z_vec += [z.rsample([20, ]).view(-1, 4)]
-                s_vec += [s.rsample([20, ]).view( -1, 4)]
+                z_vec += [z.rsample([20, ]).view(-1, 2)]
+                s_vec += [s.rsample([20, ]).view(-1, 2)]
 
                 mean_z = torch.mean(z.mean, dim=0)
                 covariance_z = torch.mean(z.covariance_matrix, dim=0)
@@ -144,20 +144,20 @@ def calculate_distance_posteriors(model, valid_dataset, valido_dataset=None):
         plt.figure(1)
         colors = ['b', 'g', 'r', 'c']
         for i in range(len(s_vec)):
-            z_pca = pca.fit_transform(z_vec[i].cpu())
+            z_pca = z_vec[i].cpu()
             plt.scatter(z_pca[:, 0], z_pca[:, 1], color=colors[i])
         plt.show()
 
         plt.figure(2)
         for i in range(len(s_vec)):
-            s_pca = pca.fit_transform(s_vec[i].cpu())
+            s_pca = s_vec[i].cpu()
             plt.scatter(s_pca[:, 0], s_pca[:, 1], color=colors[i])
         plt.show()
 
         for val_idx, (loader, loader_name) in enumerate(zip(valido_dataset['loaders'], valido_dataset['names'])):
             for batch_idx, batch in enumerate(loader):
                 batch = [tensor.cuda() for tensor in batch]
-                (obs_traj, fut_traj, _, _, _) = batch
+                (obs_traj, fut_traj, _, _, _, _, _) = batch
 
                 z, s = model(batch, "P7")
                 mean_z = torch.mean(z.mean, dim=0)

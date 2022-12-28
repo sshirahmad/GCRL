@@ -5,11 +5,11 @@ from utils import int_tuple
 def get_parser():
     parser = argparse.ArgumentParser()
     parser.add_argument("--log_dir", default="./log/", help="Directory containing logging file")
-    parser.add_argument("--model_dir", default="./models/E2/", help="Directory containing logging file")
-    parser.add_argument("--tfdir", default='./runs/E2/', type=str)
+    parser.add_argument("--model_dir", default="./models/E1/", help="Directory containing logging file")
+    parser.add_argument("--tfdir", default='./runs/E1/', type=str)
     parser.add_argument("--dataset_name", default="v4", type=str)
     parser.add_argument("--model_name", default="mlp", type=str)
-    parser.add_argument("--resume", default="./models/E2//P4/CRMF_epoch_91.pth.tar",
+    parser.add_argument("--resume", default="./models/E1//P6/CRMF_epoch_151.pth.tar",
                         type=str, metavar="PATH", help="path to latest checkpoint (default: none)")
 
     # randomness
@@ -88,7 +88,7 @@ def get_training_parser():
 
     # general training
     parser.add_argument("--finetune", default="", type=str)
-    parser.add_argument("--num_epochs", default='50-20-20-1-20-50', type=lambda x: int_tuple(x, '-'))  # '150-100-150',
+    parser.add_argument("--num_epochs", default='50-20-20-1-20-100', type=lambda x: int_tuple(x, '-'))  # '150-100-150',
 
     # learning rates
     parser.add_argument("--lrvar", default=1e-3, type=float,
