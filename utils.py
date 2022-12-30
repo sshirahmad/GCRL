@@ -445,8 +445,7 @@ def save_all_model(args, model, model_name, optimizers, metric, epoch, training_
                 'future_decoder': model.future_decoder.state_dict(),
                 'past_decoder': model.past_decoder.state_dict(),
                 'coupling_layers_z': model.coupling_layers_z.state_dict(),
-                'logvar_priors': torch.log(torch.from_numpy(model.gmm.covariances_).cuda().float()),
-                'mean_priors':  torch.from_numpy(model.gmm.means_).cuda().float(),
+                'coupling_layers_s': model.coupling_layers_s.state_dict(),
                 'pi_priore': torch.log(torch.from_numpy(model.gmm.weights_).cuda().float()) + torch.log(torch.from_numpy(model.gmm.weights_).cuda().float().sum()),
             },
             'optimizers': {
@@ -466,6 +465,7 @@ def save_all_model(args, model, model_name, optimizers, metric, epoch, training_
                 'past_decoder': model.past_decoder.state_dict(),
                 'coupling_layers_z': model.coupling_layers_z.state_dict(),
                 'coupling_layers_s': model.coupling_layers_s.state_dict(),
+                'cont_classifier': model.cont_classifier.state_dict(),
                 'pi_priore': model.pi_priore,
             },
             'optimizers': {
@@ -531,6 +531,9 @@ def load_all_model(args, model, optimizers, lr_schedulers=None, training_steps=N
             update_lr(optimizers['inv'], args.lrinv)
 
         # variational models
+        if args.contrastive:
+            model.cont_classifier.load_state_dict(models_checkpoint['cont_classifier'])
+
         model.pi_priore.data = models_checkpoint['pi_priore'].data.cuda()
         print(torch.softmax(model.pi_priore, dim=0))
         model.x_to_s.load_state_dict(models_checkpoint['x_to_s'])

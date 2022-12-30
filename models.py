@@ -390,7 +390,7 @@ class Predictor(nn.Module):
         self.teacher_forcing_ratio = teacher_forcing_ratio
 
         self.n_coordinates = n_coordinates
-        self.pred_lstm_hidden_size = z_dim + s_dim + noise_dim[0]
+        self.pred_lstm_hidden_size = z_dim + s_dim
         self.pred_hidden2pos = nn.Linear(self.pred_lstm_hidden_size, n_coordinates)
         self.pred_lstm_model = LSTMCell(n_coordinates, self.pred_lstm_hidden_size)
         self.noise_dim = noise_dim
@@ -436,7 +436,7 @@ class Predictor(nn.Module):
         input_t = obs_traj_rel[self.obs_len - 1, :, :self.n_coordinates].repeat(len(pred_lstm_hidden), 1, 1)
         output = input_t
         pred_lstm_hidden = self.mapping(pred_lstm_hidden)
-        pred_lstm_hidden = self.add_noise(pred_lstm_hidden, seq_start_end)
+        # pred_lstm_hidden = self.add_noise(pred_lstm_hidden, seq_start_end)
         pred_lstm_c_t = torch.zeros_like(pred_lstm_hidden).cuda()
         pred_q_rel = []
         if self.training:
@@ -740,6 +740,7 @@ class CRMF(nn.Module):
         self.fut_len = args.fut_len
         self.num_samples = args.num_samples
         self.n_coordinates = args.n_coordinates
+        self.contrastive = args.contrastive
 
         self.num_envs = args.num_envs
         self.pi_priore = nn.Parameter(-1 * torch.ones(args.num_envs))
@@ -770,6 +771,10 @@ class CRMF(nn.Module):
 
         self.x_to_z = Mapping(2, 0, args.z_dim)
         self.x_to_s = Mapping(2, 0, args.s_dim)
+        self.cont_classifier = nn.Sequential(nn.Linear(args.s_dim, 32),
+                                             nn.ReLU(),
+                                             nn.Linear(32, 8),
+                                             )
 
         if args.model_name == "lstm":
 
@@ -911,9 +916,8 @@ class CRMF(nn.Module):
                 elif self.model_name == "mlp":
                     px = self.past_decoder(obs_traj_rel, torch.cat((z_vec, s_vec), dim=2))
 
-                # log_px = - l2_loss(px, obs_traj_rel, mode="raw") - 0.5 * 2 * self.obs_len * torch.log(
-                #     torch.tensor(2 * math.pi)) - 0.5 * self.obs_len * torch.log(torch.tensor(0.25))
-                log_px = - l2_loss(px, obs_traj_rel, mode="raw")
+                log_px = - l2_loss(px, obs_traj_rel, mode="raw") - 0.5 * 2 * self.obs_len * torch.log(
+                    torch.tensor(2 * math.pi)) - 0.5 * self.obs_len * torch.log(torch.tensor(0.25))
 
                 # calculate q(y|x)
                 if self.model_name == "lstm":
@@ -921,15 +925,20 @@ class CRMF(nn.Module):
                 if self.model_name == "mlp":
                     py = self.future_decoder(obs_traj_rel, fut_traj_rel, seq_start_end, torch.cat((z_vec, s_vec), dim=2))
 
-                # log_py = - l2_loss(py, fut_traj_rel, mode="raw") - 0.5 * 2 * self.fut_len * torch.log(
-                #     torch.tensor(2 * math.pi)) - 0.5 * self.fut_len * torch.log(torch.tensor(0.25))
-                log_py = - l2_loss(py, fut_traj_rel, mode="raw")
+                log_py = - l2_loss(py, fut_traj_rel, mode="raw") - 0.5 * 2 * self.fut_len * torch.log(
+                    torch.tensor(2 * math.pi)) - 0.5 * self.fut_len * torch.log(torch.tensor(0.25))
+
+                if self.contrastive:
+                    low_dim = self.cont_classifier(s_vec)
+                    low_dim = F.normalize(low_dim, dim=2)
+                else:
+                    low_dim = None
 
                 E1 = torch.multiply(torch.exp(log_py), log_px).mean(0)
                 E2 = torch.multiply(torch.exp(log_py), log_ps - log_qsgx).mean(0)
                 E3 = torch.multiply(torch.exp(log_py), log_pz - log_qzgx).mean(0)
 
-                return log_py, E1, E2, E3
+                return log_py, E1, E2, E3, low_dim
 
         else:
             if training_step == "P7":
