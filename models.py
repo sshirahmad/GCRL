@@ -895,7 +895,10 @@ class CRMF(nn.Module):
                     log_pe = pe.log_prob(torch.tensor(j).cuda())
                     Et.append(torch.exp(log_psge) * torch.exp(log_pe))
 
-                log_ps = torch.log(torch.stack(Et).sum(0)) + sldj
+                log_ps = torch.log(torch.stack(Et).sum(0) + 1e-16) + sldj
+                log_ps_zeros = torch.zeros_like(log_ps, device=log_ps.device)
+                if log_ps.mean() == torch.tensor(- math.inf):
+                    log_ps = log_ps_zeros
 
                 # calculate log(q(z|x))
                 log_qzgx = q_zgx.log_prob(z_vec)
