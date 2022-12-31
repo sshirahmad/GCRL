@@ -440,21 +440,21 @@ def train_all(args, model, optimizers, train_dataset, epoch, training_step, trai
             print('Acc={:.4f}%'.format(cluster_acc(pre, Y)[0] * 100))
 
         if training_step in ["P1", "P2"]:
-            writer.add_scalar(f"encoder_loss/{stage}", loss_meter.avg, epoch)
+            writer.add_scalar(f"STGAT_loss/{stage}", loss_meter.avg, epoch)
 
         elif training_step == "P3":
+            writer.add_scalar(f"reconstruction_loss/{stage}", loss_meter.avg, epoch)
+
+        elif training_step in ["P5"]:
             writer.add_scalar(f"variational_loss/{stage}", loss_meter.avg, epoch)
-            writer.add_scalar(f"recon_loss/{stage}", e1_loss_meter.avg, epoch)
-            writer.add_scalar(f"sreg_loss/{stage}", e2_loss_meter.avg, epoch)
-            writer.add_scalar(f"zreg_loss/{stage}", e3_loss_meter.avg, epoch)
-            writer.add_scalar(f"pred_loss/{stage}", p_loss_meter.avg, epoch)
-        elif training_step == "P4":
+
+        elif training_step in ["P6"]:
             writer.add_scalar(f"variational_loss/{stage}", loss_meter.avg, epoch)
-            writer.add_scalar(f"recon_loss/{stage}", e1_loss_meter.avg, epoch)
-            writer.add_scalar(f"sreg_loss/{stage}", e2_loss_meter.avg, epoch)
-            writer.add_scalar(f"zreg_loss/{stage}", e3_loss_meter.avg, epoch)
+            writer.add_scalar(f"reconstruction_loss/{stage}", e1_loss_meter.avg, epoch)
+            writer.add_scalar(f"contrastive_loss/{stage}", c_loss_meter.avg, epoch)
+            writer.add_scalar(f"sreg/{stage}", e2_loss_meter.avg, epoch)
+            writer.add_scalar(f"zreg/{stage}", e3_loss_meter.avg, epoch)
             writer.add_scalar(f"pred_loss/{stage}", p_loss_meter.avg, epoch)
-            writer.add_scalar(f"cont_loss/{stage}", c_loss_meter.avg, epoch)
 
     else:
 
