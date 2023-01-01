@@ -9,7 +9,7 @@ def get_parser():
     parser.add_argument("--tfdir", default='./runs/E7/', type=str)
     parser.add_argument("--dataset_name", default="v4", type=str)
     parser.add_argument("--model_name", default="mlp", type=str)
-    parser.add_argument("--resume", default="./models/E5/P6/CRMF_epoch_338.pth.tar",
+    parser.add_argument("--resume", default="",
                         type=str, metavar="PATH", help="path to latest checkpoint (default: none)")
 
     # randomness
@@ -44,7 +44,9 @@ def get_parser():
     parser.add_argument("--finetune_ratio", default=0.1, type=float, help="Number of batches to be used in finetuning")
     parser.add_argument("--batch_method", default='het', type=str,
                         help='Use Homogeneous (hom), Heterogeneous (het) or alternated homogeneous (alt) batches during training')
-    parser.add_argument("--contrastive", default=True, type=bool)
+    parser.add_argument("--contrastive", default=False, type=bool, help='add contrastive loss')
+    parser.add_argument("--decoupled_loss", default=True, type=bool, help='decouple ELBO from y')
+
     parser.add_argument("--batch_size", default='64', type=str)
     parser.add_argument("--shuffle", default=True, type=bool)
     parser.add_argument('--reduce', default=0, type=int)

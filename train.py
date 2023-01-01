@@ -357,11 +357,22 @@ def train_all(args, model, optimizers, train_dataset, epoch, training_step, trai
 
                     log_py, E1, E2, E3, low_dim = model(batch, training_step)
 
-                    log_qy = torch.log(torch.exp(log_py).mean(0))
-                    l2_loss_rel.append(log_qy)
-                    l2_loss_elbo1.append(E1)
-                    l2_loss_elbo2.append(E2)
-                    l2_loss_elbo3.append(E3)
+                    if args.decoupled_loss:
+                        for i in range(args.best_k):
+                            log_qy = - l2_loss(log_py[:, i, :, :], fut_traj_rel, mode="raw")
+                            l2_loss_rel.append(log_qy)
+
+                        l2_loss_elbo1.append(E1)
+                        l2_loss_elbo2.append(E2)
+                        l2_loss_elbo3.append(E3)
+
+                    else:
+
+                        log_qy = torch.log(torch.exp(log_py).mean(0))
+                        l2_loss_rel.append(log_qy)
+                        l2_loss_elbo1.append(E1 / torch.exp(log_qy))
+                        l2_loss_elbo2.append(E2 / torch.exp(log_qy))
+                        l2_loss_elbo3.append(E3 / torch.exp(log_qy))
 
                     l2_loss_rel = torch.stack(l2_loss_rel, dim=1)
                     predict_loss = erm_loss(l2_loss_rel, seq_start_end)
