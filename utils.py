@@ -538,8 +538,8 @@ def load_all_model(args, model, optimizers, lr_schedulers=None, training_steps=N
         print(torch.softmax(model.pi_priore, dim=0))
         model.x_to_s.load_state_dict(models_checkpoint['x_to_s'])
         model.coupling_layers_s.load_state_dict(models_checkpoint['coupling_layers_s'])
-        # model.x_to_s.fc_logvar.weight.data = models_checkpoint['x_to_s']['fc_mu.weight']
-        # model.x_to_s.fc_logvar.bias.data = models_checkpoint['x_to_s']['fc_mu.bias']
+        # model.x_to_s.fc_logvar.weight.data = models_checkpoint['x_to_s']['fc_mu.weight'].cuda()
+        # model.x_to_s.fc_logvar.bias.data = models_checkpoint['x_to_s']['fc_mu.bias'].cuda()
         if optimizers != None:
             optimizers['par'].load_state_dict(checkpoint['optimizers']['par'])
             update_lr(optimizers['par'], args.lrpar)

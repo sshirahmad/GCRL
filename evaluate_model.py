@@ -79,10 +79,10 @@ def evaluate(args, loader, generator, training_step):
             step += seq_start_end.shape[0]
             ade, fde = [], []
             total_traj += fut_traj.size(1)
-            for _ in range(args.best_k):
-                pred_fut_traj_rel = generator(batch, training_step)
+            pred_fut_traj_rel = generator(batch, training_step)
+            for k in range(args.best_k):
 
-                pred_fut_traj = relative_to_abs(pred_fut_traj_rel, obs_traj[-1, :, :2])
+                pred_fut_traj = relative_to_abs(pred_fut_traj_rel[:, k, :, :], obs_traj[-1, :, :2])
 
                 ade_, fde_ = cal_ade_fde(fut_traj[:, :, :2], pred_fut_traj)
 

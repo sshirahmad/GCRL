@@ -5,11 +5,11 @@ from utils import int_tuple
 def get_parser():
     parser = argparse.ArgumentParser()
     parser.add_argument("--log_dir", default="./log/", help="Directory containing logging file")
-    parser.add_argument("--model_dir", default="./models/E7/", help="Directory containing logging file")
-    parser.add_argument("--tfdir", default='./runs/E7/', type=str)
-    parser.add_argument("--dataset_name", default="v4", type=str)
-    parser.add_argument("--model_name", default="mlp", type=str)
-    parser.add_argument("--resume", default="",
+    parser.add_argument("--model_dir", default="./models/E3/", help="Directory containing logging file")
+    parser.add_argument("--tfdir", default='./runs/E3/', type=str)
+    parser.add_argument("--dataset_name", default="eth", type=str)
+    parser.add_argument("--model_name", default="lstm", type=str)
+    parser.add_argument("--resume", default="./models/E3//P6/CRMF_epoch_509.pth.tar",
                         type=str, metavar="PATH", help="path to latest checkpoint (default: none)")
 
     # randomness
@@ -42,10 +42,10 @@ def get_parser():
     parser.add_argument("--skip", default=1, type=int)
     parser.add_argument("--delim", default="\t")
     parser.add_argument("--finetune_ratio", default=0.1, type=float, help="Number of batches to be used in finetuning")
-    parser.add_argument("--batch_method", default='het', type=str,
+    parser.add_argument("--batch_method", default='hom', type=str,
                         help='Use Homogeneous (hom), Heterogeneous (het) or alternated homogeneous (alt) batches during training')
     parser.add_argument("--contrastive", default=False, type=bool, help='add contrastive loss')
-    parser.add_argument("--decoupled_loss", default=True, type=bool, help='decouple ELBO from y')
+    parser.add_argument("--decoupled_loss", default=False, type=bool, help='decouple ELBO from y')
 
     parser.add_argument("--batch_size", default='64', type=str)
     parser.add_argument("--shuffle", default=True, type=bool)
@@ -54,9 +54,9 @@ def get_parser():
 
 
     # architecture (VE)
-    parser.add_argument("--z_dim", type=int, default=2, help="Dimension of z latent variable")
-    parser.add_argument("--s_dim", type=int, default=2, help="Dimension of s latent variable")
-    parser.add_argument("--num_envs", default=3, type=int, help="Number of environments in the dataset")
+    parser.add_argument("--z_dim", type=int, default=8, help="Dimension of z latent variable")
+    parser.add_argument("--s_dim", type=int, default=8, help="Dimension of s latent variable")
+    parser.add_argument("--num_envs", default=5, type=int, help="Number of environments in the dataset")
 
     # spurious feature
     parser.add_argument("--add_confidence", default=False, type=bool)
@@ -91,22 +91,22 @@ def get_training_parser():
 
     # general training
     parser.add_argument("--finetune", default="", type=str)
-    parser.add_argument("--num_epochs", default='50-20-20-1-20-100', type=lambda x: int_tuple(x, '-'))  # '150-100-150',
+    parser.add_argument("--num_epochs", default='150-100-100-1-20-1000', type=lambda x: int_tuple(x, '-'))  # '150-100-150',
 
     # learning rates
     parser.add_argument("--lr_scheduler", default=False, type=bool)  # '150-100-150',
 
-    parser.add_argument("--lrvar", default=1e-3, type=float,
+    parser.add_argument("--lrvar", default=5e-3, type=float,
                         help="initial learning rate for variant encoder optimizer")
-    parser.add_argument('--lrinv', default=1e-3, type=float,
+    parser.add_argument('--lrinv', default=5e-3, type=float,
                         help="initial learning rate for the invariant encoder optimizer")
-    parser.add_argument('--lrfut', default=1e-3, type=float,
+    parser.add_argument('--lrfut', default=5e-3, type=float,
                         help="initial learning rate for the future decoder optimizer")
-    parser.add_argument('--lrpast', default=1e-3, type=float,
+    parser.add_argument('--lrpast', default=5e-3, type=float,
                         help="initial learning rate for the past decoder optimizer")
-    parser.add_argument('--lrmap', default=1e-3, type=float,
+    parser.add_argument('--lrmap', default=5e-3, type=float,
                         help="initial learning rate for the regressor optimizer")
-    parser.add_argument('--lrpar', default=1e-3, type=float,
+    parser.add_argument('--lrpar', default=5e-3, type=float,
                         help="initial learning rate for the parameters optimizer")
 
     return parser

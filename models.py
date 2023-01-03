@@ -33,7 +33,7 @@ class CouplingLayer(nn.Module):
 
         # Build scale and translate network
         if hidden_dims is None:
-            hidden_dims = [8]
+            hidden_dims = [32]
 
         modules = []
         in_channels = latent_dim // 2
@@ -368,22 +368,22 @@ class Predictor(nn.Module):
     ):
         super(Predictor, self).__init__()
 
-        # if hidden_dims is None:
-        #     hidden_dims = [8]
-        #
-        # modules = []
-        # in_channels = s_dim + z_dim
-        # for h_dim in hidden_dims:
-        #     modules.append(
-        #         nn.Sequential(
-        #             nn.Linear(in_channels, h_dim),
-        #             nn.LeakyReLU())
-        #     )
-        #     in_channels = h_dim
-        #
-        # modules.append(nn.Linear(hidden_dims[-1], s_dim + z_dim))
-        #
-        # self.mapping = nn.Sequential(*modules)
+        if hidden_dims is None:
+            hidden_dims = [32]
+
+        modules = []
+        in_channels = s_dim + z_dim
+        for h_dim in hidden_dims:
+            modules.append(
+                nn.Sequential(
+                    nn.Linear(in_channels, h_dim),
+                    nn.LeakyReLU())
+            )
+            in_channels = h_dim
+
+        modules.append(nn.Linear(hidden_dims[-1], s_dim + z_dim))
+
+        self.mapping = nn.Sequential(*modules)
 
         self.obs_len = obs_len
         self.fut_len = fut_len
@@ -435,7 +435,7 @@ class Predictor(nn.Module):
 
         input_t = obs_traj_rel[self.obs_len - 1, :, :self.n_coordinates].repeat(len(pred_lstm_hidden), 1, 1)
         output = input_t
-        # pred_lstm_hidden = self.mapping(pred_lstm_hidden)
+        pred_lstm_hidden = self.mapping(pred_lstm_hidden)
         # pred_lstm_hidden = self.add_noise(pred_lstm_hidden, seq_start_end)
         pred_lstm_c_t = torch.zeros_like(pred_lstm_hidden).cuda()
         pred_q_rel = []
@@ -498,21 +498,21 @@ class Decoder(nn.Module):
     ):
         super(Decoder, self).__init__()
 
-        # if hidden_dims is None:
-        #     hidden_dims = [8]
-        #
-        # modules = []
-        # in_channels = s_dim + z_dim
-        # for h_dim in hidden_dims:
-        #     modules.append(
-        #         nn.Sequential(
-        #             nn.Linear(in_channels, h_dim),
-        #             nn.LeakyReLU())
-        #     )
-        #     in_channels = h_dim
-        #
-        # modules.append(nn.Linear(hidden_dims[-1], s_dim + z_dim))
-        # self.mapping = nn.Sequential(*modules)
+        if hidden_dims is None:
+            hidden_dims = [32]
+
+        modules = []
+        in_channels = s_dim + z_dim
+        for h_dim in hidden_dims:
+            modules.append(
+                nn.Sequential(
+                    nn.Linear(in_channels, h_dim),
+                    nn.LeakyReLU())
+            )
+            in_channels = h_dim
+
+        modules.append(nn.Linear(hidden_dims[-1], s_dim + z_dim))
+        self.mapping = nn.Sequential(*modules)
 
         self.obs_len = obs_len
         self.n_coordinates = n_coordinates
@@ -540,7 +540,7 @@ class Decoder(nn.Module):
     ):
 
         pred_traj_rel = []
-        # pred_lstm_hidden = self.mapping(pred_lstm_hidden)
+        pred_lstm_hidden = self.mapping(pred_lstm_hidden)
         pred_lstm_c_t = torch.zeros_like(pred_lstm_hidden).cuda()
         for i in range(self.obs_len):
             if i >= 1:
@@ -575,7 +575,7 @@ class Mapping(nn.Module):
         super(Mapping, self).__init__()
 
         if hidden_dims is None:
-            hidden_dims = [8]
+            hidden_dims = [32, 32]
 
         modules = []
         in_channels = traj_lstm_hidden_size + graph_lstm_hidden_size
@@ -774,8 +774,8 @@ class CRMF(nn.Module):
             self.ps += [MultivariateNormal(i * torch.ones(args.s_dim).cuda(),
                                            torch.diag((i + 1) * torch.ones(args.s_dim).cuda()))]
 
-        self.x_to_z = Mapping(2, 0, args.z_dim)
-        self.x_to_s = Mapping(2, 0, args.s_dim)
+        self.x_to_z = Mapping(args.traj_lstm_hidden_size, args.graph_lstm_hidden_size, args.z_dim)
+        self.x_to_s = Mapping(args.traj_lstm_hidden_size, args.graph_lstm_hidden_size, args.s_dim)
         self.cont_classifier = nn.Sequential(nn.Linear(args.s_dim, 32),
                                              nn.ReLU(),
                                              nn.Linear(32, 8),
@@ -851,16 +851,16 @@ class CRMF(nn.Module):
                     s_vec = self.x_to_s(self.variant_encoder(obs_traj_rel), mode="normal")
 
                 if self.model_name == "lstm":
-                    pred_past_rel = self.past_decoder(obs_traj_rel, torch.cat((z_vec, s_vec), dim=1))
+                    pred_past_rel = self.past_decoder(obs_traj_rel, torch.cat((z_vec.unsqueeze(0), s_vec.unsqueeze(0)), dim=2)).squeeze(1)
                 elif self.model_name == "mlp":
                     # pred_past_rel = self.past_decoder(torch.cat((z_vec.unsqueeze(0), s_vec.unsqueeze(0)), dim=2)).squeeze(1)
-                    pred_past_rel= self.past_decoder(obs_traj_rel, torch.cat((z_vec, s_vec), dim=1))
+                    pred_past_rel = self.past_decoder(obs_traj_rel, torch.cat((z_vec, s_vec), dim=1))
 
                 if self.model_name == "lstm":
                     pred_fut_rel = self.future_decoder(obs_traj_rel, fut_traj_rel, seq_start_end,
-                                                       torch.cat((z_vec, s_vec), dim=1))
+                                                       torch.cat((z_vec.unsqueeze(0), s_vec.unsqueeze(0)), dim=2)).squeeze(1)
                 if self.model_name == "mlp":
-                    pred_fut_rel= self.future_decoder(obs_traj_rel, fut_traj_rel, seq_start_end,
+                    pred_fut_rel = self.future_decoder(obs_traj_rel, fut_traj_rel, seq_start_end,
                                                        torch.cat((z_vec, s_vec), dim=1))
 
                 return pred_past_rel, pred_fut_rel
@@ -944,9 +944,11 @@ class CRMF(nn.Module):
 
                     # calculate q(y|x)
                     if self.model_name == "lstm":
-                        py = self.future_decoder(obs_traj_rel, fut_traj_rel, seq_start_end, torch.cat((z_vec, s_vec), dim=2))
+                        py = self.future_decoder(obs_traj_rel, fut_traj_rel, seq_start_end,
+                                                 torch.cat((z_vec, s_vec), dim=2))
                     if self.model_name == "mlp":
-                        py = self.future_decoder(obs_traj_rel, fut_traj_rel, seq_start_end, torch.cat((z_vec, s_vec), dim=2))
+                        py = self.future_decoder(obs_traj_rel, fut_traj_rel, seq_start_end,
+                                                 torch.cat((z_vec, s_vec), dim=2))
 
                     log_py = - l2_loss(py, fut_traj_rel, mode="raw") - 0.5 * 2 * self.fut_len * torch.log(
                         torch.tensor(2 * math.pi)) - 0.5 * self.fut_len * torch.log(torch.tensor(0.25))
@@ -993,11 +995,11 @@ class CRMF(nn.Module):
                     q_sgx = self.x_to_s(self.variant_encoder(obs_traj_rel), mode="variational")
 
                 # calculate q(y|theta, x)
-                z_vec = q_zgx.rsample([self.num_samples, ])
-                s_vec = q_sgx.rsample([self.num_samples, ])
+                z_vec = q_zgx.rsample([self.best_k, ])
+                s_vec = q_sgx.rsample([self.best_k, ])
                 if self.model_name == "lstm":
                     q = self.future_decoder(obs_traj_rel, fut_traj_rel, seq_start_end, torch.cat((z_vec, s_vec), dim=2))
                 elif self.model_name == "mlp":
                     q = self.future_decoder(obs_traj_rel, fut_traj_rel, seq_start_end, torch.cat((z_vec, s_vec), dim=2))
 
-                return q[:, 0, :, :]
+                return q

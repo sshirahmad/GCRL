@@ -550,11 +550,22 @@ def train_all(args, model, optimizers, train_dataset, epoch, training_step, trai
                     l2_loss_elbo3 = []
 
                     log_py, E1, E2, E3, _ = model(batch, training_step)
-                    log_qy = torch.log(torch.exp(log_py).mean(0))
-                    l2_loss_rel.append(log_qy)
-                    l2_loss_elbo1.append(E1 / torch.exp(log_qy))
-                    l2_loss_elbo2.append(E2 / torch.exp(log_qy))
-                    l2_loss_elbo3.append(E3 / torch.exp(log_qy))
+                    if args.decoupled_loss:
+                        for i in range(args.best_k):
+                            log_qy = - l2_loss(log_py[:, i, :, :], fut_traj_rel, mode="raw")
+                            l2_loss_rel.append(log_qy)
+
+                        l2_loss_elbo1.append(E1)
+                        l2_loss_elbo2.append(E2)
+                        l2_loss_elbo3.append(E3)
+
+                    else:
+
+                        log_qy = torch.log(torch.exp(log_py).mean(0))
+                        l2_loss_rel.append(log_qy)
+                        l2_loss_elbo1.append(E1 / torch.exp(log_qy))
+                        l2_loss_elbo2.append(E2 / torch.exp(log_qy))
+                        l2_loss_elbo3.append(E3 / torch.exp(log_qy))
 
                     l2_loss_rel = torch.stack(l2_loss_rel, dim=1)
                     l2_loss_elbo1 = torch.stack(l2_loss_elbo1, dim=1)
@@ -677,14 +688,15 @@ def validate_ade(args, model, valid_dataset, epoch, training_step, writer, stage
                 ade_list, fde_list = [], []
                 total_traj_i += fut_traj.size(1)
 
-                for k in range(1):
-                    if stage == "validation o":
-                        pred_fut_traj_rel = model(batch, training_step)
-                    else:
-                        pred_fut_traj_rel = model(batch, training_step, env_idx=val_idx)
+                if stage == "validation o":
+                    pred_fut_traj_rel = model(batch, training_step)
+                else:
+                    pred_fut_traj_rel = model(batch, training_step, env_idx=val_idx)
+
+                for k in range(args.best_k):
 
                     # from relative path to absolute path
-                    pred_fut_traj = relative_to_abs(pred_fut_traj_rel, obs_traj[-1, :, :2])
+                    pred_fut_traj = relative_to_abs(pred_fut_traj_rel[:, k, :, :], obs_traj[-1, :, :2])
 
                     # compute ADE and FDE metrics
                     ade_, fde_ = cal_ade_fde(fut_traj[:, :, :2], pred_fut_traj)
