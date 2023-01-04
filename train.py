@@ -688,15 +688,14 @@ def validate_ade(args, model, valid_dataset, epoch, training_step, writer, stage
                 ade_list, fde_list = [], []
                 total_traj_i += fut_traj.size(1)
 
-                if stage == "validation o":
-                    pred_fut_traj_rel = model(batch, training_step)
-                else:
-                    pred_fut_traj_rel = model(batch, training_step, env_idx=val_idx)
-
                 for k in range(args.best_k):
+                    if stage == "validation o":
+                        pred_fut_traj_rel = model(batch, training_step)
+                    else:
+                        pred_fut_traj_rel = model(batch, training_step, env_idx=val_idx)
 
                     # from relative path to absolute path
-                    pred_fut_traj = relative_to_abs(pred_fut_traj_rel[:, k, :, :], obs_traj[-1, :, :2])
+                    pred_fut_traj = relative_to_abs(pred_fut_traj_rel, obs_traj[-1, :, :2])
 
                     # compute ADE and FDE metrics
                     ade_, fde_ = cal_ade_fde(fut_traj[:, :, :2], pred_fut_traj)

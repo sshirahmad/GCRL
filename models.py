@@ -995,11 +995,11 @@ class CRMF(nn.Module):
                     q_sgx = self.x_to_s(self.variant_encoder(obs_traj_rel), mode="variational")
 
                 # calculate q(y|theta, x)
-                z_vec = q_zgx.rsample([self.best_k, ])
-                s_vec = q_sgx.rsample([self.best_k, ])
+                z_vec = q_zgx.rsample([self.num_samples, ])
+                s_vec = q_sgx.rsample([self.num_samples, ])
                 if self.model_name == "lstm":
                     q = self.future_decoder(obs_traj_rel, fut_traj_rel, seq_start_end, torch.cat((z_vec, s_vec), dim=2))
                 elif self.model_name == "mlp":
                     q = self.future_decoder(obs_traj_rel, fut_traj_rel, seq_start_end, torch.cat((z_vec, s_vec), dim=2))
 
-                return q
+                return q[:, 0, :, :]

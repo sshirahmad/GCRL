@@ -5,11 +5,11 @@ from utils import int_tuple
 def get_parser():
     parser = argparse.ArgumentParser()
     parser.add_argument("--log_dir", default="./log/", help="Directory containing logging file")
-    parser.add_argument("--model_dir", default="./models/E3/", help="Directory containing logging file")
-    parser.add_argument("--tfdir", default='./runs/E3/', type=str)
+    parser.add_argument("--model_dir", default="./models/E5/", help="Directory containing logging file")
+    parser.add_argument("--tfdir", default='./runs/E5/', type=str)
     parser.add_argument("--dataset_name", default="eth", type=str)
     parser.add_argument("--model_name", default="lstm", type=str)
-    parser.add_argument("--resume", default="./models/E3//P6/CRMF_epoch_509.pth.tar",
+    parser.add_argument("--resume", default="./models/E5//P6/CRMF_epoch_412.pth.tar",
                         type=str, metavar="PATH", help="path to latest checkpoint (default: none)")
 
     # randomness
@@ -84,7 +84,7 @@ def get_training_parser():
                         help="Say which env were used during pretraining (for contrastive loss) (i.e 0.1-0.3-0.5)")
 
     # training
-    parser.add_argument("--best_k", default=20, type=int)
+    parser.add_argument("--best_k", default=1, type=int)
     parser.add_argument("--start-epoch", default=1, type=int, metavar="N",
                         help="manual epoch number (useful on restarts)")
     parser.add_argument("--use_gpu", default=1, type=int)
@@ -94,7 +94,7 @@ def get_training_parser():
     parser.add_argument("--num_epochs", default='150-100-100-1-20-1000', type=lambda x: int_tuple(x, '-'))  # '150-100-150',
 
     # learning rates
-    parser.add_argument("--lr_scheduler", default=False, type=bool)  # '150-100-150',
+    parser.add_argument("--lr_scheduler", default=True, type=bool)  # '150-100-150',
 
     parser.add_argument("--lrvar", default=5e-3, type=float,
                         help="initial learning rate for variant encoder optimizer")
