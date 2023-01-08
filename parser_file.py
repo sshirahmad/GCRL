@@ -7,8 +7,8 @@ def get_parser():
     parser.add_argument("--log_dir", default="./log/", help="Directory containing logging file")
     parser.add_argument("--model_dir", default="./models/E5/", help="Directory containing logging file")
     parser.add_argument("--tfdir", default='./runs/E5/', type=str)
-    parser.add_argument("--dataset_name", default="v4", type=str)
-    parser.add_argument("--model_name", default="mlp", type=str)
+    parser.add_argument("--dataset_name", default="eth", type=str)
+    parser.add_argument("--model_name", default="lstm", type=str)
     parser.add_argument("--resume", default="./models/E18/P6/CRMF_epoch_754.pth.tar",
                         type=str, metavar="PATH", help="path to latest checkpoint (default: none)")
 
@@ -59,8 +59,8 @@ def get_parser():
     parser.add_argument("--num_envs", default=5, type=int, help="Number of environments in the dataset")
 
     # spurious feature
-    parser.add_argument("--add_confidence", default=False, type=bool)
-    parser.add_argument("--domain_shifts", default='0', type=str,
+    parser.add_argument("--add_confidence", default=True, type=bool)
+    parser.add_argument("--domain_shifts", default='1-2-4-8-16', type=str,
                         help='domain_shifts per environment: hotel,univ,zara1,zara2,eth')
 
     return parser

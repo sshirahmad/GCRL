@@ -201,6 +201,10 @@ def main(args):
         # elif training_step == "P6":
         #     freeze(False, (model.invariant_encoder, model.variant_encoder, model.x_to_s, model.x_to_z, model.past_decoder, model.future_decoder, model.coupling_layers_z))
 
+        elif training_step == "P7":
+            freeze(True, (model.invariant_encoder, model.x_to_z, model.past_decoder, model.future_decoder, model.coupling_layers_z))
+            freeze(False, (model.variant_encoder, model.x_to_s, model.coupling_layers_s))
+
         if training_step in ["P1", "P2", "P3", "P5", "P6"]:
             train_all(args, model, optimizers, train_dataset, epoch, training_step, train_envs_name, writer,
                       beta_scheduler,
@@ -349,7 +353,7 @@ def train_all(args, model, optimizers, train_dataset, epoch, training_step, trai
                     elbo_loss = erm_loss(l2_loss_elbo, seq_start_end)
                     batch_loss.append(- elbo_loss)
 
-                elif training_step == "P6":
+                else:
                     l2_loss_rel = []
                     l2_loss_elbo1 = []
                     l2_loss_elbo2 = []
@@ -429,12 +433,12 @@ def train_all(args, model, optimizers, train_dataset, epoch, training_step, trai
                         lr_scheduler_optims['past_decoder'].step()
                     optimizers['past_decoder'].step()
 
-                if training_step in ['P1', 'P2', 'P3', 'P5', 'P6']:
+                if training_step in ['P1', 'P2', 'P3', 'P5', 'P6', 'P7']:
                     if lr_scheduler_optims is not None:
                         lr_scheduler_optims['var'].step()
                     optimizers['var'].step()
 
-                if training_step in ['P6']:
+                if training_step in ['P6', 'P7']:
                     if lr_scheduler_optims is not None:
                         lr_scheduler_optims['par'].step()
                     optimizers['par'].step()
@@ -604,12 +608,12 @@ def train_all(args, model, optimizers, train_dataset, epoch, training_step, trai
                             lr_scheduler_optims['past_decoder'].step()
                         optimizers['past_decoder'].step()
 
-                    if training_step in ['P1', 'P2', 'P3', 'P5', 'P6']:
+                    if training_step in ['P1', 'P2', 'P3', 'P5', 'P6', 'P7']:
                         if lr_scheduler_optims is not None:
                             lr_scheduler_optims['var'].step()
                         optimizers['var'].step()
 
-                    if training_step in ['P6']:
+                    if training_step in ['P6', 'P7']:
                         if lr_scheduler_optims is not None:
                             lr_scheduler_optims['par'].step()
                         optimizers['par'].step()

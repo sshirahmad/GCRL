@@ -61,9 +61,9 @@ def main(args):
     paths = [
              "./models/E10/P6/CRMF_epoch_705.pth.tar",
              "./models/E11/P6/CRMF_epoch_685.pth.tar",
-             "./models/E12/P6/CRMF_epoch_703.pth.tar",
-             "./models/E13/P6/CRMF_epoch_669.pth.tar",
-             "./models/E14/P6/CRMF_epoch_573.pth.tar",
+             # "./models/E12/P6/CRMF_epoch_703.pth.tar",
+             # "./models/E13/P6/CRMF_epoch_669.pth.tar",
+             # "./models/E14/P6/CRMF_epoch_573.pth.tar",
              ]
 
     z_vec = []
