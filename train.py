@@ -146,6 +146,7 @@ def main(args):
                 'par': OneCycleLR(optimizers['par'], max_lr=1e-3, div_factor=25.0, total_steps=int(total_steps[5]),
                                   pct_start=0.3),
             },
+            "P7": None,
         }
     else:
         lr_schedulers = {
@@ -154,14 +155,15 @@ def main(args):
             "P3": None,
             "P4": None,
             "P5": None,
-            "P6": None
+            "P6": None,
+            "P7": None
         }
 
     # TRAINING HAPPENS IN 4 STEPS:
-    assert (len(args.num_epochs) == 6)
+    assert (len(args.num_epochs) == 7)
     # 1. Train the invariant encoder along with the future decoder to learn z
     # 2. Train everything except invariant encoder to learn the other variant latent variables
-    training_steps = {f'P{i}': [sum(args.num_epochs[:i - 1]), sum(args.num_epochs[:i])] for i in range(1, 7)}
+    training_steps = {f'P{i}': [sum(args.num_epochs[:i - 1]), sum(args.num_epochs[:i])] for i in range(1, 8)}
     print(training_steps)
 
     if args.resume:
@@ -179,7 +181,7 @@ def main(args):
     for epoch in range(args.start_epoch, sum(args.num_epochs) + 1):
 
         training_step = get_training_step(epoch)
-        if training_step in ["P1", "P2", "P3", "P4", "P5"]:
+        if training_step in ["P1", "P2", "P3", "P4", "P5", "P6"]:
             continue
         logging.info(f"\n===> EPOCH: {epoch} ({training_step})")
 
@@ -202,8 +204,8 @@ def main(args):
         #     freeze(False, (model.invariant_encoder, model.variant_encoder, model.x_to_s, model.x_to_z, model.past_decoder, model.future_decoder, model.coupling_layers_z))
 
         elif training_step == "P7":
-            freeze(True, (model.invariant_encoder, model.x_to_z, model.past_decoder, model.future_decoder, model.coupling_layers_z))
-            freeze(False, (model.variant_encoder, model.x_to_s, model.coupling_layers_s))
+            freeze(True, (model.invariant_encoder, model.x_to_z, model.past_decoder, model.future_decoder, model.coupling_layers_z, model.coupling_layers_s))
+            freeze(False, (model.variant_encoder, model.x_to_s))
 
         if training_step in ["P1", "P2", "P3", "P5", "P6"]:
             train_all(args, model, optimizers, train_dataset, epoch, training_step, train_envs_name, writer,
@@ -231,7 +233,7 @@ def main(args):
                 metric = validate_ade(args, model, valido_dataset, epoch, training_step, writer, stage='validation o')
 
             elif training_step == "P7":
-                metric = validate_ade(args, model, valido_dataset, epoch, training_step, writer, stage='validation o')
+                metric = validate_ade(args, model, finetune_dataset, epoch, training_step, writer, stage='validation o')
 
         if training_step in ["P6", "P7"]:
             if metric < min_metric:
