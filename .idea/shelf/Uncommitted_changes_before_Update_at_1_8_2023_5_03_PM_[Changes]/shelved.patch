@@ -1,0 +1,410 @@
+Index: .idea/workspace.xml
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.BaseRevisionTextPatchEP
+<+><?xml version=\"1.0\" encoding=\"UTF-8\"?>\r\n<project version=\"4\">\r\n  <component name=\"ChangeListManager\">\r\n    <list default=\"true\" id=\"8147b731-440c-4981-a21f-e4c8b1f0cd9a\" name=\"Changes\" comment=\"Experiments\">\r\n      <change beforePath=\"$PROJECT_DIR$/.idea/misc.xml\" beforeDir=\"false\" afterPath=\"$PROJECT_DIR$/.idea/misc.xml\" afterDir=\"false\" />\r\n      <change beforePath=\"$PROJECT_DIR$/.idea/shelf/Uncommitted_changes_before_Checkout_at_11_17_2022_12_09_PM__Changes_.xml\" beforeDir=\"false\" afterPath=\"$PROJECT_DIR$/.idea/shelf/Uncommitted_changes_before_Checkout_at_11_17_2022_12_09_PM__Changes_.xml\" afterDir=\"false\" />\r\n      <change beforePath=\"$PROJECT_DIR$/.idea/shelf/Uncommitted_changes_before_Checkout_at_2022-11-18,_4_44_p_m__[Changes]1/shelved.patch\" beforeDir=\"false\" />\r\n      <change beforePath=\"$PROJECT_DIR$/.idea/shelf/Uncommitted_changes_before_Checkout_at_2022-11-18__4_44_p_m___Changes_.xml\" beforeDir=\"false\" afterPath=\"$PROJECT_DIR$/.idea/shelf/Uncommitted_changes_before_Checkout_at_2022-11-18__4_44_p_m___Changes_.xml\" afterDir=\"false\" />\r\n      <change beforePath=\"$PROJECT_DIR$/.idea/shelf/Uncommitted_changes_before_Checkout_at_2022-11-18__4_44_p_m___Changes_1.xml\" beforeDir=\"false\" />\r\n      <change beforePath=\"$PROJECT_DIR$/.idea/shelf/Uncommitted_changes_before_Update_at_11_9_2022_10_12_PM__Changes_.xml\" beforeDir=\"false\" afterPath=\"$PROJECT_DIR$/.idea/shelf/Uncommitted_changes_before_Update_at_11_9_2022_10_12_PM__Changes_.xml\" afterDir=\"false\" />\r\n      <change beforePath=\"$PROJECT_DIR$/.idea/workspace.xml\" beforeDir=\"false\" afterPath=\"$PROJECT_DIR$/.idea/workspace.xml\" afterDir=\"false\" />\r\n      <change beforePath=\"$PROJECT_DIR$/Tensorboard.ipynb\" beforeDir=\"false\" afterPath=\"$PROJECT_DIR$/Tensorboard.ipynb\" afterDir=\"false\" />\r\n      <change beforePath=\"$PROJECT_DIR$/log/train.log\" beforeDir=\"false\" afterPath=\"$PROJECT_DIR$/log/train.log\" afterDir=\"false\" />\r\n      <change beforePath=\"$PROJECT_DIR$/models.py\" beforeDir=\"false\" afterPath=\"$PROJECT_DIR$/models.py\" afterDir=\"false\" />\r\n      <change beforePath=\"$PROJECT_DIR$/models/E1/P4/CRMF_epoch_1188.pth.tar\" beforeDir=\"false\" />\r\n      <change beforePath=\"$PROJECT_DIR$/models/E1/P4/CRMF_epoch_401.pth.tar\" beforeDir=\"false\" />\r\n      <change beforePath=\"$PROJECT_DIR$/models/E1/P4/CRMF_epoch_402.pth.tar\" beforeDir=\"false\" />\r\n      <change beforePath=\"$PROJECT_DIR$/models/E1/P4/CRMF_epoch_403.pth.tar\" beforeDir=\"false\" />\r\n      <change beforePath=\"$PROJECT_DIR$/models/E1/P4/CRMF_epoch_404.pth.tar\" beforeDir=\"false\" />\r\n      <change beforePath=\"$PROJECT_DIR$/models/E1/P4/CRMF_epoch_405.pth.tar\" beforeDir=\"false\" />\r\n      <change beforePath=\"$PROJECT_DIR$/models/E1/P4/CRMF_epoch_406.pth.tar\" beforeDir=\"false\" />\r\n      <change beforePath=\"$PROJECT_DIR$/models/E1/P4/CRMF_epoch_407.pth.tar\" beforeDir=\"false\" />\r\n      <change beforePath=\"$PROJECT_DIR$/models/E1/P4/CRMF_epoch_408.pth.tar\" beforeDir=\"false\" />\r\n      <change beforePath=\"$PROJECT_DIR$/models/E1/P4/CRMF_epoch_409.pth.tar\" beforeDir=\"false\" />\r\n      <change beforePath=\"$PROJECT_DIR$/models/E1/P5/CRMF_epoch_1201.pth.tar\" beforeDir=\"false\" />\r\n      <change beforePath=\"$PROJECT_DIR$/models/E1/P5/CRMF_epoch_1202.pth.tar\" beforeDir=\"false\" />\r\n      <change beforePath=\"$PROJECT_DIR$/models/E3_joint/P4/CRMF_epoch_1200.pth.tar\" beforeDir=\"false\" />\r\n      <change beforePath=\"$PROJECT_DIR$/models/E3_joint/P5/CRMF_epoch_1301.pth.tar\" beforeDir=\"false\" />\r\n      <change beforePath=\"$PROJECT_DIR$/models/E3_joint/P6/CRMF_epoch_1497.pth.tar\" beforeDir=\"false\" />\r\n      <change beforePath=\"$PROJECT_DIR$/models/E3_joint_64dimension/P4/CRMF_epoch_1200.pth.tar\" beforeDir=\"false\" />\r\n      <change beforePath=\"$PROJECT_DIR$/models/E3_joint_64dimension/P5/CRMF_epoch_1400.pth.tar\" beforeDir=\"false\" />\r\n      <change beforePath=\"$PROJECT_DIR$/models/E3_joint_64dimension/P6/CRMF_epoch_1547.pth.tar\" beforeDir=\"false\" />\r\n      <change beforePath=\"$PROJECT_DIR$/models/E4_q/P3/CRMF_epoch_850.pth.tar\" beforeDir=\"false\" />\r\n      <change beforePath=\"$PROJECT_DIR$/models/E4_q/P4/CRMF_epoch_1050.pth.tar\" beforeDir=\"false\" />\r\n      <change beforePath=\"$PROJECT_DIR$/parser_file.py\" beforeDir=\"false\" afterPath=\"$PROJECT_DIR$/parser_file.py\" afterDir=\"false\" />\r\n      <change beforePath=\"$PROJECT_DIR$/runs/E2_complex_beta_withoutz/Screenshot 2022-11-19 at 17-07-19 TensorBoard.png\" beforeDir=\"false\" />\r\n      <change beforePath=\"$PROJECT_DIR$/runs/E2_complex_beta_withoutz/Screenshot 2022-11-19 at 17-07-27 TensorBoard.png\" beforeDir=\"false\" />\r\n      <change beforePath=\"$PROJECT_DIR$/runs/E2_complex_beta_withoutz/Screenshot 2022-11-19 at 17-07-33 TensorBoard.png\" beforeDir=\"false\" />\r\n      <change beforePath=\"$PROJECT_DIR$/runs/E2_complex_beta_withoutz/Screenshot 2022-11-19 at 17-07-39 TensorBoard.png\" beforeDir=\"false\" />\r\n      <change beforePath=\"$PROJECT_DIR$/runs/E2_complex_beta_withoutz/Screenshot 2022-11-19 at 17-08-08 TensorBoard.png\" beforeDir=\"false\" />\r\n      <change beforePath=\"$PROJECT_DIR$/runs/E2_complex_beta_withoutz/Screenshot 2022-11-19 at 17-08-13 TensorBoard.png\" beforeDir=\"false\" />\r\n      <change beforePath=\"$PROJECT_DIR$/runs/E2_complex_beta_withoutz/Screenshot 2022-11-19 at 17-08-17 TensorBoard.png\" beforeDir=\"false\" />\r\n      <change beforePath=\"$PROJECT_DIR$/runs/E2_complex_beta_withoutz/Screenshot 2022-11-19 at 17-08-25 TensorBoard.png\" beforeDir=\"false\" />\r\n      <change beforePath=\"$PROJECT_DIR$/runs/E2_complex_beta_withoutz/events.out.tfevents.1668820224.zahra-ThinkPad-P15-Gen-2i.502147.0\" beforeDir=\"false\" />\r\n      <change beforePath=\"$PROJECT_DIR$/runs/E3_joint/CRMF_risk_irm_5.0_batch_hom_data_eth_ds_0_bk_20_ep_(150, 100, 150, 800, 100, 50)_shuffle_true_seed_72/events.out.tfevents.1668906133.zahra-ThinkPad-P15-Gen-2i.775334.0\" beforeDir=\"false\" />\r\n      <change beforePath=\"$PROJECT_DIR$/runs/E3_joint/CRMF_risk_irm_5.0_batch_hom_data_eth_ds_0_bk_20_ep_(150, 100, 150, 800, 100, 50)_shuffle_true_seed_72/events.out.tfevents.1668927818.zahra-ThinkPad-P15-Gen-2i.2542816.0\" beforeDir=\"false\" />\r\n      <change beforePath=\"$PROJECT_DIR$/runs/E3_joint/ade.png\" beforeDir=\"false\" />\r\n      <change beforePath=\"$PROJECT_DIR$/runs/E3_joint/adeo.png\" beforeDir=\"false\" />\r\n      <change beforePath=\"$PROJECT_DIR$/runs/E3_joint/elbo.png\" beforeDir=\"false\" />\r\n      <change beforePath=\"$PROJECT_DIR$/runs/E3_joint/hotel.png\" beforeDir=\"false\" />\r\n      <change beforePath=\"$PROJECT_DIR$/runs/E3_joint/loss.png\" beforeDir=\"false\" />\r\n      <change beforePath=\"$PROJECT_DIR$/runs/E3_joint/pred.png\" beforeDir=\"false\" />\r\n      <change beforePath=\"$PROJECT_DIR$/runs/E3_joint/univ.png\" beforeDir=\"false\" />\r\n      <change beforePath=\"$PROJECT_DIR$/runs/E3_joint/zara1.png\" beforeDir=\"false\" />\r\n      <change beforePath=\"$PROJECT_DIR$/runs/E3_joint/zara2.png\" beforeDir=\"false\" />\r\n      <change beforePath=\"$PROJECT_DIR$/runs/E3_joint_64_dimension/New Text Document.txt\" beforeDir=\"false\" />\r\n      <change beforePath=\"$PROJECT_DIR$/runs/E3_joint_64_dimension/ade.png\" beforeDir=\"false\" />\r\n      <change beforePath=\"$PROJECT_DIR$/runs/E3_joint_64_dimension/adeo.png\" beforeDir=\"false\" />\r\n      <change beforePath=\"$PROJECT_DIR$/runs/E3_joint_64_dimension/e_loss.png\" beforeDir=\"false\" />\r\n      <change beforePath=\"$PROJECT_DIR$/runs/E3_joint_64_dimension/elbo.png\" beforeDir=\"false\" />\r\n      <change beforePath=\"$PROJECT_DIR$/runs/E3_joint_64_dimension/hotel.png\" beforeDir=\"false\" />\r\n      <change beforePath=\"$PROJECT_DIR$/runs/E3_joint_64_dimension/pred.png\" beforeDir=\"false\" />\r\n      <change beforePath=\"$PROJECT_DIR$/runs/E3_joint_64_dimension/univ.png\" beforeDir=\"false\" />\r\n      <change beforePath=\"$PROJECT_DIR$/runs/E3_joint_64_dimension/zara1.png\" beforeDir=\"false\" />\r\n      <change beforePath=\"$PROJECT_DIR$/runs/E3_joint_64_dimension/zara2.png\" beforeDir=\"false\" />\r\n      <change beforePath=\"$PROJECT_DIR$/runs/E4_q/CRMF_risk_irm_5.0_batch_hom_data_eth_ds_0_bk_20_ep_(150, 100, 300, 200, 100)_shuffle_true_seed_72/events.out.tfevents.1669430022.gra1184.184179.0\" beforeDir=\"false\" />\r\n      <change beforePath=\"$PROJECT_DIR$/runs/Ebeta_fixed_learning rate/events.out.tfevents.1668801034.zahra-ThinkPad-P15-Gen-2i.670101.0\" beforeDir=\"false\" />\r\n      <change beforePath=\"$PROJECT_DIR$/runs/Eonecycle_200/events.out.tfevents.1668747604.zahra-ThinkPad-P15-Gen-2i.3924938.0\" beforeDir=\"false\" />\r\n      <change beforePath=\"$PROJECT_DIR$/runs/Eonecycle_300/events.out.tfevents.1668791888.zahra-ThinkPad-P15-Gen-2i.5816.0\" beforeDir=\"false\" />\r\n      <change beforePath=\"$PROJECT_DIR$/runs/~$Notes.docx\" beforeDir=\"false\" afterPath=\"$PROJECT_DIR$/runs/~$Notes.docx\" afterDir=\"false\" />\r\n    </list>\r\n    <option name=\"SHOW_DIALOG\" value=\"false\" />\r\n    <option name=\"HIGHLIGHT_CONFLICTS\" value=\"true\" />\r\n    <option name=\"HIGHLIGHT_NON_ACTIVE_CHANGELIST\" value=\"false\" />\r\n    <option name=\"LAST_RESOLUTION\" value=\"IGNORE\" />\r\n  </component>\r\n  <component name=\"FileTemplateManagerImpl\">\r\n    <option name=\"RECENT_TEMPLATES\">\r\n      <list>\r\n        <option value=\"Python Script\" />\r\n      </list>\r\n    </option>\r\n  </component>\r\n  <component name=\"Git.Settings\">\r\n    <option name=\"RECENT_BRANCH_BY_REPOSITORY\">\r\n      <map>\r\n        <entry key=\"$PROJECT_DIR$\" value=\"DT\" />\r\n      </map>\r\n    </option>\r\n    <option name=\"RECENT_GIT_ROOT_PATH\" value=\"$PROJECT_DIR$\" />\r\n  </component>\r\n  <component name=\"GithubProjectSettings\">\r\n    <option name=\"branchProtectionPatterns\">\r\n      <list>\r\n        <option value=\"master\" />\r\n      </list>\r\n    </option>\r\n  </component>\r\n  <component name=\"MarkdownSettingsMigration\">\r\n    <option name=\"stateVersion\" value=\"1\" />\r\n  </component>\r\n  <component name=\"ProjectId\" id=\"2HIAGvCj0b6BkQ5ayMuWDeDrSYY\" />\r\n  <component name=\"ProjectLevelVcsManager\" settingsEditedManually=\"true\" />\r\n  <component name=\"ProjectViewState\">\r\n    <option name=\"hideEmptyMiddlePackages\" value=\"true\" />\r\n    <option name=\"showLibraryContents\" value=\"true\" />\r\n  </component>\r\n  <component name=\"PropertiesComponent\">{\r\n  &quot;keyToString&quot;: {\r\n    &quot;RunOnceActivity.OpenProjectViewOnStart&quot;: &quot;true&quot;,\r\n    &quot;RunOnceActivity.ShowReadmeOnStart&quot;: &quot;true&quot;,\r\n    &quot;WebServerToolWindowFactoryState&quot;: &quot;false&quot;,\r\n    &quot;last_opened_file_path&quot;: &quot;C:/UWaterloo/PhD_thesis/motion_forecasting/codes/causalmotion-main/style/train.py&quot;,\r\n    &quot;nodejs_package_manager_path&quot;: &quot;npm&quot;,\r\n    &quot;settings.editor.selected.configurable&quot;: &quot;com.jetbrains.python.configuration.PyActiveSdkModuleConfigurable&quot;\r\n  }\r\n}</component>\r\n  <component name=\"RunManager\" selected=\"Python.evaluate_model\">\r\n    <configuration name=\"distributions\" type=\"PythonConfigurationType\" factoryName=\"Python\" temporary=\"true\" nameIsGenerated=\"true\">\r\n      <module name=\"CRMF\" />\r\n      <option name=\"INTERPRETER_OPTIONS\" value=\"\" />\r\n      <option name=\"PARENT_ENVS\" value=\"true\" />\r\n      <envs>\r\n        <env name=\"PYTHONUNBUFFERED\" value=\"1\" />\r\n      </envs>\r\n      <option name=\"SDK_HOME\" value=\"\" />\r\n      <option name=\"WORKING_DIRECTORY\" value=\"$PROJECT_DIR$\" />\r\n      <option name=\"IS_MODULE_SDK\" value=\"true\" />\r\n      <option name=\"ADD_CONTENT_ROOTS\" value=\"true\" />\r\n      <option name=\"ADD_SOURCE_ROOTS\" value=\"true\" />\r\n      <EXTENSION ID=\"PythonCoverageRunConfigurationExtension\" runner=\"coverage.py\" />\r\n      <option name=\"SCRIPT_NAME\" value=\"$PROJECT_DIR$/distributions.py\" />\r\n      <option name=\"PARAMETERS\" value=\"\" />\r\n      <option name=\"SHOW_COMMAND_LINE\" value=\"false\" />\r\n      <option name=\"EMULATE_TERMINAL\" value=\"false\" />\r\n      <option name=\"MODULE_MODE\" value=\"false\" />\r\n      <option name=\"REDIRECT_INPUT\" value=\"false\" />\r\n      <option name=\"INPUT_FILE\" value=\"\" />\r\n      <method v=\"2\" />\r\n    </configuration>\r\n    <configuration name=\"evaluate_model\" type=\"PythonConfigurationType\" factoryName=\"Python\" temporary=\"true\" nameIsGenerated=\"true\">\r\n      <module name=\"CRMF\" />\r\n      <option name=\"INTERPRETER_OPTIONS\" value=\"\" />\r\n      <option name=\"PARENT_ENVS\" value=\"true\" />\r\n      <envs>\r\n        <env name=\"PYTHONUNBUFFERED\" value=\"1\" />\r\n      </envs>\r\n      <option name=\"SDK_HOME\" value=\"\" />\r\n      <option name=\"WORKING_DIRECTORY\" value=\"$PROJECT_DIR$\" />\r\n      <option name=\"IS_MODULE_SDK\" value=\"true\" />\r\n      <option name=\"ADD_CONTENT_ROOTS\" value=\"true\" />\r\n      <option name=\"ADD_SOURCE_ROOTS\" value=\"true\" />\r\n      <EXTENSION ID=\"PythonCoverageRunConfigurationExtension\" runner=\"coverage.py\" />\r\n      <option name=\"SCRIPT_NAME\" value=\"$PROJECT_DIR$/evaluate_model.py\" />\r\n      <option name=\"PARAMETERS\" value=\"\" />\r\n      <option name=\"SHOW_COMMAND_LINE\" value=\"false\" />\r\n      <option name=\"EMULATE_TERMINAL\" value=\"false\" />\r\n      <option name=\"MODULE_MODE\" value=\"false\" />\r\n      <option name=\"REDIRECT_INPUT\" value=\"false\" />\r\n      <option name=\"INPUT_FILE\" value=\"\" />\r\n      <method v=\"2\" />\r\n    </configuration>\r\n    <configuration name=\"invariance\" type=\"PythonConfigurationType\" factoryName=\"Python\" temporary=\"true\" nameIsGenerated=\"true\">\r\n      <module name=\"CRMF\" />\r\n      <option name=\"INTERPRETER_OPTIONS\" value=\"\" />\r\n      <option name=\"PARENT_ENVS\" value=\"true\" />\r\n      <envs>\r\n        <env name=\"PYTHONUNBUFFERED\" value=\"1\" />\r\n      </envs>\r\n      <option name=\"SDK_HOME\" value=\"\" />\r\n      <option name=\"WORKING_DIRECTORY\" value=\"$PROJECT_DIR$\" />\r\n      <option name=\"IS_MODULE_SDK\" value=\"true\" />\r\n      <option name=\"ADD_CONTENT_ROOTS\" value=\"true\" />\r\n      <option name=\"ADD_SOURCE_ROOTS\" value=\"true\" />\r\n      <EXTENSION ID=\"PythonCoverageRunConfigurationExtension\" runner=\"coverage.py\" />\r\n      <option name=\"SCRIPT_NAME\" value=\"$PROJECT_DIR$/invariance.py\" />\r\n      <option name=\"PARAMETERS\" value=\"\" />\r\n      <option name=\"SHOW_COMMAND_LINE\" value=\"false\" />\r\n      <option name=\"EMULATE_TERMINAL\" value=\"false\" />\r\n      <option name=\"MODULE_MODE\" value=\"false\" />\r\n      <option name=\"REDIRECT_INPUT\" value=\"false\" />\r\n      <option name=\"INPUT_FILE\" value=\"\" />\r\n      <method v=\"2\" />\r\n    </configuration>\r\n    <configuration name=\"results\" type=\"PythonConfigurationType\" factoryName=\"Python\" temporary=\"true\" nameIsGenerated=\"true\">\r\n      <module name=\"CRMF\" />\r\n      <option name=\"INTERPRETER_OPTIONS\" value=\"\" />\r\n      <option name=\"PARENT_ENVS\" value=\"true\" />\r\n      <envs>\r\n        <env name=\"PYTHONUNBUFFERED\" value=\"1\" />\r\n      </envs>\r\n      <option name=\"SDK_HOME\" value=\"\" />\r\n      <option name=\"WORKING_DIRECTORY\" value=\"$PROJECT_DIR$\" />\r\n      <option name=\"IS_MODULE_SDK\" value=\"true\" />\r\n      <option name=\"ADD_CONTENT_ROOTS\" value=\"true\" />\r\n      <option name=\"ADD_SOURCE_ROOTS\" value=\"true\" />\r\n      <EXTENSION ID=\"PythonCoverageRunConfigurationExtension\" runner=\"coverage.py\" />\r\n      <option name=\"SCRIPT_NAME\" value=\"$PROJECT_DIR$/results.py\" />\r\n      <option name=\"PARAMETERS\" value=\"\" />\r\n      <option name=\"SHOW_COMMAND_LINE\" value=\"false\" />\r\n      <option name=\"EMULATE_TERMINAL\" value=\"false\" />\r\n      <option name=\"MODULE_MODE\" value=\"false\" />\r\n      <option name=\"REDIRECT_INPUT\" value=\"false\" />\r\n      <option name=\"INPUT_FILE\" value=\"\" />\r\n      <method v=\"2\" />\r\n    </configuration>\r\n    <configuration name=\"train\" type=\"PythonConfigurationType\" factoryName=\"Python\" temporary=\"true\" nameIsGenerated=\"true\">\r\n      <module name=\"CRMF\" />\r\n      <option name=\"INTERPRETER_OPTIONS\" value=\"\" />\r\n      <option name=\"PARENT_ENVS\" value=\"true\" />\r\n      <envs>\r\n        <env name=\"PYTHONUNBUFFERED\" value=\"1\" />\r\n      </envs>\r\n      <option name=\"SDK_HOME\" value=\"\" />\r\n      <option name=\"WORKING_DIRECTORY\" value=\"$PROJECT_DIR$\" />\r\n      <option name=\"IS_MODULE_SDK\" value=\"true\" />\r\n      <option name=\"ADD_CONTENT_ROOTS\" value=\"true\" />\r\n      <option name=\"ADD_SOURCE_ROOTS\" value=\"true\" />\r\n      <EXTENSION ID=\"PythonCoverageRunConfigurationExtension\" runner=\"coverage.py\" />\r\n      <option name=\"SCRIPT_NAME\" value=\"$PROJECT_DIR$/train.py\" />\r\n      <option name=\"PARAMETERS\" value=\"\" />\r\n      <option name=\"SHOW_COMMAND_LINE\" value=\"false\" />\r\n      <option name=\"EMULATE_TERMINAL\" value=\"false\" />\r\n      <option name=\"MODULE_MODE\" value=\"false\" />\r\n      <option name=\"REDIRECT_INPUT\" value=\"false\" />\r\n      <option name=\"INPUT_FILE\" value=\"\" />\r\n      <method v=\"2\" />\r\n    </configuration>\r\n    <recent_temporary>\r\n      <list>\r\n        <item itemvalue=\"Python.evaluate_model\" />\r\n        <item itemvalue=\"Python.train\" />\r\n        <item itemvalue=\"Python.results\" />\r\n        <item itemvalue=\"Python.invariance\" />\r\n        <item itemvalue=\"Python.distributions\" />\r\n      </list>\r\n    </recent_temporary>\r\n  </component>\r\n  <component name=\"SpellCheckerSettings\" RuntimeDictionaries=\"0\" Folders=\"0\" CustomDictionaries=\"0\" DefaultDictionary=\"application-level\" UseSingleDictionary=\"true\" transferred=\"true\" />\r\n  <component name=\"TaskManager\">\r\n    <task active=\"true\" id=\"Default\" summary=\"Default task\">\r\n      <changelist id=\"8147b731-440c-4981-a21f-e4c8b1f0cd9a\" name=\"Changes\" comment=\"\" />\r\n      <created>1667962131599</created>\r\n      <option name=\"number\" value=\"Default\" />\r\n      <option name=\"presentableId\" value=\"Default\" />\r\n      <updated>1667962131599</updated>\r\n      <workItem from=\"1667962133126\" duration=\"3158000\" />\r\n      <workItem from=\"1667965423442\" duration=\"14042000\" />\r\n      <workItem from=\"1668103527142\" duration=\"9238000\" />\r\n      <workItem from=\"1668113554483\" duration=\"9483000\" />\r\n      <workItem from=\"1668188593721\" duration=\"24064000\" />\r\n      <workItem from=\"1668280011795\" duration=\"20838000\" />\r\n      <workItem from=\"1668361022894\" duration=\"18561000\" />\r\n      <workItem from=\"1668385121155\" duration=\"9013000\" />\r\n      <workItem from=\"1668443724873\" duration=\"34005000\" />\r\n      <workItem from=\"1668544348636\" duration=\"11075000\" />\r\n      <workItem from=\"1668887765193\" duration=\"21673000\" />\r\n      <workItem from=\"1668966972913\" duration=\"2639000\" />\r\n      <workItem from=\"1669137246838\" duration=\"7027000\" />\r\n      <workItem from=\"1672294286229\" duration=\"7812000\" />\r\n      <workItem from=\"1672383569433\" duration=\"8892000\" />\r\n      <workItem from=\"1672473343807\" duration=\"4883000\" />\r\n    </task>\r\n    <task id=\"LOCAL-00001\" summary=\"Finetune completed\">\r\n      <created>1667968720588</created>\r\n      <option name=\"number\" value=\"00001\" />\r\n      <option name=\"presentableId\" value=\"LOCAL-00001\" />\r\n      <option name=\"project\" value=\"LOCAL\" />\r\n      <updated>1667968720588</updated>\r\n    </task>\r\n    <task id=\"LOCAL-00002\" summary=\"Finetune completed\">\r\n      <created>1668103730039</created>\r\n      <option name=\"number\" value=\"00002\" />\r\n      <option name=\"presentableId\" value=\"LOCAL-00002\" />\r\n      <option name=\"project\" value=\"LOCAL\" />\r\n      <updated>1668103730039</updated>\r\n    </task>\r\n    <task id=\"LOCAL-00003\" summary=\"Finetune completed\">\r\n      <created>1668104402694</created>\r\n      <option name=\"number\" value=\"00003\" />\r\n      <option name=\"presentableId\" value=\"LOCAL-00003\" />\r\n      <option name=\"project\" value=\"LOCAL\" />\r\n      <updated>1668104402694</updated>\r\n    </task>\r\n    <task id=\"LOCAL-00004\" summary=\"Finetune completed\">\r\n      <created>1668104584281</created>\r\n      <option name=\"number\" value=\"00004\" />\r\n      <option name=\"presentableId\" value=\"LOCAL-00004\" />\r\n      <option name=\"project\" value=\"LOCAL\" />\r\n      <updated>1668104584281</updated>\r\n    </task>\r\n    <task id=\"LOCAL-00005\" summary=\"Finetune completed\">\r\n      <created>1668113946515</created>\r\n      <option name=\"number\" value=\"00005\" />\r\n      <option name=\"presentableId\" value=\"LOCAL-00005\" />\r\n      <option name=\"project\" value=\"LOCAL\" />\r\n      <updated>1668113946515</updated>\r\n    </task>\r\n    <task id=\"LOCAL-00006\" summary=\"Finetune completed\">\r\n      <created>1668115250936</created>\r\n      <option name=\"number\" value=\"00006\" />\r\n      <option name=\"presentableId\" value=\"LOCAL-00006\" />\r\n      <option name=\"project\" value=\"LOCAL\" />\r\n      <updated>1668115250936</updated>\r\n    </task>\r\n    <task id=\"LOCAL-00007\" summary=\"Finetune completed\">\r\n      <created>1668219013728</created>\r\n      <option name=\"number\" value=\"00007\" />\r\n      <option name=\"presentableId\" value=\"LOCAL-00007\" />\r\n      <option name=\"project\" value=\"LOCAL\" />\r\n      <updated>1668219013728</updated>\r\n    </task>\r\n    <task id=\"LOCAL-00008\" summary=\"Finetune completed\">\r\n      <created>1668220779257</created>\r\n      <option name=\"number\" value=\"00008\" />\r\n      <option name=\"presentableId\" value=\"LOCAL-00008\" />\r\n      <option name=\"project\" value=\"LOCAL\" />\r\n      <updated>1668220779257</updated>\r\n    </task>\r\n    <task id=\"LOCAL-00009\" summary=\"Finetune completed\">\r\n      <created>1668221775701</created>\r\n      <option name=\"number\" value=\"00009\" />\r\n      <option name=\"presentableId\" value=\"LOCAL-00009\" />\r\n      <option name=\"project\" value=\"LOCAL\" />\r\n      <updated>1668221775701</updated>\r\n    </task>\r\n    <task id=\"LOCAL-00010\" summary=\"Finetune completed\">\r\n      <created>1668224494801</created>\r\n      <option name=\"number\" value=\"00010\" />\r\n      <option name=\"presentableId\" value=\"LOCAL-00010\" />\r\n      <option name=\"project\" value=\"LOCAL\" />\r\n      <updated>1668224494801</updated>\r\n    </task>\r\n    <task id=\"LOCAL-00011\" summary=\"Finetune completed\">\r\n      <created>1668226094285</created>\r\n      <option name=\"number\" value=\"00011\" />\r\n      <option name=\"presentableId\" value=\"LOCAL-00011\" />\r\n      <option name=\"project\" value=\"LOCAL\" />\r\n      <updated>1668226094285</updated>\r\n    </task>\r\n    <task id=\"LOCAL-00012\" summary=\"Finetune completed\">\r\n      <created>1668227945871</created>\r\n      <option name=\"number\" value=\"00012\" />\r\n      <option name=\"presentableId\" value=\"LOCAL-00012\" />\r\n      <option name=\"project\" value=\"LOCAL\" />\r\n      <updated>1668227945871</updated>\r\n    </task>\r\n    <task id=\"LOCAL-00013\" summary=\"Finetune completed\">\r\n      <created>1668228170979</created>\r\n      <option name=\"number\" value=\"00013\" />\r\n      <option name=\"presentableId\" value=\"LOCAL-00013\" />\r\n      <option name=\"project\" value=\"LOCAL\" />\r\n      <updated>1668228170979</updated>\r\n    </task>\r\n    <task id=\"LOCAL-00014\" summary=\"Finetune completed\">\r\n      <created>1668280159093</created>\r\n      <option name=\"number\" value=\"00014\" />\r\n      <option name=\"presentableId\" value=\"LOCAL-00014\" />\r\n      <option name=\"project\" value=\"LOCAL\" />\r\n      <updated>1668280159093</updated>\r\n    </task>\r\n    <task id=\"LOCAL-00015\" summary=\"Added RNVP prior\">\r\n      <created>1668288288821</created>\r\n      <option name=\"number\" value=\"00015\" />\r\n      <option name=\"presentableId\" value=\"LOCAL-00015\" />\r\n      <option name=\"project\" value=\"LOCAL\" />\r\n      <updated>1668288288821</updated>\r\n    </task>\r\n    <task id=\"LOCAL-00016\" summary=\"Added RNVP prior\">\r\n      <created>1668297804098</created>\r\n      <option name=\"number\" value=\"00016\" />\r\n      <option name=\"presentableId\" value=\"LOCAL-00016\" />\r\n      <option name=\"project\" value=\"LOCAL\" />\r\n      <updated>1668297804098</updated>\r\n    </task>\r\n    <task id=\"LOCAL-00017\" summary=\"Added RNVP prior\">\r\n      <created>1668298020814</created>\r\n      <option name=\"number\" value=\"00017\" />\r\n      <option name=\"presentableId\" value=\"LOCAL-00017\" />\r\n      <option name=\"project\" value=\"LOCAL\" />\r\n      <updated>1668298020814</updated>\r\n    </task>\r\n    <task id=\"LOCAL-00018\" summary=\"Added RNVP prior\">\r\n      <created>1668300013429</created>\r\n      <option name=\"number\" value=\"00018\" />\r\n      <option name=\"presentableId\" value=\"LOCAL-00018\" />\r\n      <option name=\"project\" value=\"LOCAL\" />\r\n      <updated>1668300013429</updated>\r\n    </task>\r\n    <task id=\"LOCAL-00019\" summary=\"Added RNVP prior\">\r\n      <created>1668302208211</created>\r\n      <option name=\"number\" value=\"00019\" />\r\n      <option name=\"presentableId\" value=\"LOCAL-00019\" />\r\n      <option name=\"project\" value=\"LOCAL\" />\r\n      <updated>1668302208212</updated>\r\n    </task>\r\n    <task id=\"LOCAL-00020\" summary=\"Added RNVP prior\">\r\n      <created>1668365128077</created>\r\n      <option name=\"number\" value=\"00020\" />\r\n      <option name=\"presentableId\" value=\"LOCAL-00020\" />\r\n      <option name=\"project\" value=\"LOCAL\" />\r\n      <updated>1668365128077</updated>\r\n    </task>\r\n    <task id=\"LOCAL-00021\" summary=\"Added RNVP prior\">\r\n      <created>1668370461760</created>\r\n      <option name=\"number\" value=\"00021\" />\r\n      <option name=\"presentableId\" value=\"LOCAL-00021\" />\r\n      <option name=\"project\" value=\"LOCAL\" />\r\n      <updated>1668370461760</updated>\r\n    </task>\r\n    <task id=\"LOCAL-00022\" summary=\"Different training\">\r\n      <created>1668382815610</created>\r\n      <option name=\"number\" value=\"00022\" />\r\n      <option name=\"presentableId\" value=\"LOCAL-00022\" />\r\n      <option name=\"project\" value=\"LOCAL\" />\r\n      <updated>1668382815610</updated>\r\n    </task>\r\n    <task id=\"LOCAL-00023\" summary=\"Different training\">\r\n      <created>1668385484864</created>\r\n      <option name=\"number\" value=\"00023\" />\r\n      <option name=\"presentableId\" value=\"LOCAL-00023\" />\r\n      <option name=\"project\" value=\"LOCAL\" />\r\n      <updated>1668385484864</updated>\r\n    </task>\r\n    <task id=\"LOCAL-00024\" summary=\"Corrected theta convergence\">\r\n      <created>1668390475601</created>\r\n      <option name=\"number\" value=\"00024\" />\r\n      <option name=\"presentableId\" value=\"LOCAL-00024\" />\r\n      <option name=\"project\" value=\"LOCAL\" />\r\n      <updated>1668390475601</updated>\r\n    </task>\r\n    <task id=\"LOCAL-00025\" summary=\"Corrected theta convergence\">\r\n      <created>1668390596963</created>\r\n      <option name=\"number\" value=\"00025\" />\r\n      <option name=\"presentableId\" value=\"LOCAL-00025\" />\r\n      <option name=\"project\" value=\"LOCAL\" />\r\n      <updated>1668390596963</updated>\r\n    </task>\r\n    <task id=\"LOCAL-00026\" summary=\"Corrected theta convergence\">\r\n      <created>1668390811340</created>\r\n      <option name=\"number\" value=\"00026\" />\r\n      <option name=\"presentableId\" value=\"LOCAL-00026\" />\r\n      <option name=\"project\" value=\"LOCAL\" />\r\n      <updated>1668390811340</updated>\r\n    </task>\r\n    <task id=\"LOCAL-00027\" summary=\"Corrected theta convergence\">\r\n      <created>1668400370348</created>\r\n      <option name=\"number\" value=\"00027\" />\r\n      <option name=\"presentableId\" value=\"LOCAL-00027\" />\r\n      <option name=\"project\" value=\"LOCAL\" />\r\n      <updated>1668400370348</updated>\r\n    </task>\r\n    <task id=\"LOCAL-00028\" summary=\"Corrected theta convergence\">\r\n      <created>1668446498251</created>\r\n      <option name=\"number\" value=\"00028\" />\r\n      <option name=\"presentableId\" value=\"LOCAL-00028\" />\r\n      <option name=\"project\" value=\"LOCAL\" />\r\n      <updated>1668446498251</updated>\r\n    </task>\r\n    <task id=\"LOCAL-00029\" summary=\"Corrected theta convergence\">\r\n      <created>1668455384327</created>\r\n      <option name=\"number\" value=\"00029\" />\r\n      <option name=\"presentableId\" value=\"LOCAL-00029\" />\r\n      <option name=\"project\" value=\"LOCAL\" />\r\n      <updated>1668455384327</updated>\r\n    </task>\r\n    <task id=\"LOCAL-00030\" summary=\"Corrected theta convergence\">\r\n      <created>1668459008586</created>\r\n      <option name=\"number\" value=\"00030\" />\r\n      <option name=\"presentableId\" value=\"LOCAL-00030\" />\r\n      <option name=\"project\" value=\"LOCAL\" />\r\n      <updated>1668459008586</updated>\r\n    </task>\r\n    <task id=\"LOCAL-00031\" summary=\"Corrected theta convergence\">\r\n      <created>1668472315831</created>\r\n      <option name=\"number\" value=\"00031\" />\r\n      <option name=\"presentableId\" value=\"LOCAL-00031\" />\r\n      <option name=\"project\" value=\"LOCAL\" />\r\n      <updated>1668472315831</updated>\r\n    </task>\r\n    <task id=\"LOCAL-00032\" summary=\"Corrected theta convergence\">\r\n      <created>1668479484839</created>\r\n      <option name=\"number\" value=\"00032\" />\r\n      <option name=\"presentableId\" value=\"LOCAL-00032\" />\r\n      <option name=\"project\" value=\"LOCAL\" />\r\n      <updated>1668479484839</updated>\r\n    </task>\r\n    <task id=\"LOCAL-00033\" summary=\"Corrected theta convergence\">\r\n      <created>1668808110153</created>\r\n      <option name=\"number\" value=\"00033\" />\r\n      <option name=\"presentableId\" value=\"LOCAL-00033\" />\r\n      <option name=\"project\" value=\"LOCAL\" />\r\n      <updated>1668808110153</updated>\r\n    </task>\r\n    <task id=\"LOCAL-00034\" summary=\"Corrected theta convergence\">\r\n      <created>1668808830559</created>\r\n      <option name=\"number\" value=\"00034\" />\r\n      <option name=\"presentableId\" value=\"LOCAL-00034\" />\r\n      <option name=\"project\" value=\"LOCAL\" />\r\n      <updated>1668808830559</updated>\r\n    </task>\r\n    <task id=\"LOCAL-00035\" summary=\"Corrected theta convergence\">\r\n      <created>1668813059061</created>\r\n      <option name=\"number\" value=\"00035\" />\r\n      <option name=\"presentableId\" value=\"LOCAL-00035\" />\r\n      <option name=\"project\" value=\"LOCAL\" />\r\n      <updated>1668813059061</updated>\r\n    </task>\r\n    <task id=\"LOCAL-00036\" summary=\"added lr_schedulers\">\r\n      <created>1668813067764</created>\r\n      <option name=\"number\" value=\"00036\" />\r\n      <option name=\"presentableId\" value=\"LOCAL-00036\" />\r\n      <option name=\"project\" value=\"LOCAL\" />\r\n      <updated>1668813067764</updated>\r\n    </task>\r\n    <task id=\"LOCAL-00037\" summary=\"added lr_schedulers\">\r\n      <created>1668820179803</created>\r\n      <option name=\"number\" value=\"00037\" />\r\n      <option name=\"presentableId\" value=\"LOCAL-00037\" />\r\n      <option name=\"project\" value=\"LOCAL\" />\r\n      <updated>1668820179803</updated>\r\n    </task>\r\n    <task id=\"LOCAL-00038\" summary=\"joint training\">\r\n      <created>1668968494846</created>\r\n      <option name=\"number\" value=\"00038\" />\r\n      <option name=\"presentableId\" value=\"LOCAL-00038\" />\r\n      <option name=\"project\" value=\"LOCAL\" />\r\n      <updated>1668968494846</updated>\r\n    </task>\r\n    <task id=\"LOCAL-00039\" summary=\"Updated model\">\r\n      <created>1669086543150</created>\r\n      <option name=\"number\" value=\"00039\" />\r\n      <option name=\"presentableId\" value=\"LOCAL-00039\" />\r\n      <option name=\"project\" value=\"LOCAL\" />\r\n      <updated>1669086543150</updated>\r\n    </task>\r\n    <task id=\"LOCAL-00040\" summary=\"Deleted P3 and removed flow priors\">\r\n      <created>1669342712821</created>\r\n      <option name=\"number\" value=\"00040\" />\r\n      <option name=\"presentableId\" value=\"LOCAL-00040\" />\r\n      <option name=\"project\" value=\"LOCAL\" />\r\n      <updated>1669342712821</updated>\r\n    </task>\r\n    <task id=\"LOCAL-00041\" summary=\"Added q model\">\r\n      <created>1669425714225</created>\r\n      <option name=\"number\" value=\"00041\" />\r\n      <option name=\"presentableId\" value=\"LOCAL-00041\" />\r\n      <option name=\"project\" value=\"LOCAL\" />\r\n      <updated>1669425714225</updated>\r\n    </task>\r\n    <task id=\"LOCAL-00042\" summary=\"Added q model\">\r\n      <created>1669428342843</created>\r\n      <option name=\"number\" value=\"00042\" />\r\n      <option name=\"presentableId\" value=\"LOCAL-00042\" />\r\n      <option name=\"project\" value=\"LOCAL\" />\r\n      <updated>1669428342843</updated>\r\n    </task>\r\n    <task id=\"LOCAL-00043\" summary=\"lr_scheduler in utils.py\">\r\n      <created>1669431333997</created>\r\n      <option name=\"number\" value=\"00043\" />\r\n      <option name=\"presentableId\" value=\"LOCAL-00043\" />\r\n      <option name=\"project\" value=\"LOCAL\" />\r\n      <updated>1669431333997</updated>\r\n    </task>\r\n    <task id=\"LOCAL-00044\" summary=\"E_q4\">\r\n      <created>1669507555544</created>\r\n      <option name=\"number\" value=\"00044\" />\r\n      <option name=\"presentableId\" value=\"LOCAL-00044\" />\r\n      <option name=\"project\" value=\"LOCAL\" />\r\n      <updated>1669507555544</updated>\r\n    </task>\r\n    <task id=\"LOCAL-00045\" summary=\"Added contrastive learning codes\">\r\n      <created>1672436612212</created>\r\n      <option name=\"number\" value=\"00045\" />\r\n      <option name=\"presentableId\" value=\"LOCAL-00045\" />\r\n      <option name=\"project\" value=\"LOCAL\" />\r\n      <updated>1672436612212</updated>\r\n    </task>\r\n    <task id=\"LOCAL-00046\" summary=\"Experiments\">\r\n      <created>1672436746621</created>\r\n      <option name=\"number\" value=\"00046\" />\r\n      <option name=\"presentableId\" value=\"LOCAL-00046\" />\r\n      <option name=\"project\" value=\"LOCAL\" />\r\n      <updated>1672436746621</updated>\r\n    </task>\r\n    <task id=\"LOCAL-00047\" summary=\"Experiments\">\r\n      <created>1672474634274</created>\r\n      <option name=\"number\" value=\"00047\" />\r\n      <option name=\"presentableId\" value=\"LOCAL-00047\" />\r\n      <option name=\"project\" value=\"LOCAL\" />\r\n      <updated>1672474634274</updated>\r\n    </task>\r\n    <task id=\"LOCAL-00048\" summary=\"Experiments\">\r\n      <created>1672474643796</created>\r\n      <option name=\"number\" value=\"00048\" />\r\n      <option name=\"presentableId\" value=\"LOCAL-00048\" />\r\n      <option name=\"project\" value=\"LOCAL\" />\r\n      <updated>1672474643796</updated>\r\n    </task>\r\n    <option name=\"localTasksCounter\" value=\"49\" />\r\n    <servers />\r\n  </component>\r\n  <component name=\"TypeScriptGeneratedFilesManager\">\r\n    <option name=\"version\" value=\"3\" />\r\n  </component>\r\n  <component name=\"Vcs.Log.Tabs.Properties\">\r\n    <option name=\"TAB_STATES\">\r\n      <map>\r\n        <entry key=\"MAIN\">\r\n          <value>\r\n            <State />\r\n          </value>\r\n        </entry>\r\n      </map>\r\n    </option>\r\n  </component>\r\n  <component name=\"VcsManagerConfiguration\">\r\n    <MESSAGE value=\"Finetune completed\" />\r\n    <MESSAGE value=\"Added RNVP prior\" />\r\n    <MESSAGE value=\"Different training\" />\r\n    <MESSAGE value=\"Corrected theta convergence\" />\r\n    <MESSAGE value=\"added lr_schedulers\" />\r\n    <MESSAGE value=\"joint training\" />\r\n    <MESSAGE value=\"Updated model\" />\r\n    <MESSAGE value=\"Deleted P3 and removed flow priors\" />\r\n    <MESSAGE value=\"Added q model\" />\r\n    <MESSAGE value=\"lr_scheduler in utils.py\" />\r\n    <MESSAGE value=\"E_q4\" />\r\n    <MESSAGE value=\"Added contrastive learning codes\" />\r\n    <MESSAGE value=\"Experiments\" />\r\n    <option name=\"LAST_COMMIT_MESSAGE\" value=\"Experiments\" />\r\n  </component>\r\n  <component name=\"XDebuggerManager\">\r\n    <breakpoint-manager>\r\n      <breakpoints>\r\n        <line-breakpoint enabled=\"true\" suspend=\"THREAD\" type=\"python-line\">\r\n          <url>file://$PROJECT_DIR$/test.py</url>\r\n          <line>5</line>\r\n          <option name=\"timeStamp\" value=\"29\" />\r\n        </line-breakpoint>\r\n        <line-breakpoint enabled=\"true\" suspend=\"THREAD\" type=\"python-line\">\r\n          <url>file://$PROJECT_DIR$/results.py</url>\r\n          <line>18</line>\r\n          <option name=\"timeStamp\" value=\"42\" />\r\n        </line-breakpoint>\r\n        <line-breakpoint enabled=\"true\" suspend=\"THREAD\" type=\"python-line\">\r\n          <url>file://$PROJECT_DIR$/invariance.py</url>\r\n          <line>93</line>\r\n          <option name=\"timeStamp\" value=\"43\" />\r\n        </line-breakpoint>\r\n      </breakpoints>\r\n    </breakpoint-manager>\r\n    <watches-manager>\r\n      <configuration name=\"PythonConfigurationType\">\r\n        <watch expression=\"optimizers['par']\" />\r\n        <watch expression=\"optimizers['par']\" />\r\n      </configuration>\r\n    </watches-manager>\r\n  </component>\r\n  <component name=\"com.intellij.coverage.CoverageDataManagerImpl\">\r\n    <SUITE FILE_PATH=\"coverage/CRMF$train.coverage\" NAME=\"train Coverage Results\" MODIFIED=\"1672440543104\" SOURCE_PROVIDER=\"com.intellij.coverage.DefaultCoverageFileProvider\" RUNNER=\"coverage.py\" COVERAGE_BY_TEST_ENABLED=\"true\" COVERAGE_TRACING_ENABLED=\"false\" WORKING_DIRECTORY=\"$PROJECT_DIR$\" />\r\n    <SUITE FILE_PATH=\"coverage/CRMF$results.coverage\" NAME=\"results Coverage Results\" MODIFIED=\"1668895584912\" SOURCE_PROVIDER=\"com.intellij.coverage.DefaultCoverageFileProvider\" RUNNER=\"coverage.py\" COVERAGE_BY_TEST_ENABLED=\"true\" COVERAGE_TRACING_ENABLED=\"false\" WORKING_DIRECTORY=\"$PROJECT_DIR$\" />\r\n    <SUITE FILE_PATH=\"coverage/CRMF$evaluate_model.coverage\" NAME=\"evaluate_model Coverage Results\" MODIFIED=\"1672533621727\" SOURCE_PROVIDER=\"com.intellij.coverage.DefaultCoverageFileProvider\" RUNNER=\"coverage.py\" COVERAGE_BY_TEST_ENABLED=\"true\" COVERAGE_TRACING_ENABLED=\"false\" WORKING_DIRECTORY=\"$PROJECT_DIR$\" />\r\n    <SUITE FILE_PATH=\"coverage/CRMF$a5.coverage\" NAME=\"a5 Coverage Results\" MODIFIED=\"1667872384207\" SOURCE_PROVIDER=\"com.intellij.coverage.DefaultCoverageFileProvider\" RUNNER=\"coverage.py\" COVERAGE_BY_TEST_ENABLED=\"true\" COVERAGE_TRACING_ENABLED=\"false\" WORKING_DIRECTORY=\"$PROJECT_DIR$\" />\r\n    <SUITE FILE_PATH=\"coverage/CRMF$invariance.coverage\" NAME=\"invariance Coverage Results\" MODIFIED=\"1672012912771\" SOURCE_PROVIDER=\"com.intellij.coverage.DefaultCoverageFileProvider\" RUNNER=\"coverage.py\" COVERAGE_BY_TEST_ENABLED=\"true\" COVERAGE_TRACING_ENABLED=\"false\" WORKING_DIRECTORY=\"$PROJECT_DIR$\" />\r\n    <SUITE FILE_PATH=\"coverage/CRMF$test.coverage\" NAME=\"test Coverage Results\" MODIFIED=\"1668451807866\" SOURCE_PROVIDER=\"com.intellij.coverage.DefaultCoverageFileProvider\" RUNNER=\"coverage.py\" COVERAGE_BY_TEST_ENABLED=\"true\" COVERAGE_TRACING_ENABLED=\"false\" WORKING_DIRECTORY=\"$PROJECT_DIR$\" />\r\n    <SUITE FILE_PATH=\"coverage/CRMF$distributions.coverage\" NAME=\"distributions Coverage Results\" MODIFIED=\"1667958311916\" SOURCE_PROVIDER=\"com.intellij.coverage.DefaultCoverageFileProvider\" RUNNER=\"coverage.py\" COVERAGE_BY_TEST_ENABLED=\"true\" COVERAGE_TRACING_ENABLED=\"false\" WORKING_DIRECTORY=\"$PROJECT_DIR$\" />\r\n  </component>\r\n</project>
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/.idea/workspace.xml b/.idea/workspace.xml
+--- a/.idea/workspace.xml	(revision 8f1cebd07104a1daf8419df9d5397ed230ff7ab4)
++++ b/.idea/workspace.xml	(date 1673215356400)
+@@ -1,72 +1,11 @@
+ <?xml version="1.0" encoding="UTF-8"?>
+ <project version="4">
+   <component name="ChangeListManager">
+-    <list default="true" id="8147b731-440c-4981-a21f-e4c8b1f0cd9a" name="Changes" comment="Experiments">
+-      <change beforePath="$PROJECT_DIR$/.idea/misc.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/misc.xml" afterDir="false" />
+-      <change beforePath="$PROJECT_DIR$/.idea/shelf/Uncommitted_changes_before_Checkout_at_11_17_2022_12_09_PM__Changes_.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/shelf/Uncommitted_changes_before_Checkout_at_11_17_2022_12_09_PM__Changes_.xml" afterDir="false" />
+-      <change beforePath="$PROJECT_DIR$/.idea/shelf/Uncommitted_changes_before_Checkout_at_2022-11-18,_4_44_p_m__[Changes]1/shelved.patch" beforeDir="false" />
+-      <change beforePath="$PROJECT_DIR$/.idea/shelf/Uncommitted_changes_before_Checkout_at_2022-11-18__4_44_p_m___Changes_.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/shelf/Uncommitted_changes_before_Checkout_at_2022-11-18__4_44_p_m___Changes_.xml" afterDir="false" />
+-      <change beforePath="$PROJECT_DIR$/.idea/shelf/Uncommitted_changes_before_Checkout_at_2022-11-18__4_44_p_m___Changes_1.xml" beforeDir="false" />
+-      <change beforePath="$PROJECT_DIR$/.idea/shelf/Uncommitted_changes_before_Update_at_11_9_2022_10_12_PM__Changes_.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/shelf/Uncommitted_changes_before_Update_at_11_9_2022_10_12_PM__Changes_.xml" afterDir="false" />
++    <list default="true" id="8147b731-440c-4981-a21f-e4c8b1f0cd9a" name="Changes" comment="experiments cvpr">
++      <change afterPath="$PROJECT_DIR$/tt.py" afterDir="false" />
+       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+       <change beforePath="$PROJECT_DIR$/Tensorboard.ipynb" beforeDir="false" afterPath="$PROJECT_DIR$/Tensorboard.ipynb" afterDir="false" />
+       <change beforePath="$PROJECT_DIR$/log/train.log" beforeDir="false" afterPath="$PROJECT_DIR$/log/train.log" afterDir="false" />
+-      <change beforePath="$PROJECT_DIR$/models.py" beforeDir="false" afterPath="$PROJECT_DIR$/models.py" afterDir="false" />
+-      <change beforePath="$PROJECT_DIR$/models/E1/P4/CRMF_epoch_1188.pth.tar" beforeDir="false" />
+-      <change beforePath="$PROJECT_DIR$/models/E1/P4/CRMF_epoch_401.pth.tar" beforeDir="false" />
+-      <change beforePath="$PROJECT_DIR$/models/E1/P4/CRMF_epoch_402.pth.tar" beforeDir="false" />
+-      <change beforePath="$PROJECT_DIR$/models/E1/P4/CRMF_epoch_403.pth.tar" beforeDir="false" />
+-      <change beforePath="$PROJECT_DIR$/models/E1/P4/CRMF_epoch_404.pth.tar" beforeDir="false" />
+-      <change beforePath="$PROJECT_DIR$/models/E1/P4/CRMF_epoch_405.pth.tar" beforeDir="false" />
+-      <change beforePath="$PROJECT_DIR$/models/E1/P4/CRMF_epoch_406.pth.tar" beforeDir="false" />
+-      <change beforePath="$PROJECT_DIR$/models/E1/P4/CRMF_epoch_407.pth.tar" beforeDir="false" />
+-      <change beforePath="$PROJECT_DIR$/models/E1/P4/CRMF_epoch_408.pth.tar" beforeDir="false" />
+-      <change beforePath="$PROJECT_DIR$/models/E1/P4/CRMF_epoch_409.pth.tar" beforeDir="false" />
+-      <change beforePath="$PROJECT_DIR$/models/E1/P5/CRMF_epoch_1201.pth.tar" beforeDir="false" />
+-      <change beforePath="$PROJECT_DIR$/models/E1/P5/CRMF_epoch_1202.pth.tar" beforeDir="false" />
+-      <change beforePath="$PROJECT_DIR$/models/E3_joint/P4/CRMF_epoch_1200.pth.tar" beforeDir="false" />
+-      <change beforePath="$PROJECT_DIR$/models/E3_joint/P5/CRMF_epoch_1301.pth.tar" beforeDir="false" />
+-      <change beforePath="$PROJECT_DIR$/models/E3_joint/P6/CRMF_epoch_1497.pth.tar" beforeDir="false" />
+-      <change beforePath="$PROJECT_DIR$/models/E3_joint_64dimension/P4/CRMF_epoch_1200.pth.tar" beforeDir="false" />
+-      <change beforePath="$PROJECT_DIR$/models/E3_joint_64dimension/P5/CRMF_epoch_1400.pth.tar" beforeDir="false" />
+-      <change beforePath="$PROJECT_DIR$/models/E3_joint_64dimension/P6/CRMF_epoch_1547.pth.tar" beforeDir="false" />
+-      <change beforePath="$PROJECT_DIR$/models/E4_q/P3/CRMF_epoch_850.pth.tar" beforeDir="false" />
+-      <change beforePath="$PROJECT_DIR$/models/E4_q/P4/CRMF_epoch_1050.pth.tar" beforeDir="false" />
+-      <change beforePath="$PROJECT_DIR$/parser_file.py" beforeDir="false" afterPath="$PROJECT_DIR$/parser_file.py" afterDir="false" />
+-      <change beforePath="$PROJECT_DIR$/runs/E2_complex_beta_withoutz/Screenshot 2022-11-19 at 17-07-19 TensorBoard.png" beforeDir="false" />
+-      <change beforePath="$PROJECT_DIR$/runs/E2_complex_beta_withoutz/Screenshot 2022-11-19 at 17-07-27 TensorBoard.png" beforeDir="false" />
+-      <change beforePath="$PROJECT_DIR$/runs/E2_complex_beta_withoutz/Screenshot 2022-11-19 at 17-07-33 TensorBoard.png" beforeDir="false" />
+-      <change beforePath="$PROJECT_DIR$/runs/E2_complex_beta_withoutz/Screenshot 2022-11-19 at 17-07-39 TensorBoard.png" beforeDir="false" />
+-      <change beforePath="$PROJECT_DIR$/runs/E2_complex_beta_withoutz/Screenshot 2022-11-19 at 17-08-08 TensorBoard.png" beforeDir="false" />
+-      <change beforePath="$PROJECT_DIR$/runs/E2_complex_beta_withoutz/Screenshot 2022-11-19 at 17-08-13 TensorBoard.png" beforeDir="false" />
+-      <change beforePath="$PROJECT_DIR$/runs/E2_complex_beta_withoutz/Screenshot 2022-11-19 at 17-08-17 TensorBoard.png" beforeDir="false" />
+-      <change beforePath="$PROJECT_DIR$/runs/E2_complex_beta_withoutz/Screenshot 2022-11-19 at 17-08-25 TensorBoard.png" beforeDir="false" />
+-      <change beforePath="$PROJECT_DIR$/runs/E2_complex_beta_withoutz/events.out.tfevents.1668820224.zahra-ThinkPad-P15-Gen-2i.502147.0" beforeDir="false" />
+-      <change beforePath="$PROJECT_DIR$/runs/E3_joint/CRMF_risk_irm_5.0_batch_hom_data_eth_ds_0_bk_20_ep_(150, 100, 150, 800, 100, 50)_shuffle_true_seed_72/events.out.tfevents.1668906133.zahra-ThinkPad-P15-Gen-2i.775334.0" beforeDir="false" />
+-      <change beforePath="$PROJECT_DIR$/runs/E3_joint/CRMF_risk_irm_5.0_batch_hom_data_eth_ds_0_bk_20_ep_(150, 100, 150, 800, 100, 50)_shuffle_true_seed_72/events.out.tfevents.1668927818.zahra-ThinkPad-P15-Gen-2i.2542816.0" beforeDir="false" />
+-      <change beforePath="$PROJECT_DIR$/runs/E3_joint/ade.png" beforeDir="false" />
+-      <change beforePath="$PROJECT_DIR$/runs/E3_joint/adeo.png" beforeDir="false" />
+-      <change beforePath="$PROJECT_DIR$/runs/E3_joint/elbo.png" beforeDir="false" />
+-      <change beforePath="$PROJECT_DIR$/runs/E3_joint/hotel.png" beforeDir="false" />
+-      <change beforePath="$PROJECT_DIR$/runs/E3_joint/loss.png" beforeDir="false" />
+-      <change beforePath="$PROJECT_DIR$/runs/E3_joint/pred.png" beforeDir="false" />
+-      <change beforePath="$PROJECT_DIR$/runs/E3_joint/univ.png" beforeDir="false" />
+-      <change beforePath="$PROJECT_DIR$/runs/E3_joint/zara1.png" beforeDir="false" />
+-      <change beforePath="$PROJECT_DIR$/runs/E3_joint/zara2.png" beforeDir="false" />
+-      <change beforePath="$PROJECT_DIR$/runs/E3_joint_64_dimension/New Text Document.txt" beforeDir="false" />
+-      <change beforePath="$PROJECT_DIR$/runs/E3_joint_64_dimension/ade.png" beforeDir="false" />
+-      <change beforePath="$PROJECT_DIR$/runs/E3_joint_64_dimension/adeo.png" beforeDir="false" />
+-      <change beforePath="$PROJECT_DIR$/runs/E3_joint_64_dimension/e_loss.png" beforeDir="false" />
+-      <change beforePath="$PROJECT_DIR$/runs/E3_joint_64_dimension/elbo.png" beforeDir="false" />
+-      <change beforePath="$PROJECT_DIR$/runs/E3_joint_64_dimension/hotel.png" beforeDir="false" />
+-      <change beforePath="$PROJECT_DIR$/runs/E3_joint_64_dimension/pred.png" beforeDir="false" />
+-      <change beforePath="$PROJECT_DIR$/runs/E3_joint_64_dimension/univ.png" beforeDir="false" />
+-      <change beforePath="$PROJECT_DIR$/runs/E3_joint_64_dimension/zara1.png" beforeDir="false" />
+-      <change beforePath="$PROJECT_DIR$/runs/E3_joint_64_dimension/zara2.png" beforeDir="false" />
+-      <change beforePath="$PROJECT_DIR$/runs/E4_q/CRMF_risk_irm_5.0_batch_hom_data_eth_ds_0_bk_20_ep_(150, 100, 300, 200, 100)_shuffle_true_seed_72/events.out.tfevents.1669430022.gra1184.184179.0" beforeDir="false" />
+-      <change beforePath="$PROJECT_DIR$/runs/Ebeta_fixed_learning rate/events.out.tfevents.1668801034.zahra-ThinkPad-P15-Gen-2i.670101.0" beforeDir="false" />
+-      <change beforePath="$PROJECT_DIR$/runs/Eonecycle_200/events.out.tfevents.1668747604.zahra-ThinkPad-P15-Gen-2i.3924938.0" beforeDir="false" />
+-      <change beforePath="$PROJECT_DIR$/runs/Eonecycle_300/events.out.tfevents.1668791888.zahra-ThinkPad-P15-Gen-2i.5816.0" beforeDir="false" />
+       <change beforePath="$PROJECT_DIR$/runs/~$Notes.docx" beforeDir="false" afterPath="$PROJECT_DIR$/runs/~$Notes.docx" afterDir="false" />
+     </list>
+     <option name="SHOW_DIALOG" value="false" />
+@@ -115,7 +54,7 @@
+     &quot;settings.editor.selected.configurable&quot;: &quot;com.jetbrains.python.configuration.PyActiveSdkModuleConfigurable&quot;
+   }
+ }</component>
+-  <component name="RunManager" selected="Python.evaluate_model">
++  <component name="RunManager" selected="Python.identifiability">
+     <configuration name="distributions" type="PythonConfigurationType" factoryName="Python" temporary="true" nameIsGenerated="true">
+       <module name="CRMF" />
+       <option name="INTERPRETER_OPTIONS" value="" />
+@@ -160,7 +99,7 @@
+       <option name="INPUT_FILE" value="" />
+       <method v="2" />
+     </configuration>
+-    <configuration name="invariance" type="PythonConfigurationType" factoryName="Python" temporary="true" nameIsGenerated="true">
++    <configuration name="identifiability" type="PythonConfigurationType" factoryName="Python" temporary="true" nameIsGenerated="true">
+       <module name="CRMF" />
+       <option name="INTERPRETER_OPTIONS" value="" />
+       <option name="PARENT_ENVS" value="true" />
+@@ -173,7 +112,7 @@
+       <option name="ADD_CONTENT_ROOTS" value="true" />
+       <option name="ADD_SOURCE_ROOTS" value="true" />
+       <EXTENSION ID="PythonCoverageRunConfigurationExtension" runner="coverage.py" />
+-      <option name="SCRIPT_NAME" value="$PROJECT_DIR$/invariance.py" />
++      <option name="SCRIPT_NAME" value="$PROJECT_DIR$/identifiability.py" />
+       <option name="PARAMETERS" value="" />
+       <option name="SHOW_COMMAND_LINE" value="false" />
+       <option name="EMULATE_TERMINAL" value="false" />
+@@ -182,7 +121,7 @@
+       <option name="INPUT_FILE" value="" />
+       <method v="2" />
+     </configuration>
+-    <configuration name="results" type="PythonConfigurationType" factoryName="Python" temporary="true" nameIsGenerated="true">
++    <configuration name="invariance" type="PythonConfigurationType" factoryName="Python" temporary="true" nameIsGenerated="true">
+       <module name="CRMF" />
+       <option name="INTERPRETER_OPTIONS" value="" />
+       <option name="PARENT_ENVS" value="true" />
+@@ -195,7 +134,7 @@
+       <option name="ADD_CONTENT_ROOTS" value="true" />
+       <option name="ADD_SOURCE_ROOTS" value="true" />
+       <EXTENSION ID="PythonCoverageRunConfigurationExtension" runner="coverage.py" />
+-      <option name="SCRIPT_NAME" value="$PROJECT_DIR$/results.py" />
++      <option name="SCRIPT_NAME" value="$PROJECT_DIR$/invariance.py" />
+       <option name="PARAMETERS" value="" />
+       <option name="SHOW_COMMAND_LINE" value="false" />
+       <option name="EMULATE_TERMINAL" value="false" />
+@@ -204,7 +143,7 @@
+       <option name="INPUT_FILE" value="" />
+       <method v="2" />
+     </configuration>
+-    <configuration name="train" type="PythonConfigurationType" factoryName="Python" temporary="true" nameIsGenerated="true">
++    <configuration name="tt" type="PythonConfigurationType" factoryName="Python" temporary="true" nameIsGenerated="true">
+       <module name="CRMF" />
+       <option name="INTERPRETER_OPTIONS" value="" />
+       <option name="PARENT_ENVS" value="true" />
+@@ -217,7 +156,7 @@
+       <option name="ADD_CONTENT_ROOTS" value="true" />
+       <option name="ADD_SOURCE_ROOTS" value="true" />
+       <EXTENSION ID="PythonCoverageRunConfigurationExtension" runner="coverage.py" />
+-      <option name="SCRIPT_NAME" value="$PROJECT_DIR$/train.py" />
++      <option name="SCRIPT_NAME" value="$PROJECT_DIR$/tt.py" />
+       <option name="PARAMETERS" value="" />
+       <option name="SHOW_COMMAND_LINE" value="false" />
+       <option name="EMULATE_TERMINAL" value="false" />
+@@ -228,10 +167,10 @@
+     </configuration>
+     <recent_temporary>
+       <list>
++        <item itemvalue="Python.identifiability" />
++        <item itemvalue="Python.invariance" />
+         <item itemvalue="Python.evaluate_model" />
+-        <item itemvalue="Python.train" />
+-        <item itemvalue="Python.results" />
+-        <item itemvalue="Python.invariance" />
++        <item itemvalue="Python.tt" />
+         <item itemvalue="Python.distributions" />
+       </list>
+     </recent_temporary>
+@@ -260,41 +199,17 @@
+       <workItem from="1672294286229" duration="7812000" />
+       <workItem from="1672383569433" duration="8892000" />
+       <workItem from="1672473343807" duration="4883000" />
+-    </task>
+-    <task id="LOCAL-00001" summary="Finetune completed">
+-      <created>1667968720588</created>
+-      <option name="number" value="00001" />
+-      <option name="presentableId" value="LOCAL-00001" />
+-      <option name="project" value="LOCAL" />
+-      <updated>1667968720588</updated>
+-    </task>
+-    <task id="LOCAL-00002" summary="Finetune completed">
+-      <created>1668103730039</created>
+-      <option name="number" value="00002" />
+-      <option name="presentableId" value="LOCAL-00002" />
+-      <option name="project" value="LOCAL" />
+-      <updated>1668103730039</updated>
+-    </task>
+-    <task id="LOCAL-00003" summary="Finetune completed">
+-      <created>1668104402694</created>
+-      <option name="number" value="00003" />
+-      <option name="presentableId" value="LOCAL-00003" />
+-      <option name="project" value="LOCAL" />
+-      <updated>1668104402694</updated>
+-    </task>
+-    <task id="LOCAL-00004" summary="Finetune completed">
+-      <created>1668104584281</created>
+-      <option name="number" value="00004" />
+-      <option name="presentableId" value="LOCAL-00004" />
+-      <option name="project" value="LOCAL" />
+-      <updated>1668104584281</updated>
+-    </task>
+-    <task id="LOCAL-00005" summary="Finetune completed">
+-      <created>1668113946515</created>
+-      <option name="number" value="00005" />
+-      <option name="presentableId" value="LOCAL-00005" />
+-      <option name="project" value="LOCAL" />
+-      <updated>1668113946515</updated>
++      <workItem from="1672564287482" duration="2009000" />
++      <workItem from="1672599652397" duration="4829000" />
++      <workItem from="1672708787974" duration="1467000" />
++      <workItem from="1672779888329" duration="2108000" />
++      <workItem from="1672870070877" duration="10688000" />
++      <workItem from="1672908835221" duration="3000" />
++      <workItem from="1672908984313" duration="16974000" />
++      <workItem from="1672977156771" duration="776000" />
++      <workItem from="1673037068778" duration="6530000" />
++      <workItem from="1673122675840" duration="14233000" />
++      <workItem from="1673212208883" duration="1374000" />
+     </task>
+     <task id="LOCAL-00006" summary="Finetune completed">
+       <created>1668115250936</created>
+@@ -597,7 +512,49 @@
+       <option name="project" value="LOCAL" />
+       <updated>1672474643796</updated>
+     </task>
+-    <option name="localTasksCounter" value="49" />
++    <task id="LOCAL-00049" summary="added variety loss">
++      <created>1672565246369</created>
++      <option name="number" value="00049" />
++      <option name="presentableId" value="LOCAL-00049" />
++      <option name="project" value="LOCAL" />
++      <updated>1672565246369</updated>
++    </task>
++    <task id="LOCAL-00050" summary="added variety loss">
++      <created>1672807899845</created>
++      <option name="number" value="00050" />
++      <option name="presentableId" value="LOCAL-00050" />
++      <option name="project" value="LOCAL" />
++      <updated>1672807899846</updated>
++    </task>
++    <task id="LOCAL-00051" summary="identifiability">
++      <created>1673139447735</created>
++      <option name="number" value="00051" />
++      <option name="presentableId" value="LOCAL-00051" />
++      <option name="project" value="LOCAL" />
++      <updated>1673139447735</updated>
++    </task>
++    <task id="LOCAL-00052" summary="finetune">
++      <created>1673212493433</created>
++      <option name="number" value="00052" />
++      <option name="presentableId" value="LOCAL-00052" />
++      <option name="project" value="LOCAL" />
++      <updated>1673212493433</updated>
++    </task>
++    <task id="LOCAL-00053" summary="finetune">
++      <created>1673212629350</created>
++      <option name="number" value="00053" />
++      <option name="presentableId" value="LOCAL-00053" />
++      <option name="project" value="LOCAL" />
++      <updated>1673212629350</updated>
++    </task>
++    <task id="LOCAL-00054" summary="experiments cvpr">
++      <created>1673212960077</created>
++      <option name="number" value="00054" />
++      <option name="presentableId" value="LOCAL-00054" />
++      <option name="project" value="LOCAL" />
++      <updated>1673212960077</updated>
++    </task>
++    <option name="localTasksCounter" value="55" />
+     <servers />
+   </component>
+   <component name="TypeScriptGeneratedFilesManager">
+@@ -628,7 +585,11 @@
+     <MESSAGE value="E_q4" />
+     <MESSAGE value="Added contrastive learning codes" />
+     <MESSAGE value="Experiments" />
+-    <option name="LAST_COMMIT_MESSAGE" value="Experiments" />
++    <MESSAGE value="added variety loss" />
++    <MESSAGE value="identifiability" />
++    <MESSAGE value="finetune" />
++    <MESSAGE value="experiments cvpr" />
++    <option name="LAST_COMMIT_MESSAGE" value="experiments cvpr" />
+   </component>
+   <component name="XDebuggerManager">
+     <breakpoint-manager>
+@@ -647,8 +608,30 @@
+           <url>file://$PROJECT_DIR$/invariance.py</url>
+           <line>93</line>
+           <option name="timeStamp" value="43" />
++        </line-breakpoint>
++        <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
++          <url>file://$PROJECT_DIR$/distributions.py</url>
++          <line>46</line>
++          <option name="timeStamp" value="47" />
++        </line-breakpoint>
++        <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
++          <url>file://$PROJECT_DIR$/distributions.py</url>
++          <line>41</line>
++          <option name="timeStamp" value="48" />
++        </line-breakpoint>
++        <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
++          <url>file://$PROJECT_DIR$/identifiability.py</url>
++          <line>107</line>
++          <option name="timeStamp" value="52" />
+         </line-breakpoint>
+       </breakpoints>
++      <default-breakpoints>
++        <breakpoint type="python-exception">
++          <properties notifyOnTerminate="true" exception="BaseException">
++            <option name="notifyOnTerminate" value="true" />
++          </properties>
++        </breakpoint>
++      </default-breakpoints>
+     </breakpoint-manager>
+     <watches-manager>
+       <configuration name="PythonConfigurationType">
+@@ -658,12 +641,14 @@
+     </watches-manager>
+   </component>
+   <component name="com.intellij.coverage.CoverageDataManagerImpl">
+-    <SUITE FILE_PATH="coverage/CRMF$train.coverage" NAME="train Coverage Results" MODIFIED="1672440543104" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
++    <SUITE FILE_PATH="coverage/CRMF$identifiability.coverage" NAME="identifiability Coverage Results" MODIFIED="1673140457483" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
++    <SUITE FILE_PATH="coverage/CRMF$tt.coverage" NAME="tt Coverage Results" MODIFIED="1672977318357" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
++    <SUITE FILE_PATH="coverage/CRMF$train.coverage" NAME="train Coverage Results" MODIFIED="1672710303879" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
+     <SUITE FILE_PATH="coverage/CRMF$results.coverage" NAME="results Coverage Results" MODIFIED="1668895584912" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
+-    <SUITE FILE_PATH="coverage/CRMF$evaluate_model.coverage" NAME="evaluate_model Coverage Results" MODIFIED="1672533621727" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
++    <SUITE FILE_PATH="coverage/CRMF$evaluate_model.coverage" NAME="evaluate_model Coverage Results" MODIFIED="1673139231705" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
+     <SUITE FILE_PATH="coverage/CRMF$a5.coverage" NAME="a5 Coverage Results" MODIFIED="1667872384207" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
+-    <SUITE FILE_PATH="coverage/CRMF$invariance.coverage" NAME="invariance Coverage Results" MODIFIED="1672012912771" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
++    <SUITE FILE_PATH="coverage/CRMF$invariance.coverage" NAME="invariance Coverage Results" MODIFIED="1673139935419" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
+     <SUITE FILE_PATH="coverage/CRMF$test.coverage" NAME="test Coverage Results" MODIFIED="1668451807866" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
+-    <SUITE FILE_PATH="coverage/CRMF$distributions.coverage" NAME="distributions Coverage Results" MODIFIED="1667958311916" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
++    <SUITE FILE_PATH="coverage/CRMF$distributions.coverage" NAME="distributions Coverage Results" MODIFIED="1672971638822" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
+   </component>
+ </project>
+\ No newline at end of file
+Index: Tensorboard.ipynb
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.BaseRevisionTextPatchEP
+<+>{\r\n \"cells\": [\r\n  {\r\n   \"cell_type\": \"code\",\r\n   \"execution_count\": null,\r\n   \"metadata\": {\r\n    \"collapsed\": true\r\n   },\r\n   \"outputs\": [],\r\n   \"source\": [\r\n    \"%load_ext tensorboard\\n\",\r\n    \"tensorboard --logdir='./runs/E6/CRMF_batch_het_data_v4_ds_0_bk_20_ep_(50, 20, 20, 1, 20, 1000)_shuffle_true_seed_1/'\"\r\n   ]\r\n  },\r\n  {\r\n   \"cell_type\": \"code\",\r\n   \"execution_count\": null,\r\n   \"outputs\": [],\r\n   \"source\": [],\r\n   \"metadata\": {\r\n    \"collapsed\": false\r\n   }\r\n  }\r\n ],\r\n \"metadata\": {\r\n  \"kernelspec\": {\r\n   \"display_name\": \"Python 3\",\r\n   \"language\": \"python\",\r\n   \"name\": \"python3\"\r\n  },\r\n  \"language_info\": {\r\n   \"codemirror_mode\": {\r\n    \"name\": \"ipython\",\r\n    \"version\": 2\r\n   },\r\n   \"file_extension\": \".py\",\r\n   \"mimetype\": \"text/x-python\",\r\n   \"name\": \"python\",\r\n   \"nbconvert_exporter\": \"python\",\r\n   \"pygments_lexer\": \"ipython2\",\r\n   \"version\": \"2.7.6\"\r\n  }\r\n },\r\n \"nbformat\": 4,\r\n \"nbformat_minor\": 0\r\n}\r\n
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/Tensorboard.ipynb b/Tensorboard.ipynb
+--- a/Tensorboard.ipynb	(revision 8f1cebd07104a1daf8419df9d5397ed230ff7ab4)
++++ b/Tensorboard.ipynb	(date 1673037590439)
+@@ -9,7 +9,7 @@
+    "outputs": [],
+    "source": [
+     "%load_ext tensorboard\n",
+-    "tensorboard --logdir='./runs/E6/CRMF_batch_het_data_v4_ds_0_bk_20_ep_(50, 20, 20, 1, 20, 1000)_shuffle_true_seed_1/'"
++    "tensorboard --logdir='./runs/E15/CRMF_batch_hom_data_eth_ds_0_bk_1_ep_(150, 100, 100, 1, 20, 3000)_shuffle_true_seed_1/'"
+    ]
+   },
+   {
+Index: log/train.log
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.BaseRevisionTextPatchEP
+<+>2023-01-01 04:26:59,718:INFO: Initializing Training Set\r\n
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/log/train.log b/log/train.log
+--- a/log/train.log	(revision 8f1cebd07104a1daf8419df9d5397ed230ff7ab4)
++++ b/log/train.log	(date 1673140504442)
+@@ -1,1 +1,5 @@
+-2023-01-01 04:26:59,718:INFO: Initializing Training Set
++2023-01-07 20:14:20,814:INFO: Initializing Training Set
++2023-01-07 20:14:25,979:INFO: Initializing Validation Set
++2023-01-07 20:14:26,652:INFO: Initializing Validation O Set
++2023-01-07 20:14:29,336:INFO: => loaded checkpoint './models/E10/P6/CRMF_epoch_705.pth.tar' (epoch 706)
++2023-01-07 20:15:04,441:INFO: => loaded checkpoint './models/E11/P6/CRMF_epoch_685.pth.tar' (epoch 686)
+Index: tt.py
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/tt.py b/tt.py
+new file mode 100644
+--- /dev/null	(date 1672977229206)
++++ b/tt.py	(date 1672977229206)
+@@ -0,0 +1,34 @@
++import torch
++from torch.utils.tensorboard import SummaryWriter
++from tqdm import tqdm
++
++from loader import data_loader
++from parser_file import get_training_parser
++from utils import *
++from models import CRMF
++from scipy.optimize import least_squares
++
++
++def main(args):
++    seed = 2
++    set_seed_globally(seed)
++    print(torch.randn(2))
++
++    for i in range(10):
++        print(i)
++        print(torch.randn(2))
++
++    print(torch.randn(2))
++    print(torch.randn(2))
++    print(torch.randn(2))
++
++
++
++
++
++if __name__ == "__main__":
++    print('Using GPU: ' + str(torch.cuda.is_available()))
++    input_args = get_training_parser().parse_args()
++    print('Arguments for training: ', input_args)
++    set_logger(os.path.join(input_args.log_dir, "train.log"))
++    main(input_args)
