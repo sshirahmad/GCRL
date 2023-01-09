@@ -185,7 +185,7 @@ def main(args):
     for epoch in range(args.start_epoch, sum(args.num_epochs) + 1):
 
         training_step = get_training_step(epoch)
-        if training_step in ["P1", "P2", "P5"]:
+        if training_step in ["P1", "P2", "P5", "P6"]:
             continue
         logging.info(f"\n===> EPOCH: {epoch} ({training_step})")
 
@@ -208,8 +208,8 @@ def main(args):
         #     freeze(False, (model.invariant_encoder, model.variant_encoder, model.x_to_s, model.x_to_z, model.past_decoder, model.future_decoder, model.coupling_layers_z))
 
         elif training_step == "P7":
-            freeze(True, (model.invariant_encoder, model.x_to_z, model.past_decoder, model.future_decoder, model.coupling_layers_z, model.coupling_layers_s))
-            freeze(False, (model.variant_encoder, model.x_to_s, model.future_decoder))
+            freeze(True, (model.invariant_encoder, model.x_to_z, model.past_decoder, model.future_decoder))
+            freeze(False, (model.variant_encoder, model.x_to_s))
 
         if training_step in ["P1", "P2", "P3", "P5", "P6"]:
             train_all(args, model, optimizers, train_dataset, epoch, training_step, train_envs_name, writer,
@@ -430,7 +430,7 @@ def train_all(args, model, optimizers, train_dataset, epoch, training_step, trai
                             lr_scheduler_optims['inv'].step()
                         optimizers['inv'].step()
 
-                    if training_step in ['P3', 'P6', 'P7']:
+                    if training_step in ['P3', 'P6']:
                         if lr_scheduler_optims is not None:
                             lr_scheduler_optims['future_decoder'].step()
                         optimizers['future_decoder'].step()

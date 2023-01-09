@@ -9,7 +9,7 @@ def get_parser():
     parser.add_argument("--tfdir", default='./runs/E19/', type=str)
     parser.add_argument("--dataset_name", default="v4", type=str)
     parser.add_argument("--model_name", default="mlp", type=str)
-    parser.add_argument("--resume", default="./models/E19//P4/CRMF_epoch_351.pth.tar",
+    parser.add_argument("--resume", default="./models/E19//P6/CRMF_epoch_644.pth.tar",
                         type=str, metavar="PATH", help="path to latest checkpoint (default: none)")
 
     # randomness
