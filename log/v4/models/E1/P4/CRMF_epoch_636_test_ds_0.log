@@ -1,0 +1,7 @@
+2022-12-25 15:06:14,330:INFO: model ./models/E1//P4/CRMF_epoch_636.pth.tar not found
+2022-12-25 15:06:22,940:INFO: Model: ./models/E1//P4/CRMF_epoch_636.pth.tar
+2022-12-25 15:06:22,940:INFO: Dataset: v4
+2022-12-25 15:06:22,940:INFO: Eval shift: 0
+2022-12-25 15:06:22,940:INFO: Dataset type: test
+2022-12-25 15:06:37,801:INFO: ADE: 2.1122	FDE: 3.9838
+2022-12-25 15:06:52,515:INFO: ADE: 2.1090	FDE: 3.9785
