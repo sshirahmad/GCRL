@@ -91,9 +91,9 @@ def main(args):
         'par': torch.optim.Adam(
             [
                 {"params": model.pi_priore, 'lr': args.lrpar},
-                {"params": model.mean_priors, 'lr': args.lrpar},
-                {"params": model.logvar_priors, 'lr': args.lrpar},
-                # {"params": model.coupling_layers_s.parameters(), 'lr': args.lrpar},
+                # {"params": model.mean_priors, 'lr': args.lrpar},
+                # {"params": model.logvar_priors, 'lr': args.lrpar},
+                {"params": model.coupling_layers_s.parameters(), 'lr': args.lrpar},
             ]
         ),
         'var': torch.optim.Adam(
@@ -150,7 +150,12 @@ def main(args):
                 'par': OneCycleLR(optimizers['par'], max_lr=1e-3, div_factor=25.0, total_steps=int(total_steps[5]),
                                   pct_start=0.3),
             },
-            "P7": None,
+            "P7": {
+                'var': OneCycleLR(optimizers['var'], max_lr=1e-3, div_factor=25.0, total_steps=int(total_steps[6]),
+                                  pct_start=0.3),
+                'par': OneCycleLR(optimizers['par'], max_lr=1e-3, div_factor=25.0, total_steps=int(total_steps[6]),
+                                  pct_start=0.3),
+            },
         }
     else:
         lr_schedulers = {

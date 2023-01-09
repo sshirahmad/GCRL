@@ -390,7 +390,7 @@ class Predictor(nn.Module):
         self.teacher_forcing_ratio = teacher_forcing_ratio
 
         self.n_coordinates = n_coordinates
-        self.pred_lstm_hidden_size = z_dim + s_dim + noise_dim[0]
+        self.pred_lstm_hidden_size = z_dim + s_dim
         self.pred_hidden2pos = nn.Linear(self.pred_lstm_hidden_size, n_coordinates)
         self.pred_lstm_model = LSTMCell(n_coordinates, self.pred_lstm_hidden_size)
         self.noise_dim = noise_dim
@@ -436,7 +436,7 @@ class Predictor(nn.Module):
         input_t = obs_traj_rel[self.obs_len - 1, :, :self.n_coordinates].repeat(len(pred_lstm_hidden), 1, 1)
         output = input_t
         pred_lstm_hidden = self.mapping(pred_lstm_hidden)
-        pred_lstm_hidden = self.add_noise(pred_lstm_hidden, seq_start_end)
+        # pred_lstm_hidden = self.add_noise(pred_lstm_hidden, seq_start_end)
         pred_lstm_c_t = torch.zeros_like(pred_lstm_hidden).cuda()
         pred_q_rel = []
         if self.training:
@@ -761,11 +761,11 @@ class CRMF(nn.Module):
             CouplingLayer(args.z_dim, reverse_mask=False)
         ])
 
-        # self.coupling_layers_s = nn.ModuleList([
-        #     CouplingLayer(args.s_dim, reverse_mask=False),
-        #     CouplingLayer(args.s_dim, reverse_mask=True),
-        #     CouplingLayer(args.s_dim, reverse_mask=False)
-        # ])
+        self.coupling_layers_s = nn.ModuleList([
+            CouplingLayer(args.s_dim, reverse_mask=False),
+            CouplingLayer(args.s_dim, reverse_mask=True),
+            CouplingLayer(args.s_dim, reverse_mask=False)
+        ])
 
         self.pw = MultivariateNormal(torch.zeros(args.z_dim).cuda(), torch.diag(torch.ones(args.z_dim).cuda()))
 
