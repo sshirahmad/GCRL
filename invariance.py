@@ -22,7 +22,7 @@ def main(args):
     if not os.path.exists(args.tfdir + '/' + model_name):
         os.makedirs(args.tfdir + '/' + model_name)
 
-    training_step = "P7"
+    training_step = "P8"
     args.batch_size = "10000"
 
     logging.info("Initializing Training Set")
@@ -67,7 +67,7 @@ def main(args):
         load_all_model(args, model, None)
         model.cuda()
 
-    if training_step == "P7":
+    if training_step == "P8":
         calculate_distance_posteriors(model, valid_dataset, valido_dataset)
     else:
         calculate_distance_priors(model, valid_dataset, valido_dataset)
@@ -127,7 +127,7 @@ def calculate_distance_posteriors(model, valid_dataset, valido_dataset=None):
                 batch = [tensor.cuda() for tensor in batch]
                 (obs_traj, fut_traj, _, _, _, _, _) = batch
 
-                z, s = model(batch, "P7", env_idx=val_idx)
+                z, s = model(batch, "P8", env_idx=val_idx)
                 z_vec += [z.rsample([20, ]).flatten(start_dim=0, end_dim=1)]
                 s_vec += [s.rsample([20, ]).flatten(start_dim=0, end_dim=1)]
 
@@ -159,7 +159,7 @@ def calculate_distance_posteriors(model, valid_dataset, valido_dataset=None):
                 batch = [tensor.cuda() for tensor in batch]
                 (obs_traj, fut_traj, _, _, _, _, _) = batch
 
-                z, s = model(batch, "P7")
+                z, s = model(batch, "P8")
                 mean_z = torch.mean(z.mean, dim=0)
                 covariance_z = torch.mean(z.covariance_matrix, dim=0)
                 mean_s = torch.mean(s.mean, dim=0)
