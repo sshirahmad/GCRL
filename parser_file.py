@@ -5,11 +5,11 @@ from utils import int_tuple
 def get_parser():
     parser = argparse.ArgumentParser()
     parser.add_argument("--log_dir", default="./log/", help="Directory containing logging file")
-    parser.add_argument("--model_dir", default="./models/E19/", help="Directory containing logging file")
-    parser.add_argument("--tfdir", default='./runs/E19/', type=str)
+    parser.add_argument("--model_dir", default="./models/E20/", help="Directory containing logging file")
+    parser.add_argument("--tfdir", default='./runs/E20/', type=str)
     parser.add_argument("--dataset_name", default="v4", type=str)
     parser.add_argument("--model_name", default="mlp", type=str)
-    parser.add_argument("--resume", default="./models/E19//P6/CRMF_epoch_644.pth.tar",
+    parser.add_argument("--resume", default="",
                         type=str, metavar="PATH", help="path to latest checkpoint (default: none)")
 
     # randomness
@@ -96,7 +96,7 @@ def get_training_parser():
     # learning rates
     parser.add_argument("--lr_scheduler", default=True, type=bool)  # '150-100-150',
 
-    parser.add_argument("--lrvar", default=1e-2, type=float,
+    parser.add_argument("--lrvar", default=5e-3, type=float,
                         help="initial learning rate for variant encoder optimizer")
     parser.add_argument('--lrinv', default=5e-3, type=float,
                         help="initial learning rate for the invariant encoder optimizer")
@@ -106,7 +106,7 @@ def get_training_parser():
                         help="initial learning rate for the past decoder optimizer")
     parser.add_argument('--lrmap', default=5e-3, type=float,
                         help="initial learning rate for the regressor optimizer")
-    parser.add_argument('--lrpar', default=1e-2, type=float,
+    parser.add_argument('--lrpar', default=5e-3, type=float,
                         help="initial learning rate for the parameters optimizer")
 
     return parser

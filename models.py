@@ -749,18 +749,18 @@ class CRMF(nn.Module):
         self.pi_priore = nn.Parameter(-1 * torch.ones(args.num_envs))
         self.logvar_priors = nn.Parameter(torch.randn(args.num_envs, args.s_dim))
         self.mean_priors = nn.Parameter(torch.zeros(args.num_envs, args.s_dim))
-        self.logvar_priorz = nn.Parameter(torch.randn(args.z_dim))
-        self.mean_priorz = nn.Parameter(torch.zeros(args.z_dim))
+        # self.logvar_priorz = nn.Parameter(torch.randn(args.z_dim))
+        # self.mean_priorz = nn.Parameter(torch.zeros(args.z_dim))
         self.gmm = GMM(n_components=args.num_envs, covariance_type='diag')
         self.beta_scheduler = get_beta(0, 1500, 1000)
         self.iter = 1
 
-        # self.coupling_layers_z = nn.ModuleList([
-        #     CouplingLayer(args.z_dim, reverse_mask=False),
-        #     CouplingLayer(args.z_dim, reverse_mask=True),
-        #     CouplingLayer(args.z_dim, reverse_mask=False)
-        # ])
-        #
+        self.coupling_layers_z = nn.ModuleList([
+            CouplingLayer(args.z_dim, reverse_mask=False),
+            CouplingLayer(args.z_dim, reverse_mask=True),
+            CouplingLayer(args.z_dim, reverse_mask=False)
+        ])
+
         # self.coupling_layers_s = nn.ModuleList([
         #     CouplingLayer(args.s_dim, reverse_mask=False),
         #     CouplingLayer(args.s_dim, reverse_mask=True),
@@ -941,12 +941,12 @@ class CRMF(nn.Module):
                 log_qsgx = q_sgx.log_prob(s_vec)
 
                 # calculate log(p(z))
-                # sldj = torch.zeros((self.num_samples, z_vec.shape[1]), device=z_vec.device)
-                # z_vec_c = z_vec
-                # for coupling in self.coupling_layers_z:
-                #     z_vec_c, sldj = coupling(z_vec_c, sldj)
-                pw = MultivariateNormal(self.mean_priorz, torch.diag(torch.exp(self.logvar_priorz)))
-                log_pz = pw.log_prob(z_vec)
+                sldj = torch.zeros((self.num_samples, z_vec.shape[1]), device=z_vec.device)
+                z_vec_c = z_vec
+                for coupling in self.coupling_layers_z:
+                    z_vec_c, sldj = coupling(z_vec_c, sldj)
+                # pw = MultivariateNormal(self.mean_priorz, torch.diag(torch.exp(self.logvar_priorz)))
+                log_pz = self.pw.log_prob(z_vec_c) + sldj
 
                 # calculate log(p(x|z,s))
                 if self.model_name == "lstm":
