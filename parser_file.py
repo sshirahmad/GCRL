@@ -5,11 +5,11 @@ from utils import int_tuple
 def get_parser():
     parser = argparse.ArgumentParser()
     parser.add_argument("--log_dir", default="./log/", help="Directory containing logging file")
-    parser.add_argument("--model_dir", default="./models/E17/", help="Directory containing logging file")
-    parser.add_argument("--tfdir", default='./runs/E17/', type=str)
+    parser.add_argument("--model_dir", default="./models/E19/", help="Directory containing logging file")
+    parser.add_argument("--tfdir", default='./runs/E19/', type=str)
     parser.add_argument("--dataset_name", default="v4", type=str)
     parser.add_argument("--model_name", default="mlp", type=str)
-    parser.add_argument("--resume", default="./models/E17/P6/CRMF_epoch_1312.pth.tar",
+    parser.add_argument("--resume", default="./models/E19//P4/CRMF_epoch_351.pth.tar",
                         type=str, metavar="PATH", help="path to latest checkpoint (default: none)")
 
     # randomness
@@ -41,11 +41,11 @@ def get_parser():
                         help="Filter only certain environments (i.e 0.1-0.3-0.5)")
     parser.add_argument("--skip", default=1, type=int)
     parser.add_argument("--delim", default="\t")
-    parser.add_argument("--finetune_ratio", default=0.8, type=float, help="Number of batches to be used in finetuning")
+    parser.add_argument("--finetune_ratio", default=0.1, type=float, help="Number of batches to be used in finetuning")
     parser.add_argument("--batch_method", default='het', type=str,
                         help='Use Homogeneous (hom), Heterogeneous (het) or alternated homogeneous (alt) batches during training')
     parser.add_argument("--contrastive", default=False, type=bool, help='add contrastive loss')
-    parser.add_argument("--decoupled_loss", default=False, type=bool, help='decouple ELBO from y')
+    parser.add_argument("--decoupled_loss", default=True, type=bool, help='decouple ELBO from y')
 
     parser.add_argument("--batch_size", default='64', type=str)
     parser.add_argument("--shuffle", default=True, type=bool)
@@ -54,8 +54,8 @@ def get_parser():
 
 
     # architecture (VE)
-    parser.add_argument("--z_dim", type=int, default=8, help="Dimension of z latent variable")
-    parser.add_argument("--s_dim", type=int, default=8, help="Dimension of s latent variable")
+    parser.add_argument("--z_dim", type=int, default=2, help="Dimension of z latent variable")
+    parser.add_argument("--s_dim", type=int, default=2, help="Dimension of s latent variable")
     parser.add_argument("--num_envs", default=5, type=int, help="Number of environments in the dataset")
 
     # spurious feature
@@ -84,7 +84,7 @@ def get_training_parser():
                         help="Say which env were used during pretraining (for contrastive loss) (i.e 0.1-0.3-0.5)")
 
     # training
-    parser.add_argument("--best_k", default=1, type=int)
+    parser.add_argument("--best_k", default=20, type=int)
     parser.add_argument("--start-epoch", default=1, type=int, metavar="N",
                         help="manual epoch number (useful on restarts)")
     parser.add_argument("--use_gpu", default=1, type=int)

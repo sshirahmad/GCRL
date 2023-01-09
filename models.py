@@ -749,21 +749,23 @@ class CRMF(nn.Module):
         self.pi_priore = nn.Parameter(-1 * torch.ones(args.num_envs))
         self.logvar_priors = nn.Parameter(torch.randn(args.num_envs, args.s_dim))
         self.mean_priors = nn.Parameter(torch.zeros(args.num_envs, args.s_dim))
+        self.logvar_priorz = nn.Parameter(torch.randn(args.z_dim))
+        self.mean_priorz = nn.Parameter(torch.zeros(args.z_dim))
         self.gmm = GMM(n_components=args.num_envs, covariance_type='diag')
         self.beta_scheduler = get_beta(0, 1500, 1000)
         self.iter = 1
 
-        self.coupling_layers_z = nn.ModuleList([
-            CouplingLayer(args.z_dim, reverse_mask=False),
-            CouplingLayer(args.z_dim, reverse_mask=True),
-            CouplingLayer(args.z_dim, reverse_mask=False)
-        ])
-
-        self.coupling_layers_s = nn.ModuleList([
-            CouplingLayer(args.s_dim, reverse_mask=False),
-            CouplingLayer(args.s_dim, reverse_mask=True),
-            CouplingLayer(args.s_dim, reverse_mask=False)
-        ])
+        # self.coupling_layers_z = nn.ModuleList([
+        #     CouplingLayer(args.z_dim, reverse_mask=False),
+        #     CouplingLayer(args.z_dim, reverse_mask=True),
+        #     CouplingLayer(args.z_dim, reverse_mask=False)
+        # ])
+        #
+        # self.coupling_layers_s = nn.ModuleList([
+        #     CouplingLayer(args.s_dim, reverse_mask=False),
+        #     CouplingLayer(args.s_dim, reverse_mask=True),
+        #     CouplingLayer(args.s_dim, reverse_mask=False)
+        # ])
 
         self.pw = MultivariateNormal(torch.zeros(args.z_dim).cuda(), torch.diag(torch.ones(args.z_dim).cuda()))
 
@@ -803,22 +805,22 @@ class CRMF(nn.Module):
             self.invariant_encoder = SimpleEncoder(args.obs_len, 2,
                                                    NUMBER_PERSONS, args.add_confidence)
 
-            self.past_decoder = Decoder(args.obs_len, args.n_coordinates, args.z_dim, args.s_dim)
-
-            self.future_decoder = Predictor(args.obs_len, args.fut_len, args.n_coordinates, args.s_dim,
-                                            args.z_dim, args.teachingratio)
-
-            # self.past_decoder = SimpleDecoder(
-            #     args.obs_len,
-            #     args.s_dim,
-            #     NUMBER_PERSONS,
-            # )
+            # self.past_decoder = Decoder(args.obs_len, args.n_coordinates, args.z_dim, args.s_dim)
             #
-            # self.future_decoder = SimpleDecoder(
-            #     args.fut_len,
-            #     args.s_dim,
-            #     NUMBER_PERSONS,
-            # )
+            # self.future_decoder = Predictor(args.obs_len, args.fut_len, args.n_coordinates, args.s_dim,
+            #                                 args.z_dim, args.teachingratio)
+
+            self.past_decoder = SimpleDecoder(
+                args.obs_len,
+                args.s_dim + args.z_dim,
+                NUMBER_PERSONS,
+            )
+
+            self.future_decoder = SimpleDecoder(
+                args.fut_len,
+                args.s_dim + args.z_dim,
+                NUMBER_PERSONS,
+            )
 
         else:
             raise ValueError('Unrecognized model name "%s"' % args.model_name)
@@ -851,15 +853,16 @@ class CRMF(nn.Module):
                 if self.model_name == "lstm":
                     pred_past_rel = self.past_decoder(obs_traj_rel, torch.cat((z_vec.unsqueeze(0), s_vec.unsqueeze(0)), dim=2)).squeeze(1)
                 elif self.model_name == "mlp":
-                    # pred_past_rel = self.past_decoder(torch.cat((z_vec.unsqueeze(0), s_vec.unsqueeze(0)), dim=2)).squeeze(1)
-                    pred_past_rel = self.past_decoder(obs_traj_rel, torch.cat((z_vec, s_vec), dim=1))
+                    pred_past_rel = self.past_decoder(torch.cat((z_vec.unsqueeze(0), s_vec.unsqueeze(0)), dim=2)).squeeze(1)
+                    # pred_past_rel = self.past_decoder(obs_traj_rel, torch.cat((z_vec, s_vec), dim=1))
 
                 if self.model_name == "lstm":
                     pred_fut_rel = self.future_decoder(obs_traj_rel, fut_traj_rel, seq_start_end,
                                                        torch.cat((z_vec.unsqueeze(0), s_vec.unsqueeze(0)), dim=2)).squeeze(1)
                 if self.model_name == "mlp":
-                    pred_fut_rel = self.future_decoder(obs_traj_rel, fut_traj_rel, seq_start_end,
-                                                       torch.cat((z_vec, s_vec), dim=1))
+                    pred_fut_rel = self.future_decoder(torch.cat((z_vec.unsqueeze(0), s_vec.unsqueeze(0)), dim=2)).squeeze(1)
+                    # pred_fut_rel = self.future_decoder(obs_traj_rel, fut_traj_rel, seq_start_end,
+                    #                                    torch.cat((z_vec, s_vec), dim=1))
 
                 return pred_past_rel, pred_fut_rel
 
@@ -870,6 +873,34 @@ class CRMF(nn.Module):
                     s_vec = self.x_to_s(self.variant_encoder(obs_traj_rel), mode="normal")
 
                 return s_vec
+
+            elif training_step == "P5":
+                pe = Categorical(logits=self.pi_priore)
+                if self.model_name == "lstm":
+                    q_sgx = self.x_to_s(self.variant_encoder(obs_traj_rel, seq_start_end, training_step),
+                                        mode="variational")
+                elif self.model_name == "mlp":
+                    q_sgx = self.x_to_s(self.variant_encoder(obs_traj_rel), mode="variational")
+
+                s_vec = q_sgx.rsample([self.num_samples, ])
+
+                # calculate p(s|e)
+                Et = []
+                for j in range(self.num_envs):
+                    psge = MultivariateNormal(self.mean_priors[j], torch.diag(torch.exp(self.logvar_priors[j])))
+                    log_psge = psge.log_prob(s_vec)
+                    log_pe = pe.log_prob(torch.tensor(j).cuda())
+                    Et.append(torch.exp(log_psge) * torch.exp(log_pe))
+
+                log_ps = torch.log(torch.stack(Et).sum(0) + 1e-6)
+                log_ps_zeros = torch.zeros_like(log_ps, device=log_ps.device)
+                if log_ps.mean() == torch.tensor(- math.inf):
+                    log_ps = log_ps_zeros
+
+                # calculate log(q(s|x))
+                log_qsgx = q_sgx.log_prob(s_vec)
+
+                return (log_ps - log_qsgx).mean(0)
 
             else:
                 pe = Categorical(logits=self.pi_priore)
@@ -885,20 +916,20 @@ class CRMF(nn.Module):
                 s_vec = q_sgx.rsample([self.num_samples, ])
                 z_vec = q_zgx.rsample([self.num_samples, ])
 
-                sldj = torch.zeros((self.num_samples, z_vec.shape[1]), device=z_vec.device)
-                s_vec_c = s_vec
-                for coupling in self.coupling_layers_s:
-                    s_vec_c, sldj = coupling(s_vec_c, sldj)
+                # sldj = torch.zeros((self.num_samples, z_vec.shape[1]), device=z_vec.device)
+                # s_vec_c = s_vec
+                # for coupling in self.coupling_layers_s:
+                #     s_vec_c, sldj = coupling(s_vec_c, sldj)
 
                 # calculate p(s|e)
                 Et = []
                 for j in range(self.num_envs):
-                    psge = self.ps[j]
-                    log_psge = psge.log_prob(s_vec_c)
+                    psge = MultivariateNormal(self.mean_priors[j], torch.diag(torch.exp(self.logvar_priors[j])))
+                    log_psge = psge.log_prob(s_vec)
                     log_pe = pe.log_prob(torch.tensor(j).cuda())
                     Et.append(torch.exp(log_psge) * torch.exp(log_pe))
 
-                log_ps = torch.log(torch.stack(Et).sum(0) + 1e-16) + sldj
+                log_ps = torch.log(torch.stack(Et).sum(0) + 1e-16)
                 log_ps_zeros = torch.zeros_like(log_ps, device=log_ps.device)
                 if log_ps.mean() == torch.tensor(- math.inf):
                     log_ps = log_ps_zeros
@@ -910,17 +941,19 @@ class CRMF(nn.Module):
                 log_qsgx = q_sgx.log_prob(s_vec)
 
                 # calculate log(p(z))
-                sldj = torch.zeros((self.num_samples, z_vec.shape[1]), device=z_vec.device)
-                z_vec_c = z_vec
-                for coupling in self.coupling_layers_z:
-                    z_vec_c, sldj = coupling(z_vec_c, sldj)
-                log_pz = self.pw.log_prob(z_vec_c) + sldj
+                # sldj = torch.zeros((self.num_samples, z_vec.shape[1]), device=z_vec.device)
+                # z_vec_c = z_vec
+                # for coupling in self.coupling_layers_z:
+                #     z_vec_c, sldj = coupling(z_vec_c, sldj)
+                pw = MultivariateNormal(self.mean_priorz, torch.diag(torch.exp(self.logvar_priorz)))
+                log_pz = pw.log_prob(z_vec)
 
                 # calculate log(p(x|z,s))
                 if self.model_name == "lstm":
                     px = self.past_decoder(obs_traj_rel, torch.cat((z_vec, s_vec), dim=2))
                 elif self.model_name == "mlp":
-                    px = self.past_decoder(obs_traj_rel, torch.cat((z_vec, s_vec), dim=2))
+                    # px = self.past_decoder(obs_traj_rel, torch.cat((z_vec, s_vec), dim=2))
+                    px = self.past_decoder(torch.cat((z_vec, s_vec), dim=2))
 
                 log_px = - l2_loss(px, obs_traj_rel, mode="raw") - 0.5 * 2 * self.obs_len * torch.log(
                     torch.tensor(2 * math.pi)) - 0.5 * self.obs_len * torch.log(torch.tensor(0.25))
@@ -934,8 +967,9 @@ class CRMF(nn.Module):
                         py = self.future_decoder(obs_traj_rel, fut_traj_rel, seq_start_end,
                                                  torch.cat((z_vec, s_vec), dim=2))
                     if self.model_name == "mlp":
-                        py = self.future_decoder(obs_traj_rel, fut_traj_rel, seq_start_end,
-                                                 torch.cat((z_vec, s_vec), dim=2))
+                        # py = self.future_decoder(obs_traj_rel, fut_traj_rel, seq_start_end,
+                        #                          torch.cat((z_vec, s_vec), dim=2))
+                        py = self.future_decoder(torch.cat((z_vec, s_vec), dim=2))
 
                     log_py = py
                 else:
@@ -945,8 +979,9 @@ class CRMF(nn.Module):
                         py = self.future_decoder(obs_traj_rel, fut_traj_rel, seq_start_end,
                                                  torch.cat((z_vec, s_vec), dim=2))
                     if self.model_name == "mlp":
-                        py = self.future_decoder(obs_traj_rel, fut_traj_rel, seq_start_end,
-                                                 torch.cat((z_vec, s_vec), dim=2))
+                        # py = self.future_decoder(obs_traj_rel, fut_traj_rel, seq_start_end,
+                        #                          torch.cat((z_vec, s_vec), dim=2))
+                        py = self.future_decoder(torch.cat((z_vec, s_vec), dim=2))
 
                     log_py = - l2_loss(py, fut_traj_rel, mode="raw") - 0.5 * 2 * self.fut_len * torch.log(
                         torch.tensor(2 * math.pi)) - 0.5 * self.fut_len * torch.log(torch.tensor(0.25))
@@ -998,6 +1033,7 @@ class CRMF(nn.Module):
                 if self.model_name == "lstm":
                     q = self.future_decoder(obs_traj_rel, fut_traj_rel, seq_start_end, torch.cat((z_vec, s_vec), dim=2))
                 elif self.model_name == "mlp":
-                    q = self.future_decoder(obs_traj_rel, fut_traj_rel, seq_start_end, torch.cat((z_vec, s_vec), dim=2))
+                    # q = self.future_decoder(obs_traj_rel, fut_traj_rel, seq_start_end, torch.cat((z_vec, s_vec), dim=2))
+                    q = self.future_decoder(torch.cat((z_vec, s_vec), dim=2))
 
                 return q[:, 0, :, :]

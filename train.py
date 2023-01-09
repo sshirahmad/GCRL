@@ -91,7 +91,9 @@ def main(args):
         'par': torch.optim.Adam(
             [
                 {"params": model.pi_priore, 'lr': args.lrpar},
-                {"params": model.coupling_layers_s.parameters(), 'lr': args.lrpar},
+                {"params": model.mean_priors, 'lr': args.lrpar},
+                {"params": model.logvar_priors, 'lr': args.lrpar},
+                # {"params": model.coupling_layers_s.parameters(), 'lr': args.lrpar},
             ]
         ),
         'var': torch.optim.Adam(
@@ -102,7 +104,9 @@ def main(args):
         ),
         'inv': torch.optim.Adam(
             [
-                {"params": model.coupling_layers_z.parameters(), 'lr': args.lrinv},
+                # {"params": model.coupling_layers_z.parameters(), 'lr': args.lrinv},
+                {"params": model.mean_priorz, 'lr': args.lrinv},
+                {"params": model.logvar_priorz, 'lr': args.lrinv},
                 {"params": model.x_to_z.parameters(), 'lr': args.lrinv},
                 {"params": model.invariant_encoder.parameters(), 'lr': args.lrinv},
             ]
@@ -181,7 +185,7 @@ def main(args):
     for epoch in range(args.start_epoch, sum(args.num_epochs) + 1):
 
         training_step = get_training_step(epoch)
-        if training_step in ["P1", "P2", "P3", "P4", "P5", "P6"]:
+        if training_step in ["P1", "P2", "P5"]:
             continue
         logging.info(f"\n===> EPOCH: {epoch} ({training_step})")
 
@@ -189,15 +193,15 @@ def main(args):
             freeze(True, (model.x_to_z, model.x_to_s, model.past_decoder, model.future_decoder, model.coupling_layers_z))
             freeze(False, (model.variant_encoder, model.invariant_encoder))
 
-        if training_step == 'P3':
-            freeze(True, (model.future_decoder, model.coupling_layers_z))
-            freeze(False, (model.variant_encoder, model.invariant_encoder, model.x_to_s, model.x_to_z, model.past_decoder))
+        # if training_step == 'P3':
+        #     freeze(True, (model.coupling_layers_z))
+        #     freeze(False, (model.variant_encoder, model.invariant_encoder, model.future_decoder, model.x_to_s, model.x_to_z, model.past_decoder))
 
         if training_step == 'P4':
             pass
 
         elif training_step == 'P5':
-            freeze(True, (model.invariant_encoder, model.x_to_z, model.past_decoder, model.future_decoder, model.coupling_layers_z))
+            freeze(True, (model.invariant_encoder, model.x_to_z, model.past_decoder, model.future_decoder))
             freeze(False, (model.variant_encoder, model.x_to_s))
 
         # elif training_step == "P6":
@@ -205,7 +209,7 @@ def main(args):
 
         elif training_step == "P7":
             freeze(True, (model.invariant_encoder, model.x_to_z, model.past_decoder, model.future_decoder, model.coupling_layers_z, model.coupling_layers_s))
-            freeze(False, (model.variant_encoder, model.x_to_s))
+            freeze(False, (model.variant_encoder, model.x_to_s, model.future_decoder))
 
         if training_step in ["P1", "P2", "P3", "P5", "P6"]:
             train_all(args, model, optimizers, train_dataset, epoch, training_step, train_envs_name, writer,
@@ -285,7 +289,7 @@ def train_all(args, model, optimizers, train_dataset, epoch, training_step, trai
             env_embeddings, label_embeddings = [], []  # to store the low dim feat space for contrastive style loss, and their labels
             ped_tot = torch.zeros(1).cuda()
             # COMPUTE LOSS ON EACH OF THE ENVIRONMENTS
-            for env_iter, env_name in zip(train_iter, train_dataset['names']):
+            for train_idx, (env_iter, env_name) in enumerate(zip(train_iter, train_dataset['names'])):
                 try:
                     batch = next(env_iter)
                 except StopIteration:
@@ -401,52 +405,53 @@ def train_all(args, model, optimizers, train_dataset, epoch, training_step, trai
                     e3_loss_meter.update(elbo_loss3.item(), fut_traj_rel.shape[1])
                     p_loss_meter.update(predict_loss.item(), fut_traj_rel.shape[1])
 
-            loss = torch.zeros(()).cuda()
-            loss += torch.stack(batch_loss).sum()
+            if training_step != "P4":
+                loss = torch.zeros(()).cuda()
+                loss += torch.stack(batch_loss).sum()
 
-            if training_step == "P6" and args.contrastive:
-                c_loss_list = []
-                for i in range(args.num_samples):
-                    c_loss_list += [
-                        contrastive_loss(torch.stack(env_embeddings)[:, i, :, :], torch.stack(label_embeddings))]
+                if training_step == "P6" and args.contrastive:
+                    c_loss_list = []
+                    for i in range(args.num_samples):
+                        c_loss_list += [
+                            contrastive_loss(torch.stack(env_embeddings)[:, i, :, :], torch.stack(label_embeddings))]
 
-                c_loss = torch.min(torch.stack(c_loss_list))
-                loss += c_loss
-                c_loss_meter.update(c_loss.item(), ped_tot.item())
+                    c_loss = torch.min(torch.stack(c_loss_list))
+                    loss += c_loss
+                    c_loss_meter.update(c_loss.item(), ped_tot.item())
 
-            # backpropagate if needed
-            if stage == 'training' and update:
-                loss.backward()
+                # backpropagate if needed
+                if stage == 'training' and update:
+                    loss.backward()
 
-                lr_scheduler_optims = lr_schedulers[training_step]
-                # choose which optimizer to use depending on the training step
-                if training_step in ['P1', 'P2', 'P3', 'P6']:
-                    if lr_scheduler_optims is not None:
-                        lr_scheduler_optims['inv'].step()
-                    optimizers['inv'].step()
+                    lr_scheduler_optims = lr_schedulers[training_step]
+                    # choose which optimizer to use depending on the training step
+                    if training_step in ['P1', 'P2', 'P3', 'P6']:
+                        if lr_scheduler_optims is not None:
+                            lr_scheduler_optims['inv'].step()
+                        optimizers['inv'].step()
 
-                if training_step in ['P3', 'P6']:
-                    if lr_scheduler_optims is not None:
-                        lr_scheduler_optims['future_decoder'].step()
-                    optimizers['future_decoder'].step()
+                    if training_step in ['P3', 'P6', 'P7']:
+                        if lr_scheduler_optims is not None:
+                            lr_scheduler_optims['future_decoder'].step()
+                        optimizers['future_decoder'].step()
 
-                if training_step in ['P3', 'P6']:
-                    if lr_scheduler_optims is not None:
-                        lr_scheduler_optims['past_decoder'].step()
-                    optimizers['past_decoder'].step()
+                    if training_step in ['P3', 'P6']:
+                        if lr_scheduler_optims is not None:
+                            lr_scheduler_optims['past_decoder'].step()
+                        optimizers['past_decoder'].step()
 
-                if training_step in ['P1', 'P2', 'P3', 'P5', 'P6', 'P7']:
-                    if lr_scheduler_optims is not None:
-                        lr_scheduler_optims['var'].step()
-                    optimizers['var'].step()
+                    if training_step in ['P1', 'P2', 'P3', 'P5', 'P6', 'P7']:
+                        if lr_scheduler_optims is not None:
+                            lr_scheduler_optims['var'].step()
+                        optimizers['var'].step()
 
-                if training_step in ['P6', 'P7']:
-                    if lr_scheduler_optims is not None:
-                        lr_scheduler_optims['par'].step()
-                    optimizers['par'].step()
+                    if training_step in ['P6', 'P7']:
+                        if lr_scheduler_optims is not None:
+                            lr_scheduler_optims['par'].step()
+                        optimizers['par'].step()
 
-            loss_meter.update(loss.item(), ped_tot.item())
-            progress.display(batch_idx + 1)
+                loss_meter.update(loss.item(), ped_tot.item())
+                progress.display(batch_idx + 1)
 
         # train GMM
         if training_step == "P4":
