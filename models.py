@@ -795,11 +795,11 @@ class CRMF(nn.Module):
             CouplingLayer(args.z_dim, reverse_mask=False)
         ])
 
-        # self.coupling_layers_s = nn.ModuleList([
-        #     CouplingLayer(args.s_dim, reverse_mask=False),
-        #     CouplingLayer(args.s_dim, reverse_mask=True),
-        #     CouplingLayer(args.s_dim, reverse_mask=False)
-        # ])
+        self.coupling_layers_s = nn.ModuleList([
+            CouplingLayer(args.s_dim, reverse_mask=False),
+            CouplingLayer(args.s_dim, reverse_mask=True),
+            CouplingLayer(args.s_dim, reverse_mask=False)
+        ])
 
         self.pw = MultivariateNormal(torch.zeros(args.z_dim).cuda(), torch.diag(torch.ones(args.z_dim).cuda()))
 
