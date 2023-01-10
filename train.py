@@ -216,7 +216,7 @@ def main(args):
             freeze(True, (model.invariant_encoder, model.x_to_z, model.past_decoder, model.future_decoder))
             freeze(False, (model.variant_encoder, model.x_to_s))
 
-        if training_step in ["P1", "P2", "P5"]:
+        if training_step in ["P1", "P2", "P3", "P5", "P6"]:
             train_all(args, model, optimizers, train_dataset, epoch, training_step, train_envs_name, writer,
                       beta_scheduler,
                       lr_schedulers,
