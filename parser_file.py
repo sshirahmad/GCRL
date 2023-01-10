@@ -5,11 +5,11 @@ from utils import int_tuple
 def get_parser():
     parser = argparse.ArgumentParser()
     parser.add_argument("--log_dir", default="./log/", help="Directory containing logging file")
-    parser.add_argument("--model_dir", default="./models/E19/", help="Directory containing logging file")
-    parser.add_argument("--tfdir", default='./runs/E19/', type=str)
+    parser.add_argument("--model_dir", default="./models/E22/", help="Directory containing logging file")
+    parser.add_argument("--tfdir", default='./runs/E22/', type=str)
     parser.add_argument("--dataset_name", default="v4", type=str)
     parser.add_argument("--model_name", default="mlp", type=str)
-    parser.add_argument("--resume", default="./models/E19/P7/CRMF_epoch_4443.pth.tar",
+    parser.add_argument("--resume", default="",
                         type=str, metavar="PATH", help="path to latest checkpoint (default: none)")
 
     # randomness
@@ -41,8 +41,8 @@ def get_parser():
                         help="Filter only certain environments (i.e 0.1-0.3-0.5)")
     parser.add_argument("--skip", default=1, type=int)
     parser.add_argument("--delim", default="\t")
-    parser.add_argument("--finetune_ratio", default=0.5, type=float, help="Number of batches to be used in finetuning")
-    parser.add_argument("--batch_method", default='het', type=str,
+    parser.add_argument("--finetune_ratio", default=0.1, type=float, help="Number of batches to be used in finetuning")
+    parser.add_argument("--batch_method", default='hom', type=str,
                         help='Use Homogeneous (hom), Heterogeneous (het) or alternated homogeneous (alt) batches during training')
     parser.add_argument("--contrastive", default=False, type=bool, help='add contrastive loss')
     parser.add_argument("--decoupled_loss", default=True, type=bool, help='decouple ELBO from y')
@@ -91,7 +91,7 @@ def get_training_parser():
 
     # general training
     parser.add_argument("--finetune", default="", type=str)
-    parser.add_argument("--num_epochs", default='150-100-100-1-20-4000-100', type=lambda x: int_tuple(x, '-'))  # '150-100-150',
+    parser.add_argument("--num_epochs", default='150-100-100-1-20-500-100', type=lambda x: int_tuple(x, '-'))  # '150-100-150',
 
     # learning rates
     parser.add_argument("--lr_scheduler", default=True, type=bool)  # '150-100-150',

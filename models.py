@@ -632,8 +632,8 @@ class ConcatBlock(nn.Module):
         if style == None:
             return x
 
-        B, D = x.shape
-        content_and_style = torch.cat((x, style.repeat(B, 1)), dim=1)
+        _, B, D = x.shape
+        content_and_style = torch.cat((x, style.repeat(1, B, 1)), dim=2)
         out = self.perceptron(content_and_style)
         return out + x
 
@@ -650,7 +650,7 @@ class SimpleStyleEncoder(nn.Module):
         )
 
     def forward(self, style_input):
-        # for batch size 68
+        # for batch size 64
         # style 20 x 128 x 2
         style_input = torch.stack(style_input.split(2, dim=1), dim=1)[:, :, 1, :]  # 20 x 64 x 2
         style_input = torch.permute(style_input, (1, 0, 2))  # 64 x 20 x 2
@@ -658,10 +658,9 @@ class SimpleStyleEncoder(nn.Module):
 
         # MLP
         style_seq = self.encoder(style_input)
-        encoded = torch.stack(style_seq.split(style_seq.shape[1] // 2, dim=1), dim=1)
-        encoded = encoded.flatten(start_dim=0, end_dim=1)
+        batch_style = style_seq.mean(dim=0).unsqueeze(dim=0)
 
-        return encoded
+        return batch_style
 
 
 class SimpleEncoder(nn.Module):
@@ -709,39 +708,40 @@ class SimpleDecoder(nn.Module):
     def __init__(
             self,
             seq_len,
-            hidden_size,
+            z_dim,
+            s_dim,
             number_of_agents,
     ):
         super(SimpleDecoder, self).__init__()
 
         # num of frames per sequence
         self.seq_len = seq_len
-
+        self.style_input_size = s_dim
         self.noise_fixed = False
 
         self.mlp1 = nn.Sequential(
-            nn.Linear(hidden_size * 2, 4 * hidden_size),
+            nn.Linear(z_dim * 2, 4 * z_dim),
             nn.ReLU(),
-            nn.Linear(4 * hidden_size, 4 * hidden_size)
+            nn.Linear(4 * z_dim, 4 * z_dim)
         )
 
         self.mlp2 = nn.Sequential(
-            nn.Linear(4 * hidden_size, number_of_agents * 2 * fut_len),
+            nn.Linear(4 * z_dim, number_of_agents * 2 * seq_len),
             nn.ReLU(),
-            nn.Linear(number_of_agents * 2 * fut_len, number_of_agents * 2 * fut_len)
+            nn.Linear(number_of_agents * 2 * seq_len, number_of_agents * 2 * seq_len)
         )
 
         self.number_of_agents = number_of_agents
 
         self.style_blocks = nn.ModuleList(
-            [ConcatBlock(self.style_input_size + hidden_size * 2, hidden_size * 2),
-             ConcatBlock(self.style_input_size + 4 * hidden_size, 4 * hidden_size)]
+            [ConcatBlock(self.style_input_size + z_dim * 2, z_dim * 2),
+             ConcatBlock(self.style_input_size + 4 * z_dim, 4 * z_dim)]
         )
 
     def forward(self, latent_space, style_feat_space=None):
 
-        traj_lstm_hidden_state = torch.stack(latent_space.split(2, dim=0), dim=0)
-        out = traj_lstm_hidden_state.flatten(start_dim=1)
+        traj_lstm_hidden_state = torch.stack(latent_space.split(2, dim=1), dim=1)
+        out = traj_lstm_hidden_state.flatten(start_dim=2)
 
         if style_feat_space != None:
             out = self.style_blocks[0](out, style_feat_space)
@@ -808,8 +808,8 @@ class CRMF(nn.Module):
             self.ps += [MultivariateNormal(i * torch.ones(args.s_dim).cuda(),
                                            torch.diag((i + 1) * torch.ones(args.s_dim).cuda()))]
 
-        self.x_to_z = Mapping(2, 0, args.z_dim)
-        self.x_to_s = Mapping(2, 0, args.s_dim)
+        self.x_to_z = Mapping(8, 0, args.z_dim)
+        self.x_to_s = Mapping(8 * 2, 0, args.s_dim)
         self.cont_classifier = nn.Sequential(nn.Linear(args.s_dim, 32),
                                              nn.ReLU(),
                                              nn.Linear(32, 8),
@@ -833,10 +833,9 @@ class CRMF(nn.Module):
                                             args.z_dim, args.teachingratio)
 
         elif args.model_name == "mlp":
-            self.variant_encoder = SimpleEncoder(args.obs_len, 2,
-                                                 NUMBER_PERSONS, args.add_confidence)
+            self.variant_encoder = SimpleStyleEncoder(8)
 
-            self.invariant_encoder = SimpleEncoder(args.obs_len, 2,
+            self.invariant_encoder = SimpleEncoder(args.obs_len, 8,
                                                    NUMBER_PERSONS, args.add_confidence)
 
             # self.past_decoder = Decoder(args.obs_len, args.n_coordinates, args.z_dim, args.s_dim)
@@ -846,13 +845,15 @@ class CRMF(nn.Module):
 
             self.past_decoder = SimpleDecoder(
                 args.obs_len,
-                args.s_dim + args.z_dim,
+                args.z_dim,
+                args.s_dim,
                 NUMBER_PERSONS,
             )
 
             self.future_decoder = SimpleDecoder(
                 args.fut_len,
-                args.s_dim + args.z_dim,
+                args.z_dim,
+                args.s_dim,
                 NUMBER_PERSONS,
             )
 
@@ -882,19 +883,19 @@ class CRMF(nn.Module):
                     s_vec = self.x_to_s(self.variant_encoder(obs_traj_rel, seq_start_end, training_step), mode="normal")
                 else:
                     z_vec = self.x_to_z(self.invariant_encoder(obs_traj_rel), mode="normal")
-                    s_vec = self.x_to_s(self.variant_encoder(obs_traj_rel), mode="normal")
+                    s_vec = self.x_to_s(self.variant_encoder(augm_data), mode="normal")
 
                 if self.model_name == "lstm":
                     pred_past_rel = self.past_decoder(obs_traj_rel, torch.cat((z_vec.unsqueeze(0), s_vec.unsqueeze(0)), dim=2)).squeeze(1)
                 elif self.model_name == "mlp":
-                    pred_past_rel = self.past_decoder(torch.cat((z_vec.unsqueeze(0), s_vec.unsqueeze(0)), dim=2)).squeeze(1)
+                    pred_past_rel = self.past_decoder(z_vec.unsqueeze(0), s_vec.unsqueeze(0)).squeeze(1)
                     # pred_past_rel = self.past_decoder(obs_traj_rel, torch.cat((z_vec, s_vec), dim=1))
 
                 if self.model_name == "lstm":
                     pred_fut_rel = self.future_decoder(obs_traj_rel, fut_traj_rel, seq_start_end,
                                                        torch.cat((z_vec.unsqueeze(0), s_vec.unsqueeze(0)), dim=2)).squeeze(1)
                 if self.model_name == "mlp":
-                    pred_fut_rel = self.future_decoder(torch.cat((z_vec.unsqueeze(0), s_vec.unsqueeze(0)), dim=2)).squeeze(1)
+                    pred_fut_rel = self.future_decoder(z_vec.unsqueeze(0), s_vec.unsqueeze(0)).squeeze(1)
                     # pred_fut_rel = self.future_decoder(obs_traj_rel, fut_traj_rel, seq_start_end,
                     #                                    torch.cat((z_vec, s_vec), dim=1))
 
@@ -904,7 +905,7 @@ class CRMF(nn.Module):
                 if self.model_name == "lstm":
                     s_vec = self.x_to_s(self.variant_encoder(obs_traj_rel, seq_start_end, training_step), mode="normal")
                 else:
-                    s_vec = self.x_to_s(self.variant_encoder(obs_traj_rel), mode="normal")
+                    s_vec = self.x_to_s(self.variant_encoder(augm_data), mode="normal")
 
                 return s_vec
 
@@ -914,7 +915,7 @@ class CRMF(nn.Module):
                     q_sgx = self.x_to_s(self.variant_encoder(obs_traj_rel, seq_start_end, training_step),
                                         mode="variational")
                 elif self.model_name == "mlp":
-                    q_sgx = self.x_to_s(self.variant_encoder(obs_traj_rel), mode="variational")
+                    q_sgx = self.x_to_s(self.variant_encoder(augm_data), mode="variational")
 
                 s_vec = q_sgx.rsample([self.num_samples, ])
 
@@ -945,25 +946,26 @@ class CRMF(nn.Module):
                                         mode="variational")
                 elif self.model_name == "mlp":
                     q_zgx = self.x_to_z(self.invariant_encoder(obs_traj_rel), mode="variational")
-                    q_sgx = self.x_to_s(self.variant_encoder(obs_traj_rel), mode="variational")
+                    q_sgx = self.x_to_s(self.variant_encoder(augm_data), mode="variational")
 
                 s_vec = q_sgx.rsample([self.num_samples, ])
                 z_vec = q_zgx.rsample([self.num_samples, ])
 
-                # sldj = torch.zeros((self.num_samples, z_vec.shape[1]), device=z_vec.device)
-                # s_vec_c = s_vec
-                # for coupling in self.coupling_layers_s:
-                #     s_vec_c, sldj = coupling(s_vec_c, sldj)
+                sldj = torch.zeros((self.num_samples, z_vec.shape[1]), device=z_vec.device)
+                s_vec_c = s_vec
+                for coupling in self.coupling_layers_s:
+                    s_vec_c, sldj = coupling(s_vec_c, sldj)
 
                 # calculate p(s|e)
                 Et = []
                 for j in range(self.num_envs):
-                    psge = MultivariateNormal(self.mean_priors[j], torch.diag(torch.exp(self.logvar_priors[j])))
-                    log_psge = psge.log_prob(s_vec)
+                    # psge = MultivariateNormal(self.mean_priors[j], torch.diag(torch.exp(self.logvar_priors[j])))
+                    psge = self.ps[j]
+                    log_psge = psge.log_prob(s_vec_c)
                     log_pe = pe.log_prob(torch.tensor(j).cuda())
                     Et.append(torch.exp(log_psge) * torch.exp(log_pe))
 
-                log_ps = torch.log(torch.stack(Et).sum(0) + 1e-16)
+                log_ps = torch.log(torch.stack(Et).sum(0) + 1e-16) + sldj
                 log_ps_zeros = torch.zeros_like(log_ps, device=log_ps.device)
                 if log_ps.mean() == torch.tensor(- math.inf):
                     log_ps = log_ps_zeros
@@ -987,7 +989,7 @@ class CRMF(nn.Module):
                     px = self.past_decoder(obs_traj_rel, torch.cat((z_vec, s_vec), dim=2))
                 elif self.model_name == "mlp":
                     # px = self.past_decoder(obs_traj_rel, torch.cat((z_vec, s_vec), dim=2))
-                    px = self.past_decoder(torch.cat((z_vec, s_vec), dim=2))
+                    px = self.past_decoder(z_vec, s_vec)
 
                 log_px = - l2_loss(px, obs_traj_rel, mode="raw") - 0.5 * 2 * self.obs_len * torch.log(
                     torch.tensor(2 * math.pi)) - 0.5 * self.obs_len * torch.log(torch.tensor(0.25))
@@ -1003,7 +1005,7 @@ class CRMF(nn.Module):
                     if self.model_name == "mlp":
                         # py = self.future_decoder(obs_traj_rel, fut_traj_rel, seq_start_end,
                         #                          torch.cat((z_vec, s_vec), dim=2))
-                        py = self.future_decoder(torch.cat((z_vec, s_vec), dim=2))
+                        py = self.future_decoder(z_vec, s_vec)
 
                     log_py = py
                 else:
@@ -1015,7 +1017,7 @@ class CRMF(nn.Module):
                     if self.model_name == "mlp":
                         # py = self.future_decoder(obs_traj_rel, fut_traj_rel, seq_start_end,
                         #                          torch.cat((z_vec, s_vec), dim=2))
-                        py = self.future_decoder(torch.cat((z_vec, s_vec), dim=2))
+                        py = self.future_decoder(z_vec, s_vec)
 
                     log_py = - l2_loss(py, fut_traj_rel, mode="raw") - 0.5 * 2 * self.fut_len * torch.log(
                         torch.tensor(2 * math.pi)) - 0.5 * self.fut_len * torch.log(torch.tensor(0.25))
@@ -1059,7 +1061,7 @@ class CRMF(nn.Module):
                                         mode="variational")
                 elif self.model_name == "mlp":
                     q_zgx = self.x_to_z(self.invariant_encoder(obs_traj_rel), mode="variational")
-                    q_sgx = self.x_to_s(self.variant_encoder(obs_traj_rel), mode="variational")
+                    q_sgx = self.x_to_s(self.variant_encoder(augm_data), mode="variational")
 
                 # calculate q(y|theta, x)
                 z_vec = q_zgx.rsample([self.num_samples, ])
@@ -1068,6 +1070,6 @@ class CRMF(nn.Module):
                     q = self.future_decoder(obs_traj_rel, fut_traj_rel, seq_start_end, torch.cat((z_vec, s_vec), dim=2))
                 elif self.model_name == "mlp":
                     # q = self.future_decoder(obs_traj_rel, fut_traj_rel, seq_start_end, torch.cat((z_vec, s_vec), dim=2))
-                    q = self.future_decoder(torch.cat((z_vec, s_vec), dim=2))
+                    q = self.future_decoder(z_vec, s_vec)
 
                 return q[:, 0, :, :]

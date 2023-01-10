@@ -104,9 +104,9 @@ def main(args):
         ),
         'inv': torch.optim.Adam(
             [
-                # {"params": model.coupling_layers_z.parameters(), 'lr': args.lrinv},
-                {"params": model.mean_priorz, 'lr': args.lrinv},
-                {"params": model.logvar_priorz, 'lr': args.lrinv},
+                {"params": model.coupling_layers_z.parameters(), 'lr': args.lrinv},
+                # {"params": model.mean_priorz, 'lr': args.lrinv},
+                # {"params": model.logvar_priorz, 'lr': args.lrinv},
                 {"params": model.x_to_z.parameters(), 'lr': args.lrinv},
                 {"params": model.invariant_encoder.parameters(), 'lr': args.lrinv},
             ]
@@ -190,7 +190,7 @@ def main(args):
     for epoch in range(args.start_epoch, sum(args.num_epochs) + 1):
 
         training_step = get_training_step(epoch)
-        if training_step in ["P1", "P2", "P5", "P6"]:
+        if training_step in ["P1", "P2", "P4", "P5"]:
             continue
         logging.info(f"\n===> EPOCH: {epoch} ({training_step})")
 
@@ -216,7 +216,7 @@ def main(args):
             freeze(True, (model.invariant_encoder, model.x_to_z, model.past_decoder, model.future_decoder))
             freeze(False, (model.variant_encoder, model.x_to_s))
 
-        if training_step in ["P1", "P2", "P3", "P5", "P6"]:
+        if training_step in ["P1", "P2", "P5"]:
             train_all(args, model, optimizers, train_dataset, epoch, training_step, train_envs_name, writer,
                       beta_scheduler,
                       lr_schedulers,
