@@ -390,7 +390,7 @@ class Predictor(nn.Module):
         self.teacher_forcing_ratio = teacher_forcing_ratio
 
         self.n_coordinates = n_coordinates
-        self.pred_lstm_hidden_size = z_dim + s_dim + noise_dim[0]
+        self.pred_lstm_hidden_size = z_dim + s_dim
         self.pred_hidden2pos = nn.Linear(self.pred_lstm_hidden_size, n_coordinates)
         self.pred_lstm_model = LSTMCell(n_coordinates, self.pred_lstm_hidden_size)
         self.noise_dim = noise_dim
@@ -436,7 +436,7 @@ class Predictor(nn.Module):
         input_t = obs_traj_rel[self.obs_len - 1, :, :self.n_coordinates].repeat(len(pred_lstm_hidden), 1, 1)
         output = input_t
         pred_lstm_hidden = self.mapping(pred_lstm_hidden)
-        pred_lstm_hidden = self.add_noise(pred_lstm_hidden, seq_start_end)
+        # pred_lstm_hidden = self.add_noise(pred_lstm_hidden, seq_start_end)
         pred_lstm_c_t = torch.zeros_like(pred_lstm_hidden).cuda()
         pred_q_rel = []
         if self.training:
@@ -619,6 +619,25 @@ class Mapping(nn.Module):
             return ps
 
 
+class ConcatBlock(nn.Module):
+    def __init__(self, input_size, output_size):
+        super(ConcatBlock, self).__init__()
+        self.perceptron = nn.Sequential(
+            nn.Linear(input_size, output_size),
+            nn.ReLU(),
+            nn.Linear(output_size, output_size)
+        )
+
+    def forward(self, x, style):
+        if style == None:
+            return x
+
+        B, D = x.shape
+        content_and_style = torch.cat((x, style.repeat(B, 1)), dim=1)
+        out = self.perceptron(content_and_style)
+        return out + x
+
+
 class SimpleStyleEncoder(nn.Module):
     def __init__(self, hidden_size):
         super(SimpleStyleEncoder, self).__init__()
@@ -700,24 +719,39 @@ class SimpleDecoder(nn.Module):
 
         self.noise_fixed = False
 
-        self.mlp = nn.Sequential(
-            nn.Linear(hidden_size * number_of_agents, hidden_size * 4),
+        self.mlp1 = nn.Sequential(
+            nn.Linear(hidden_size * 2, 4 * hidden_size),
             nn.ReLU(),
-            nn.Linear(hidden_size * 4, hidden_size * 4),
+            nn.Linear(4 * hidden_size, 4 * hidden_size)
+        )
+
+        self.mlp2 = nn.Sequential(
+            nn.Linear(4 * hidden_size, number_of_agents * 2 * fut_len),
             nn.ReLU(),
-            nn.Linear(hidden_size * 4, 2 * seq_len * number_of_agents),
-            nn.ReLU(),
-            nn.Linear(2 * seq_len * number_of_agents, 2 * seq_len * number_of_agents)
+            nn.Linear(number_of_agents * 2 * fut_len, number_of_agents * 2 * fut_len)
         )
 
         self.number_of_agents = number_of_agents
 
-    def forward(self, latent_space):
-        traj_lstm_hidden_state = torch.stack(latent_space.split(self.number_of_agents, dim=1), dim=1)
-        out = traj_lstm_hidden_state.flatten(start_dim=2)
+        self.style_blocks = nn.ModuleList(
+            [ConcatBlock(self.style_input_size + hidden_size * 2, hidden_size * 2),
+             ConcatBlock(self.style_input_size + 4 * hidden_size, 4 * hidden_size)]
+        )
 
-        out = self.mlp(out)
+    def forward(self, latent_space, style_feat_space=None):
 
+        traj_lstm_hidden_state = torch.stack(latent_space.split(2, dim=0), dim=0)
+        out = traj_lstm_hidden_state.flatten(start_dim=1)
+
+        if style_feat_space != None:
+            out = self.style_blocks[0](out, style_feat_space)
+
+        out = self.mlp1(out)
+
+        if style_feat_space != None:
+            out = self.style_blocks[1](out, style_feat_space)
+
+        out = self.mlp2(out)
         out = torch.reshape(out, (out.shape[0], out.shape[1], self.number_of_agents, self.seq_len, 2))
 
         out = out.flatten(start_dim=1, end_dim=2)
@@ -749,8 +783,8 @@ class CRMF(nn.Module):
         self.pi_priore = nn.Parameter(-1 * torch.ones(args.num_envs))
         self.logvar_priors = nn.Parameter(torch.randn(args.num_envs, args.s_dim))
         self.mean_priors = nn.Parameter(torch.zeros(args.num_envs, args.s_dim))
-        # self.logvar_priorz = nn.Parameter(torch.randn(args.z_dim))
-        # self.mean_priorz = nn.Parameter(torch.zeros(args.z_dim))
+        self.logvar_priorz = nn.Parameter(torch.randn(args.z_dim))
+        self.mean_priorz = nn.Parameter(torch.zeros(args.z_dim))
         self.gmm = GMM(n_components=args.num_envs, covariance_type='diag')
         self.beta_scheduler = get_beta(0, 1500, 1000)
         self.iter = 1

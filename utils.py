@@ -468,14 +468,14 @@ def save_all_model(args, model, model_name, optimizers, metric, epoch, training_
                 'x_to_s': model.x_to_s.state_dict(),
                 'future_decoder': model.future_decoder.state_dict(),
                 'past_decoder': model.past_decoder.state_dict(),
-                'coupling_layers_z': model.coupling_layers_z.state_dict(),
+                # 'coupling_layers_z': model.coupling_layers_z.state_dict(),
                 # 'coupling_layers_s': model.coupling_layers_s.state_dict(),
                 'cont_classifier': model.cont_classifier.state_dict(),
                 'pi_priore': model.pi_priore,
                 'mean_priors': model.mean_priors,
                 'logvar_priors': model.logvar_priors,
-                # 'mean_priorz': model.mean_priorz,
-                # 'logvar_priorz': model.logvar_priorz,
+                'mean_priorz': model.mean_priorz,
+                'logvar_priorz': model.logvar_priorz,
 
             },
             'optimizers': {

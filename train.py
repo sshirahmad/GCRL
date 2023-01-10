@@ -104,9 +104,9 @@ def main(args):
         ),
         'inv': torch.optim.Adam(
             [
-                {"params": model.coupling_layers_z.parameters(), 'lr': args.lrinv},
-                # {"params": model.mean_priorz, 'lr': args.lrinv},
-                # {"params": model.logvar_priorz, 'lr': args.lrinv},
+                # {"params": model.coupling_layers_z.parameters(), 'lr': args.lrinv},
+                {"params": model.mean_priorz, 'lr': args.lrinv},
+                {"params": model.logvar_priorz, 'lr': args.lrinv},
                 {"params": model.x_to_z.parameters(), 'lr': args.lrinv},
                 {"params": model.invariant_encoder.parameters(), 'lr': args.lrinv},
             ]
@@ -185,7 +185,7 @@ def main(args):
     for epoch in range(args.start_epoch, sum(args.num_epochs) + 1):
 
         training_step = get_training_step(epoch)
-        if training_step in ["P1", "P2", "P5"]:
+        if training_step in ["P1", "P2", "P5", "P6"]:
             continue
         logging.info(f"\n===> EPOCH: {epoch} ({training_step})")
 
@@ -237,7 +237,7 @@ def main(args):
                 metric = validate_ade(args, model, valido_dataset, epoch, training_step, writer, stage='validation o')
 
             elif training_step == "P7":
-                metric = validate_ade(args, model, finetune_dataset, epoch, training_step, writer, stage='validation o')
+                metric = validate_ade(args, model, valido_dataset, epoch, training_step, writer, stage='validation o')
 
         if training_step in ["P6", "P7"]:
             if metric < min_metric:
