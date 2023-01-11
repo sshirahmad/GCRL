@@ -141,18 +141,18 @@ def calculate_distance_posteriors(model, valid_dataset, valido_dataset=None):
             mean_s_env += [mean_s]
             cov_s_env += [covariance_s]
 
-        # plt.figure(1)
-        # colors = ['b', 'g', 'r', 'c']
-        # for i in range(len(s_vec)):
-        #     z_pca = z_vec[i].cpu()
-        #     plt.scatter(z_pca[:, 0], z_pca[:, 1], color=colors[i])
-        # plt.show()
-        #
-        # plt.figure(2)
-        # for i in range(len(s_vec)):
-        #     s_pca = s_vec[i].cpu()
-        #     plt.scatter(s_pca[:, 0], s_pca[:, 1], color=colors[i])
-        # plt.show()
+        plt.figure(1)
+        colors = ['b', 'g', 'r', 'c']
+        for i in range(len(s_vec)):
+            z_pca = z_vec[i].cpu()
+            plt.scatter(z_pca[:, 0], z_pca[:, 1], color=colors[i])
+        plt.show()
+
+        plt.figure(2)
+        for i in range(len(s_vec)):
+            s_pca = s_vec[i].cpu()
+            plt.scatter(s_pca[:, 0], s_pca[:, 1], color=colors[i])
+        plt.show()
 
         for val_idx, (loader, loader_name) in enumerate(zip(valido_dataset['loaders'], valido_dataset['names'])):
             for batch_idx, batch in enumerate(loader):
