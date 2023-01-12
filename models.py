@@ -832,24 +832,24 @@ class CRMF(nn.Module):
             self.invariant_encoder = SimpleEncoder(args.obs_len, 8,
                                                    NUMBER_PERSONS, args.add_confidence)
 
-            # self.past_decoder = Decoder(args.obs_len, args.n_coordinates, args.z_dim, args.s_dim)
+            self.past_decoder = Decoder(args.obs_len, args.n_coordinates, args.z_dim, args.s_dim)
+
+            self.future_decoder = Predictor(args.obs_len, args.fut_len, args.n_coordinates, args.s_dim,
+                                            args.z_dim, args.teachingratio)
+
+            # self.past_decoder = SimpleDecoder(
+            #     args.obs_len,
+            #     args.z_dim,
+            #     args.s_dim,
+            #     NUMBER_PERSONS,
+            # )
             #
-            # self.future_decoder = Predictor(args.obs_len, args.fut_len, args.n_coordinates, args.s_dim,
-            #                                 args.z_dim, args.teachingratio)
-
-            self.past_decoder = SimpleDecoder(
-                args.obs_len,
-                args.z_dim,
-                args.s_dim,
-                NUMBER_PERSONS,
-            )
-
-            self.future_decoder = SimpleDecoder(
-                args.fut_len,
-                args.z_dim,
-                args.s_dim,
-                NUMBER_PERSONS,
-            )
+            # self.future_decoder = SimpleDecoder(
+            #     args.fut_len,
+            #     args.z_dim,
+            #     args.s_dim,
+            #     NUMBER_PERSONS,
+            # )
 
         else:
             raise ValueError('Unrecognized model name "%s"' % args.model_name)
@@ -982,8 +982,8 @@ class CRMF(nn.Module):
                 if self.model_name == "lstm":
                     px = self.past_decoder(obs_traj_rel, torch.cat((z_vec, s_vec), dim=2))
                 elif self.model_name == "mlp":
-                    # px = self.past_decoder(obs_traj, torch.cat((z_vec, s_vec.repeat(1, z_vec.shape[1], 1)), dim=2))
-                    px = self.past_decoder(z_vec)
+                    px = self.past_decoder(obs_traj, torch.cat((z_vec, s_vec.repeat(1, z_vec.shape[1], 1)), dim=2))
+                    # px = self.past_decoder(z_vec, s_vec)
 
                 # log_px = - l2_loss(px, obs_traj_rel, mode="raw") - 0.5 * 2 * self.obs_len * torch.log(
                 #     torch.tensor(2 * math.pi)) - 0.5 * self.obs_len * torch.log(torch.tensor(0.25))
@@ -998,9 +998,9 @@ class CRMF(nn.Module):
                         py = self.future_decoder(obs_traj_rel, fut_traj_rel, seq_start_end,
                                                  torch.cat((z_vec, s_vec), dim=2))
                     if self.model_name == "mlp":
-                        # py = self.future_decoder(obs_traj_rel, fut_traj_rel, seq_start_end,
-                        #                          torch.cat((z_vec, s_vec.repeat(1, z_vec.shape[1], 1)), dim=2))
-                        py = self.future_decoder(z_vec)
+                        py = self.future_decoder(obs_traj_rel, fut_traj_rel, seq_start_end,
+                                                 torch.cat((z_vec, s_vec.repeat(1, z_vec.shape[1], 1)), dim=2))
+                        # py = self.future_decoder(z_vec, s_vec)
 
                     log_py = py
                 else:
@@ -1064,7 +1064,7 @@ class CRMF(nn.Module):
                 if self.model_name == "lstm":
                     q = self.future_decoder(obs_traj_rel, fut_traj_rel, seq_start_end, torch.cat((z_vec, s_vec), dim=2))
                 elif self.model_name == "mlp":
-                    # q = self.future_decoder(obs_traj_rel, fut_traj_rel, seq_start_end, torch.cat((z_vec, s_vec.repeat(1, z_vec.shape[1], 1)), dim=2))
-                    q = self.future_decoder(z_vec, s_vec)
+                    q = self.future_decoder(obs_traj_rel, fut_traj_rel, seq_start_end, torch.cat((z_vec, s_vec.repeat(1, z_vec.shape[1], 1)), dim=2))
+                    # q = self.future_decoder(z_vec, s_vec)
 
                 return q[:, 0, :, :]
