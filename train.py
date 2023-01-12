@@ -190,7 +190,7 @@ def main(args):
     for epoch in range(args.start_epoch, sum(args.num_epochs) + 1):
 
         training_step = get_training_step(epoch)
-        if training_step in ["P1", "P2", "P3", "P4", "P5"]:
+        if training_step in ["P1", "P2", "P3", "P4", "P5", "P6"]:
             continue
         logging.info(f"\n===> EPOCH: {epoch} ({training_step})")
 
@@ -590,8 +590,7 @@ def train_all(args, model, optimizers, train_dataset, epoch, training_step, trai
                     l2_loss_elbo3 = torch.stack(l2_loss_elbo3, dim=1)
                     predict_loss = erm_loss(l2_loss_rel, seq_start_end)
                     elbo_loss1 = erm_loss(l2_loss_elbo1, seq_start_end)
-                    # elbo_loss2 = erm_loss(l2_loss_elbo2, seq_start_end)
-                    elbo_loss2 = l2_loss_elbo2.mean()
+                    elbo_loss2 = erm_loss(l2_loss_elbo2, seq_start_end)
                     elbo_loss3 = erm_loss(l2_loss_elbo3, seq_start_end)
 
                     loss = (- predict_loss) + (- elbo_loss1) + (- elbo_loss2) + (- elbo_loss3)

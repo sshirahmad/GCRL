@@ -5,11 +5,11 @@ from utils import int_tuple
 def get_parser():
     parser = argparse.ArgumentParser()
     parser.add_argument("--log_dir", default="./log/", help="Directory containing logging file")
-    parser.add_argument("--model_dir", default="./models/E22/", help="Directory containing logging file")
-    parser.add_argument("--tfdir", default='./runs/E22/', type=str)
+    parser.add_argument("--model_dir", default="./models/E25", help="Directory containing logging file")
+    parser.add_argument("--tfdir", default='./runs/E25/', type=str)
     parser.add_argument("--dataset_name", default="v4", type=str)
     parser.add_argument("--model_name", default="mlp", type=str)
-    parser.add_argument("--resume", default="./models/E22/P6/CRMF_epoch_403.pth.tar",
+    parser.add_argument("--resume", default="./models/E25/P6/CRMF_epoch_592.pth.tar",
                         type=str, metavar="PATH", help="path to latest checkpoint (default: none)")
 
     # randomness
