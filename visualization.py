@@ -38,7 +38,7 @@ def exp_StyleDomainShift():
 
     # Visualizations
     plt.figure(1)
-    plt.plot(domain_shifts, cvpr_ADE, "-ob", label="CVPR")
+    plt.plot(domain_shifts, cvpr_ADE, "-ob", label="Invariant + modular")
     plt.plot(domain_shifts, ADE_E25, "-or", label="OURS")
     plt.legend(loc="upper left")
     plt.xlim(0.0, 1.0)
@@ -48,7 +48,7 @@ def exp_StyleDomainShift():
     plt.show()
 
     plt.figure(2)
-    plt.plot(domain_shifts, cvpr_FDE, "-ob", label="CVPR")
+    plt.plot(domain_shifts, cvpr_FDE, "-ob", label="Invariant + modular")
     plt.plot(domain_shifts, FDE_E25, "-or", label="OURS")
     plt.legend(loc="upper left")
     plt.xlim(0.0, 1.0)
@@ -58,8 +58,9 @@ def exp_StyleDomainShift():
     plt.show()
 
 
-def exp_DomianAdaptation():
+def exp_DomianAdaptation_1():
 
+    # Update: Prior S (Weights of Gaussian), Posterior S, Decoders (input reconstruction, future prediction)
     # Fine-Tuning the trained model with different number of test batches 1:8
     # and compare the results with no fine-tuning.
     # finetune_ratio = 0.1 is equivalent to 8 batches
@@ -118,6 +119,18 @@ def exp_DomianAdaptation():
     plt.ylabel('ADE')
     plt.show()
 
+def exp_DomianAdaptation_2():
+
+    # Update: Prior S (Weights of Gaussian & Coupling layers), Posterior S, Decoders (input reconstruction, future prediction)
+
+def exp_DomianAdaptation_3():
+
+    # Update: Prior S (Weights of Gaussian & Coupling layers), Posterior S
+
+def exp_DomianAdaptation_4():
+
+    # Update: Prior S (Weights of Gaussian), Posterior S, Decoders (input reconstruction, future prediction)
+    # Fine-tune for 5 seeds plot mean abd var in a plot (number of experiments is 5x8=40)
 
 def exp_Identifiability():
 
@@ -162,20 +175,24 @@ def exp_Identifiability():
     print('STD ADE over seeds:', std_ADE_over_seeds)
     print('STD FDE over seeds:', std_FDE_over_seeds)
 
-def exp_Ablation():
+def exp_AblationStudies():
 
-    # Only Z
+    # Exp1: Only Z
     ADE_E26_z = 0.1404
     FDE_E26_z = 0.1818
 
-    # Only S
+    # Exp2: Only S
     ADE_E26_z = 0.
     FDE_E26_z = 0.
+
+    # Exp3: No Coupling-Layers in S and Z Priors
+
+    # Exp4: Num-Samples 10, 10
 
 
 if __name__ == "__main__":
 
     # exp_StyleDomainShift()
-    # exp_DomianAdaptation()
+    # exp_DomianAdaptation_1()
     exp_Identifiability()
-    exp_Ablation()
+    exp_AblationStudies()
