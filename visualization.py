@@ -144,11 +144,11 @@ def exp_Identifiability():
 
     # E25_S5 (Seed = 5)
     epoch = 736 - 422
-    ADE_E25_S5 = 0.
-    FDE_E25_S5 = 0.
+    ADE_E25_S5 = 0.1280
+    FDE_E25_S5 = 0.1537
 
-    ADE_seeds = [ADE_E25_S1, ADE_E25_S2, ADE_E25_S3, ADE_E25_S4]
-    FDE_seeds = [FDE_E25_S1, FDE_E25_S2, FDE_E25_S3, FDE_E25_S4]
+    ADE_seeds = [ADE_E25_S1, ADE_E25_S2, ADE_E25_S3, ADE_E25_S4, ADE_E25_S5]
+    FDE_seeds = [FDE_E25_S1, FDE_E25_S2, FDE_E25_S3, FDE_E25_S4, FDE_E25_S5]
 
     ave_ADE_over_seeds = np.mean(ADE_seeds)
     ave_FDE_over_seeds = np.mean(FDE_seeds)
@@ -162,9 +162,20 @@ def exp_Identifiability():
     print('STD ADE over seeds:', std_ADE_over_seeds)
     print('STD FDE over seeds:', std_FDE_over_seeds)
 
+def exp_Ablation():
+
+    # Only Z
+    ADE_E26_z = 0.1404
+    FDE_E26_z = 0.1818
+
+    # Only S
+    ADE_E26_z = 0.
+    FDE_E26_z = 0.
+
 
 if __name__ == "__main__":
 
     # exp_StyleDomainShift()
     # exp_DomianAdaptation()
     exp_Identifiability()
+    exp_Ablation()
