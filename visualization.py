@@ -103,21 +103,9 @@ def exp_DomianAdaptation_1():
     E25_B8_ADE = 0.0848
     E25_B8_FDE = 0.1211
 
-    batch =  [0.1, 0.7 / 8, 0.6 / 8, 0.5 / 8, 0.4 / 8, 0.3 / 8, 0.2 / 8, 0.1 / 8, 0.0]
-    ADE_ft = [E25_B8_ADE, E25_B7_ADE, E25_B6_ADE, E25_B5_ADE, E25_B4_ADE, E25_B3_ADE, E25_B2_ADE, E25_B1_ADE, E25_ADE]
-    FDE_ft = [E25_B8_FDE, E25_B7_FDE, E25_B6_FDE, E25_B5_FDE, E25_B4_FDE, E25_B3_FDE, E25_B2_FDE, E25_B1_FDE, E25_FDE]
-
-
-    # Visualizations
-    plt.figure()
-    plt.plot(batch, ADE_ft, "-ob", label="ADE")
-    #plt.plot(batch, FDE_ft, "-or", label="FDE")
-    #plt.legend(loc="upper right")
-    plt.xlim(-0.01, 0.11)
-    plt.xlabel('Batch Ratio Applied for Fine-Tuning')
-    plt.ylim(0.07, 0.13)
-    plt.ylabel('ADE')
-    plt.show()
+    # Visualization
+    vis_DA(E25_B8_ADE, E25_B7_ADE, E25_B6_ADE, E25_B5_ADE, E25_B4_ADE, E25_B3_ADE, E25_B2_ADE, E25_B1_ADE, E25_ADE,
+           E25_B8_FDE, E25_B7_FDE, E25_B6_FDE, E25_B5_FDE, E25_B4_FDE, E25_B3_FDE, E25_B2_FDE, E25_B1_FDE, E25_FDE)
 
 def exp_DomianAdaptation_2():
 
@@ -131,6 +119,26 @@ def exp_DomianAdaptation_4():
 
     # Update: Prior S (Weights of Gaussian), Posterior S, Decoders (input reconstruction, future prediction)
     # Fine-tune for 5 seeds plot mean abd var in a plot (number of experiments is 5x8=40)
+
+
+def vis_DA(E25_B8_ADE, E25_B7_ADE, E25_B6_ADE, E25_B5_ADE, E25_B4_ADE, E25_B3_ADE, E25_B2_ADE, E25_B1_ADE, E25_ADE,
+           E25_B8_FDE, E25_B7_FDE, E25_B6_FDE, E25_B5_FDE, E25_B4_FDE, E25_B3_FDE, E25_B2_FDE, E25_B1_FDE, E25_FDE):
+
+    batch = [0.1, 0.7 / 8, 0.6 / 8, 0.5 / 8, 0.4 / 8, 0.3 / 8, 0.2 / 8, 0.1 / 8, 0.0]
+    ADE_ft = [E25_B8_ADE, E25_B7_ADE, E25_B6_ADE, E25_B5_ADE, E25_B4_ADE, E25_B3_ADE, E25_B2_ADE, E25_B1_ADE, E25_ADE]
+    FDE_ft = [E25_B8_FDE, E25_B7_FDE, E25_B6_FDE, E25_B5_FDE, E25_B4_FDE, E25_B3_FDE, E25_B2_FDE, E25_B1_FDE, E25_FDE]
+
+    # Visualizations
+    plt.figure()
+    plt.plot(batch, ADE_ft, "-ob", label="ADE")
+    # plt.plot(batch, FDE_ft, "-or", label="FDE")
+    # plt.legend(loc="upper right")
+    plt.xlim(-0.01, 0.11)
+    plt.xlabel('Batch Ratio Applied for Fine-Tuning')
+    plt.ylim(0.07, 0.13)
+    plt.ylabel('ADE')
+    plt.show()
+
 
 def exp_Identifiability():
 
@@ -182,12 +190,16 @@ def exp_AblationStudies():
     FDE_E26_z = 0.1818
 
     # Exp2: Only S
-    ADE_E26_z = 0.
-    FDE_E26_z = 0.
+    ADE_E27_z = 0.
+    FDE_E27_z = 0.
 
     # Exp3: No Coupling-Layers in S and Z Priors
+    ADE_E28_NoCL = 0.
+    FDE_E28_NoCL = 0.
 
     # Exp4: Num-Samples 10, 10
+    ADE_E29_num_samp = 0.
+    FDE_E29_num_samp = 0.
 
 
 if __name__ == "__main__":
