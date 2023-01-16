@@ -79,35 +79,35 @@ def exp_DomianAdaptation_1():
     E25_ADE = 0.1182
     E25_FDE = 0.1480
 
-    # Experiment name: E25_B1 (fine-tuning of 1 batch: reduceall=1*64)
+    # Experiment name: E25_exp1_B1 (fine-tuning of 1 batch: reduceall=1*64)
     E25_B1_ADE = 0.1015
     E25_B1_FDE = 0.1314
 
-    # Experiment name: E25_B2 (fine-tuning of 2 batch: reduceall=2*64)
+    # Experiment name: E25_exp1_B2 (fine-tuning of 2 batch: reduceall=2*64)
     E25_B2_ADE = 0.0912
     E25_B2_FDE = 0.1238
 
-    # Experiment name: E25_B3 (fine-tuning of 3 batch: reduceall=3*64)
+    # Experiment name: E25_exp1_B3 (fine-tuning of 3 batch: reduceall=3*64)
     E25_B3_ADE = 0.0889
     E25_B3_FDE = 0.1216
 
-    # Experiment name: E25_B4 (fine-tuning of 4 batch: reduceall=4*64)
+    # Experiment name: E25_exp1_B4 (fine-tuning of 4 batch: reduceall=4*64)
     E25_B4_ADE = 0.0859
     E25_B4_FDE = 0.1154
 
-    # Experiment name: E25_B5 (fine-tuning of 5 batch: reduceall=5*64)
+    # Experiment name: E25_exp1_B5 (fine-tuning of 5 batch: reduceall=5*64)
     E25_B5_ADE = 0.0856
     E25_B5_FDE = 0.1171
 
-    # Experiment name: E25_B6 (fine-tuning of 6 batch: reduceall=6*64)
+    # Experiment name: E25_exp1_B6 (fine-tuning of 6 batch: reduceall=6*64)
     E25_B6_ADE = 0.0840
     E25_B6_FDE = 0.1161
 
-    # Experiment name: E25_B7 (fine-tuning of 7 batch: reduceall=7*64)
+    # Experiment name: E25_exp1_B7 (fine-tuning of 7 batch: reduceall=7*64)
     E25_B7_ADE = 0.0852
     E25_B7_FDE = 0.1184
 
-    # Experiment name: E25_B8 (fine-tuning of 8 batch: reduceall=8*64)
+    # Experiment name: E25_exp1_B8 (fine-tuning of 8 batch: reduceall=8*64)
     E25_B8_ADE = 0.0829
     E25_B8_FDE = 0.1160
 
@@ -123,35 +123,80 @@ def exp_DomianAdaptation_2():
     E25_ADE = 0.1182
     E25_FDE = 0.1480
 
-    # Experiment name: E25_B1 (fine-tuning of 1 batch: reduceall=1*64)
+    # Experiment name: E25_exp2_B1 (fine-tuning of 1 batch: reduceall=1*64)
     E25_B1_ADE = 0.1018
     E25_B1_FDE = 0.1283
 
-    # Experiment name: E25_B2 (fine-tuning of 2 batch: reduceall=2*64)
+    # Experiment name: E25_exp2_B2 (fine-tuning of 2 batch: reduceall=2*64)
     E25_B2_ADE = 0.0917
     E25_B2_FDE = 0.1255
 
-    # Experiment name: E25_B3 (fine-tuning of 3 batch: reduceall=3*64)
+    # Experiment name: E25_exp2_B3 (fine-tuning of 3 batch: reduceall=3*64)
+    E25_B3_ADE = 0.0879
+    E25_B3_FDE = 0.1187
+
+    # Experiment name: E25_exp2_B4 (fine-tuning of 4 batch: reduceall=4*64)
+    E25_B4_ADE = 0.0868
+    E25_B4_FDE = 0.1186
+
+    # Experiment name: E25_exp2_B5 (fine-tuning of 5 batch: reduceall=5*64)
+    E25_B5_ADE = 0.0848
+    E25_B5_FDE = 0.1173
+
+    # Experiment name: E25_exp2_B6 (fine-tuning of 6 batch: reduceall=6*64)
+    E25_B6_ADE = 0.0853
+    E25_B6_FDE = 0.1154
+
+    # Experiment name: E25_exp2_B7 (fine-tuning of 7 batch: reduceall=7*64)
+    E25_B7_ADE = 0.0864
+    E25_B7_FDE = 0.1183
+
+    # Experiment name: E25_exp2_B8 (fine-tuning of 8 batch: reduceall=8*64)
+    E25_B8_ADE = 0.0818
+    E25_B8_FDE = 0.1127
+
+    # Visualization
+    vis_DA(E25_B8_ADE, E25_B7_ADE, E25_B6_ADE, E25_B5_ADE, E25_B4_ADE, E25_B3_ADE, E25_B2_ADE, E25_B1_ADE, E25_ADE,
+           E25_B8_FDE, E25_B7_FDE, E25_B6_FDE, E25_B5_FDE, E25_B4_FDE, E25_B3_FDE, E25_B2_FDE, E25_B1_FDE, E25_FDE)
+
+
+def exp_DomianAdaptation_3():
+
+    # Exp3-Update (E25_exp3_Bn): Prior S (Weights of Gaussian & Coupling layers), Posterior S
+
+    # Experiment name: E25 (No fine-tuning)
+    E25_ADE = 0.1182
+    E25_FDE = 0.1480
+
+    # Experiment name: E25_exp3_B1 (fine-tuning of 1 batch: reduceall=1*64)
+    E25_B1_ADE = 0.
+    E25_B1_FDE = 0.
+
+    # Experiment name: E25_exp3_B2 (fine-tuning of 2 batch: reduceall=2*64)
+    E25_B2_ADE = 0.
+    E25_B2_FDE = 0.
+
+    # Experiment name: E25_exp3_B3 (fine-tuning of 3 batch: reduceall=3*64)
     E25_B3_ADE = 0.
     E25_B3_FDE = 0.
 
-    # Experiment name: E25_B4 (fine-tuning of 4 batch: reduceall=4*64)
+    # Experiment name: E25_exp3_B4 (fine-tuning of 4 batch: reduceall=4*64)
     E25_B4_ADE = 0.
     E25_B4_FDE = 0.
 
-    # Experiment name: E25_B5 (fine-tuning of 5 batch: reduceall=5*64)
+    # Experiment name: E25_exp3_B5 (fine-tuning of 5 batch: reduceall=5*64)
     E25_B5_ADE = 0.
     E25_B5_FDE = 0.
 
-    # Experiment name: E25_B6 (fine-tuning of 6 batch: reduceall=6*64)
+    # Experiment name: E25_exp3_B6 (fine-tuning of 6 batch: reduceall=6*64)
     E25_B6_ADE = 0.
     E25_B6_FDE = 0.
 
-    # Experiment name: E25_B7 (fine-tuning of 7 batch: reduceall=7*64)
+    # Experiment name: E25_exp3_B7 (fine-tuning of 7 batch: reduceall=7*64)
     E25_B7_ADE = 0.
     E25_B7_FDE = 0.
 
-    # Experiment name: E25_B8 (fine-tuning of 8 batch: reduceall=8*64)
+    # Experiment name: E25_exp3_B8 (fine-tuning of 8 batch: reduceall=8*64)
     E25_B8_ADE = 0.
     E25_B8_FDE = 0.
 
@@ -160,10 +205,6 @@ def exp_DomianAdaptation_2():
            E25_B8_FDE, E25_B7_FDE, E25_B6_FDE, E25_B5_FDE, E25_B4_FDE, E25_B3_FDE, E25_B2_FDE, E25_B1_FDE, E25_FDE)
 
 
-# def exp_DomianAdaptation_3():
-#
-#     # Exp3-Update (E25_exp3_Bn): Prior S (Weights of Gaussian & Coupling layers), Posterior S
-#
 # def exp_DomianAdaptation_4():
 #
 #     # Exp4-Update (E25_exp4_Bn): Prior S (Weights of Gaussian), Posterior S, Decoders (input reconstruction, future prediction)
