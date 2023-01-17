@@ -59,8 +59,11 @@ def main(args):
     args.n_heads = [int(x) for x in args.heads.strip().split(",")]
 
     paths = [
-             "./models/E10/P6/CRMF_epoch_705.pth.tar",
-             "./models/E11/P6/CRMF_epoch_685.pth.tar",
+             "./models/E25/P6/CRMF_epoch_626.pth.tar",
+             "./models/E25_S2/P6/CRMF_epoch_714.pth.tar",
+             "./models/E25_S3/P6/CRMF_epoch_614.pth.tar",
+             "./models/E25_S4/P6/CRMF_epoch_700.pth.tar",
+             "./models/E25_S5/P6/CRMF_epoch_624.pth.tar",
              # "./models/E12/P6/CRMF_epoch_703.pth.tar",
              # "./models/E13/P6/CRMF_epoch_669.pth.tar",
              # "./models/E14/P6/CRMF_epoch_573.pth.tar",
@@ -85,9 +88,9 @@ def main(args):
             for val_idx, (loader, loader_name) in enumerate(zip(valid_dataset['loaders'], valid_dataset['names'])):
                 for batch_idx, batch in enumerate(loader):
                     batch = [tensor.cuda() for tensor in batch]
-                    (obs_traj, fut_traj, _, _, _) = batch
+                    (obs_traj, fut_traj, _, _, _, _, _) = batch
 
-                    qz, qs = model(batch, "P7", env_idx=val_idx)
+                    qz, qs = model(batch, "P8", env_idx=val_idx)
                     z_vec_seed += [qz.rsample([20, ]).flatten(start_dim=0, end_dim=1)]
                     s_vec_seed += [qs.rsample([20, ]).flatten(start_dim=0, end_dim=1)]
 
@@ -105,8 +108,8 @@ def main(args):
     # mean_s = torch.stack(mean_s).cpu().numpy()
     # covariance_z = torch.stack(covariance_z).cpu().numpy()
     # covariance_s = torch.stack(covariance_s).cpu().numpy()
-    MCC(z_vec, s_vec, mode="strong")
-    MCC(covariance_z, covariance_s, mode="strong")
+    MCC(z_vec, s_vec, mode="weak")
+    # MCC(covariance_z, covariance_s, mode="strong")
 
 
 def MCC(z_vec, s_vec, mode="weak"):
@@ -121,7 +124,9 @@ def MCC(z_vec, s_vec, mode="weak"):
                 affine = z_vec[j] @ w
             else:
                 affine = z_vec[j]
-            ccz += [np.corrcoef(z_vec[i].transpose(), affine.transpose())]
+
+            ccall = np.corrcoef(z_vec[i], affine, rowvar=False)
+            ccz += [(ccall[0, -2] + ccall[1, -1]) / 2]
             # distaffz += [np.linalg.norm(affine - z_vec[i], ord=2) / (
             #             np.linalg.norm(affine, ord=2) ** 0.5 * np.linalg.norm(z_vec[i], ord=2) ** 0.5)]
 
@@ -130,7 +135,9 @@ def MCC(z_vec, s_vec, mode="weak"):
                 affine = s_vec[j] @ w
             else:
                 affine = s_vec[j]
-            ccs += [np.corrcoef(s_vec[i].transpose(), affine.transpose())]
+
+            ccall = np.corrcoef(s_vec[i], affine, rowvar=False)
+            ccs += [(ccall[0, -2] + ccall[1, -1]) / 2]
             # distaffs += [np.linalg.norm(affine - s_vec[i], ord=2) / (
             #             np.linalg.norm(affine, ord=2) ** 0.5 * np.linalg.norm(s_vec[i], ord=2) ** 0.5)]
 

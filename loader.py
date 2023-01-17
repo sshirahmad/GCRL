@@ -42,8 +42,10 @@ def data_loader(args, paths, name, finetune=False, test=False, pt=False):
         reduce = 0
         if ('train' in paths and not pt):
             reduce = args.reduce
+
         if args.reduceall != 0:
             reduce = args.reduceall  # used to test quickly
+
         dset = SynTrajectoryDataset(
             paths,  # path
             obs_len=args.obs_len,
@@ -52,9 +54,6 @@ def data_loader(args, paths, name, finetune=False, test=False, pt=False):
             add_confidence=args.add_confidence,
             alpha_e=alpha_e,
             reduce=reduce,
-            finetune_ratio=args.finetune_ratio,
-            finetune=finetune,
-            test=test
         )
 
         batch_size = set_batch_size(args.batch_method, args.batch_size, name)
