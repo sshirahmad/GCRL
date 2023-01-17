@@ -2,14 +2,41 @@ import argparse
 from utils import int_tuple
 
 
+Best_Model = "./models/E25_S1/P6/CRMF_epoch_626.pth.tar"
+
+# ##### Seeds test domain shifts ##### #
+seed = 5
+epoch = 624
+model_dir = f"./models/E25_S{seed:g}"
+tf_dir = f"./runs/E25_S{seed:g}/"
+pretrained_Model = f"./models/E25_S{seed:g}/P6/CRMF_epoch_{epoch:g}.pth.tar"
+n_samples = 0
+
+# # ##### Domain Adaptation: Fine-Tuning ##### #
+# finetune = False
+# exp_num = 2
+# cnt = 8
+# epoch = 1496
+# FineTuned_Model = f"./models/E25_exp{exp_num:g}_B{cnt:g}/P7/CRMF_epoch_{epoch:g}.pth.tar"
+#
+# if finetune:
+#     pretrained_Model = Best_Model
+#     n_samples = cnt*64
+# else:
+#     pretrained_Model = FineTuned_Model
+#     n_samples = 9000
+# model_dir = f"./models/E25_exp{exp_num:g}_B{cnt:g}"
+# tf_dir = f"./runs/E25_exp{exp_num:g}_B{cnt:g}/"
+
+
 def get_parser():
     parser = argparse.ArgumentParser()
     parser.add_argument("--log_dir", default="./log/", help="Directory containing logging file")
-    parser.add_argument("--model_dir", default="./models/E25", help="Directory containing logging file")
-    parser.add_argument("--tfdir", default='./runs/E25/', type=str)
+    parser.add_argument("--model_dir", default=model_dir, help="Directory containing logging file")
+    parser.add_argument("--tfdir", default=tf_dir, type=str)
     parser.add_argument("--dataset_name", default="v4", type=str)
     parser.add_argument("--model_name", default="mlp", type=str)
-    parser.add_argument("--resume", default="./models/E25/P6/CRMF_epoch_592.pth.tar",
+    parser.add_argument("--resume", default=pretrained_Model,
                         type=str, metavar="PATH", help="path to latest checkpoint (default: none)")
 
     # randomness
@@ -37,11 +64,11 @@ def get_parser():
     parser.add_argument("--obs_len", default=8, type=int)
     parser.add_argument("--fut_len", default=12, type=int)
     parser.add_argument("--n_coordinates", type=int, default=2, help="Number of coordinates")
-    parser.add_argument("--filter_envs", type=str, default="0.1-0.3-0.5",
+    parser.add_argument("--filter_envs", type=str, default="0.6",
                         help="Filter only certain environments (i.e 0.1-0.3-0.5)")
     parser.add_argument("--skip", default=1, type=int)
     parser.add_argument("--delim", default="\t")
-    parser.add_argument("--finetune_ratio", default=0.1, type=float, help="Number of batches to be used in finetuning")
+    parser.add_argument("--finetune_ratio", default=0.1/8, type=float, help="Number of batches to be used in finetuning (0.1 == 8 batches)")
     parser.add_argument("--batch_method", default='het', type=str,
                         help='Use Homogeneous (hom), Heterogeneous (het) or alternated homogeneous (alt) batches during training')
     parser.add_argument("--contrastive", default=False, type=bool, help='add contrastive loss')
@@ -49,8 +76,8 @@ def get_parser():
 
     parser.add_argument("--batch_size", default='64', type=str)
     parser.add_argument("--shuffle", default=True, type=bool)
-    parser.add_argument('--reduce', default=0, type=int)
-    parser.add_argument('--reduceall', default=9000, type=int)
+    parser.add_argument('--reduce', default=n_samples, type=int)
+    parser.add_argument('--reduceall', default=0, type=int, help="all data samples: 9000")
 
 
     # architecture (VE)
