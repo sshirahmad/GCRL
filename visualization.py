@@ -84,32 +84,32 @@ def exp_DomianAdaptation_1():
     E25_B1_FDE = 0.1314
 
     # Experiment name: E25_exp1_B2 (fine-tuning of 2 batch: reduceall=2*64)
-    E25_B2_ADE = 0.0912
-    E25_B2_FDE = 0.1238
+    E25_B2_ADE = 0.0903
+    E25_B2_FDE = 0.1227
 
     # Experiment name: E25_exp1_B3 (fine-tuning of 3 batch: reduceall=3*64)
-    E25_B3_ADE = 0.0889
-    E25_B3_FDE = 0.1216
+    E25_B3_ADE = 0.0873
+    E25_B3_FDE = 0.1187
 
     # Experiment name: E25_exp1_B4 (fine-tuning of 4 batch: reduceall=4*64)
-    E25_B4_ADE = 0.0859
-    E25_B4_FDE = 0.1154
+    E25_B4_ADE = 0.0857
+    E25_B4_FDE = 0.1168
 
     # Experiment name: E25_exp1_B5 (fine-tuning of 5 batch: reduceall=5*64)
-    E25_B5_ADE = 0.0856
-    E25_B5_FDE = 0.1171
+    E25_B5_ADE = 0.0832
+    E25_B5_FDE = 0.1134
 
     # Experiment name: E25_exp1_B6 (fine-tuning of 6 batch: reduceall=6*64)
-    E25_B6_ADE = 0.0840
-    E25_B6_FDE = 0.1161
+    E25_B6_ADE = 0.0844
+    E25_B6_FDE = 0.1147
 
     # Experiment name: E25_exp1_B7 (fine-tuning of 7 batch: reduceall=7*64)
-    E25_B7_ADE = 0.0852
-    E25_B7_FDE = 0.1184
+    E25_B7_ADE = 0.0840
+    E25_B7_FDE = 0.1164
 
     # Experiment name: E25_exp1_B8 (fine-tuning of 8 batch: reduceall=8*64)
-    E25_B8_ADE = 0.0829
-    E25_B8_FDE = 0.1160
+    E25_B8_ADE = 0.0831
+    E25_B8_FDE = 0.1136
 
     # output
     ADE_out = [E25_B8_ADE, E25_B7_ADE, E25_B6_ADE, E25_B5_ADE, E25_B4_ADE, E25_B3_ADE, E25_B2_ADE, E25_B1_ADE, E25_ADE]
@@ -126,36 +126,36 @@ def exp_DomianAdaptation_2():
     E25_FDE = 0.1480
 
     # Experiment name: E25_exp2_B1 (fine-tuning of 1 batch: reduceall=1*64)
-    E25_B1_ADE = 0.1018
-    E25_B1_FDE = 0.1283
+    E25_B1_ADE = 0.0990
+    E25_B1_FDE = 0.1285
 
     # Experiment name: E25_exp2_B2 (fine-tuning of 2 batch: reduceall=2*64)
-    E25_B2_ADE = 0.0917
-    E25_B2_FDE = 0.1255
+    E25_B2_ADE = 0.0904
+    E25_B2_FDE = 0.1206
 
     # Experiment name: E25_exp2_B3 (fine-tuning of 3 batch: reduceall=3*64)
-    E25_B3_ADE = 0.0879
-    E25_B3_FDE = 0.1187
+    E25_B3_ADE = 0.0885
+    E25_B3_FDE = 0.1222
 
     # Experiment name: E25_exp2_B4 (fine-tuning of 4 batch: reduceall=4*64)
-    E25_B4_ADE = 0.0868
-    E25_B4_FDE = 0.1186
+    E25_B4_ADE = 0.0858
+    E25_B4_FDE = 0.1160
 
     # Experiment name: E25_exp2_B5 (fine-tuning of 5 batch: reduceall=5*64)
-    E25_B5_ADE = 0.0848
-    E25_B5_FDE = 0.1173
+    E25_B5_ADE = 0.0857
+    E25_B5_FDE = 0.1178
 
     # Experiment name: E25_exp2_B6 (fine-tuning of 6 batch: reduceall=6*64)
-    E25_B6_ADE = 0.0853
-    E25_B6_FDE = 0.1154
+    E25_B6_ADE = 0.0829
+    E25_B6_FDE = 0.1149
 
     # Experiment name: E25_exp2_B7 (fine-tuning of 7 batch: reduceall=7*64)
-    E25_B7_ADE = 0.0864
-    E25_B7_FDE = 0.1183
+    E25_B7_ADE = 0.0835
+    E25_B7_FDE = 0.1152
 
     # Experiment name: E25_exp2_B8 (fine-tuning of 8 batch: reduceall=8*64)
-    E25_B8_ADE = 0.0818
-    E25_B8_FDE = 0.1127
+    E25_B8_ADE = 0.0838
+    E25_B8_FDE = 0.1192
 
     # output
     ADE_out = [E25_B8_ADE, E25_B7_ADE, E25_B6_ADE, E25_B5_ADE, E25_B4_ADE, E25_B3_ADE, E25_B2_ADE, E25_B1_ADE, E25_ADE]
@@ -164,49 +164,47 @@ def exp_DomianAdaptation_2():
     return ADE_out, FDE_out
 
 
-def exp_DomianAdaptation_3():
-
-    # Exp3-Update (E25_exp3_Bn): Prior S (Weights of Gaussian & Coupling layers), Posterior S
+def exp_DomianAdaptation_cvpr():
 
     # Experiment name: E25 (No fine-tuning)
-    E25_ADE = 0.1182
-    E25_FDE = 0.1480
+    Ecvpr_ADE = 0.1258
+    Ecvpr_FDE = 0.1546
 
     # Experiment name: E25_exp3_B1 (fine-tuning of 1 batch: reduceall=1*64)
-    E25_B1_ADE = 0.1179
-    E25_B1_FDE = 0.1486
+    Ecvpr_B1_ADE = 0.1151
+    Ecvpr_B1_FDE = 0.1410
 
     # Experiment name: E25_exp3_B2 (fine-tuning of 2 batch: reduceall=2*64)
-    E25_B2_ADE = 0.1183
-    E25_B2_FDE = 0.1482
+    Ecvpr_B2_ADE = 0.1111
+    Ecvpr_B2_FDE = 0.1377
 
     # Experiment name: E25_exp3_B3 (fine-tuning of 3 batch: reduceall=3*64)
-    E25_B3_ADE = 0.1184
-    E25_B3_FDE = 0.1487
+    Ecvpr_B3_ADE = 0.1086
+    Ecvpr_B3_FDE = 0.1359
 
     # Experiment name: E25_exp3_B4 (fine-tuning of 4 batch: reduceall=4*64)
-    E25_B4_ADE = 0.1185
-    E25_B4_FDE = 0.1481
+    Ecvpr_B4_ADE = 0.1083
+    Ecvpr_B4_FDE = 0.1347
 
     # Experiment name: E25_exp3_B5 (fine-tuning of 5 batch: reduceall=5*64)
-    E25_B5_ADE = 0.1198
-    E25_B5_FDE = 0.1500
+    Ecvpr_B5_ADE = 0.1055
+    Ecvpr_B5_FDE = 0.1340
 
     # Experiment name: E25_exp3_B6 (fine-tuning of 6 batch: reduceall=6*64)
-    E25_B6_ADE = 0.1199
-    E25_B6_FDE = 0.1504
+    Ecvpr_B6_ADE = 0.1050
+    Ecvpr_B6_FDE = 0.1328
 
     # Experiment name: E25_exp3_B7 (fine-tuning of 7 batch: reduceall=7*64)
-    E25_B7_ADE = 0.1185
-    E25_B7_FDE = 0.1486
+    Ecvpr_B7_ADE = 0.1054
+    Ecvpr_B7_FDE = 0.1328
 
     # Experiment name: E25_exp3_B8 (fine-tuning of 8 batch: reduceall=8*64)
-    E25_B8_ADE = 0.1186
-    E25_B8_FDE = 0.1478
+    Ecvpr_B8_ADE = 0.1051
+    Ecvpr_B8_FDE = 0.1335
 
     # output
-    ADE_out = [E25_B8_ADE, E25_B7_ADE, E25_B6_ADE, E25_B5_ADE, E25_B4_ADE, E25_B3_ADE, E25_B2_ADE, E25_B1_ADE, E25_ADE]
-    FDE_out = [E25_B8_FDE, E25_B7_FDE, E25_B6_FDE, E25_B5_FDE, E25_B4_FDE, E25_B3_FDE, E25_B2_FDE, E25_B1_FDE, E25_FDE]
+    ADE_out = [Ecvpr_B8_ADE, Ecvpr_B7_ADE, Ecvpr_B6_ADE, Ecvpr_B5_ADE, Ecvpr_B4_ADE, Ecvpr_B3_ADE, Ecvpr_B2_ADE, Ecvpr_B1_ADE, Ecvpr_ADE]
+    FDE_out = [Ecvpr_B8_FDE, Ecvpr_B7_FDE, Ecvpr_B6_FDE, Ecvpr_B5_FDE, Ecvpr_B4_FDE, Ecvpr_B3_FDE, Ecvpr_B2_FDE, Ecvpr_B1_FDE, Ecvpr_FDE]
 
     return ADE_out, FDE_out
 
@@ -221,7 +219,7 @@ def vis_DA():
 
     exp1_ADE, exp1_FDE = exp_DomianAdaptation_1()
     exp2_ADE, exp2_FDE = exp_DomianAdaptation_2()
-    exp3_ADE, exp3_FDE = exp_DomianAdaptation_3()
+    exp_cvpr_ADE, exp_cvpr_FDE = exp_DomianAdaptation_cvpr()
 
     batch = [8, 7, 6, 5, 4, 3, 2, 1, 0]
 
@@ -229,7 +227,7 @@ def vis_DA():
     plt.figure()
     plt.plot(batch, exp1_ADE, "-ob", label="exp1")
     plt.plot(batch, exp2_ADE, "-or", label="exp2")
-    plt.plot(batch, exp3_ADE, "-og", label="exp3")
+    plt.plot(batch, exp_cvpr_ADE, "-og", label="Invariant+Modular")
     plt.legend(loc="lower left")
     plt.xlim(-1, 9)
     plt.xlabel('Number of Batches Used for Fine-Tuning')
@@ -240,7 +238,7 @@ def vis_DA():
     plt.figure()
     plt.plot(batch, exp1_FDE, "-ob", label="exp1")
     plt.plot(batch, exp2_FDE, "-or", label="exp2")
-    plt.plot(batch, exp3_FDE, "-og", label="exp3")
+    plt.plot(batch, exp_cvpr_FDE, "-og", label="Invariant+Modular")
     plt.legend(loc="lower left")
     plt.xlim(-1, 9)
     plt.xlabel('Number of Batches Used for Fine-Tuning')
