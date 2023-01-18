@@ -230,7 +230,7 @@ def main(args):
                           stage='training')
 
         elif training_step == "P7":
-            train_all(args, model, optimizers, finetune_dataset, epoch, training_step, valo_envs_name, writer,
+            train_all(args, model, optimizers, train_dataset, epoch, training_step, train_envs_name, writer,
                       beta_scheduler,
                       lr_schedulers,
                       stage='training')
@@ -238,11 +238,11 @@ def main(args):
         with torch.no_grad():
             if training_step == "P6":
                 validate_ade(args, model, train_dataset, epoch, training_step, writer, stage='training')
-                validate_ade(args, model, valid_dataset, epoch, training_step, writer, stage='validation')
-                metric = validate_ade(args, model, valido_dataset, epoch, training_step, writer, stage='validation o')
+                metric = validate_ade(args, model, valid_dataset, epoch, training_step, writer, stage='validation')
+                validate_ade(args, model, valido_dataset, epoch, training_step, writer, stage='validation o')
 
             elif training_step == "P7":
-                metric = validate_ade(args, model, valido_dataset, epoch, training_step, writer, stage='validation o')
+                metric = validate_ade(args, model, valid_dataset, epoch, training_step, writer, stage='validation o')
 
         if training_step in ["P6", "P7"]:
             if metric < min_metric:
