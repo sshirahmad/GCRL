@@ -9,7 +9,7 @@ def get_parser():
     parser.add_argument("--tfdir", default='./runs/E25/', type=str)
     parser.add_argument("--dataset_name", default="v4", type=str)
     parser.add_argument("--model_name", default="mlp", type=str)
-    parser.add_argument("--resume", default="./models/E25/P6/CRMF_epoch_592.pth.tar",
+    parser.add_argument("--resume", default="./models/E25/P6/CRMF_epoch_626.pth.tar",
                         type=str, metavar="PATH", help="path to latest checkpoint (default: none)")
 
     # randomness
@@ -41,7 +41,7 @@ def get_parser():
                         help="Filter only certain environments (i.e 0.1-0.3-0.5)")
     parser.add_argument("--skip", default=1, type=int)
     parser.add_argument("--delim", default="\t")
-    parser.add_argument("--finetune_ratio", default=0.1, type=float, help="Number of batches to be used in finetuning")
+    parser.add_argument("--finetune_ratio", default=0.01, type=float, help="Number of batches to be used in finetuning")
     parser.add_argument("--batch_method", default='het', type=str,
                         help='Use Homogeneous (hom), Heterogeneous (het) or alternated homogeneous (alt) batches during training')
     parser.add_argument("--contrastive", default=False, type=bool, help='add contrastive loss')
@@ -106,7 +106,7 @@ def get_training_parser():
                         help="initial learning rate for the past decoder optimizer")
     parser.add_argument('--lrmap', default=5e-3, type=float,
                         help="initial learning rate for the regressor optimizer")
-    parser.add_argument('--lrpar', default=5e-3, type=float,
+    parser.add_argument('--lrpar', default=5e-4, type=float,
                         help="initial learning rate for the parameters optimizer")
 
     return parser

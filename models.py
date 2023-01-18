@@ -783,17 +783,17 @@ class CRMF(nn.Module):
         self.beta_scheduler = get_beta(0, 1500, 1000)
         self.iter = 1
 
-        self.coupling_layers_z = nn.ModuleList([
-            CouplingLayer(args.z_dim, reverse_mask=False),
-            CouplingLayer(args.z_dim, reverse_mask=True),
-            CouplingLayer(args.z_dim, reverse_mask=False)
-        ])
-
-        self.coupling_layers_s = nn.ModuleList([
-            CouplingLayer(args.s_dim, reverse_mask=False),
-            CouplingLayer(args.s_dim, reverse_mask=True),
-            CouplingLayer(args.s_dim, reverse_mask=False)
-        ])
+        # self.coupling_layers_z = nn.ModuleList([
+        #     CouplingLayer(args.z_dim, reverse_mask=False),
+        #     CouplingLayer(args.z_dim, reverse_mask=True),
+        #     CouplingLayer(args.z_dim, reverse_mask=False)
+        # ])
+        #
+        # self.coupling_layers_s = nn.ModuleList([
+        #     CouplingLayer(args.s_dim, reverse_mask=False),
+        #     CouplingLayer(args.s_dim, reverse_mask=True),
+        #     CouplingLayer(args.s_dim, reverse_mask=False)
+        # ])
 
         self.pw = MultivariateNormal(torch.zeros(args.z_dim).cuda(), torch.diag(torch.ones(args.z_dim).cuda()))
 
@@ -945,21 +945,21 @@ class CRMF(nn.Module):
                 s_vec = q_sgx.rsample([self.num_samples, ])
                 z_vec = q_zgx.rsample([self.num_samples, ])
 
-                sldj = torch.zeros((self.num_samples, s_vec.shape[1]), device=z_vec.device)
-                s_vec_c = s_vec
-                for coupling in self.coupling_layers_s:
-                    s_vec_c, sldj = coupling(s_vec_c, sldj)
+                # sldj = torch.zeros((self.num_samples, s_vec.shape[1]), device=z_vec.device)
+                # s_vec_c = s_vec
+                # for coupling in self.coupling_layers_s:
+                #     s_vec_c, sldj = coupling(s_vec_c, sldj)
 
                 # calculate p(s|e)
                 Et = []
                 for j in range(self.num_envs):
-                    # psge = MultivariateNormal(self.mean_priors[j], torch.diag(torch.exp(self.logvar_priors[j])))
-                    psge = self.ps[j]
-                    log_psge = psge.log_prob(s_vec_c)
+                    psge = MultivariateNormal(self.mean_priors[j], torch.diag(torch.exp(self.logvar_priors[j])))
+                    # psge = self.ps[j]
+                    log_psge = psge.log_prob(s_vec)
                     log_pe = pe.log_prob(torch.tensor(j).cuda())
                     Et.append(torch.exp(log_psge) * torch.exp(log_pe))
 
-                log_ps = torch.log(torch.stack(Et).sum(0) + 1e-16) + sldj
+                log_ps = torch.log(torch.stack(Et).sum(0) + 1e-16)
                 log_ps_zeros = torch.zeros_like(log_ps, device=log_ps.device)
                 if log_ps.mean() == torch.tensor(- math.inf):
                     log_ps = log_ps_zeros
@@ -971,12 +971,12 @@ class CRMF(nn.Module):
                 log_qsgx = q_sgx.log_prob(s_vec)
 
                 # calculate log(p(z))
-                sldj = torch.zeros((self.num_samples, z_vec.shape[1]), device=z_vec.device)
-                z_vec_c = z_vec
-                for coupling in self.coupling_layers_z:
-                    z_vec_c, sldj = coupling(z_vec_c, sldj)
-                # pw = MultivariateNormal(self.mean_priorz, torch.diag(torch.exp(self.logvar_priorz)))
-                log_pz = self.pw.log_prob(z_vec_c) + sldj
+                # sldj = torch.zeros((self.num_samples, z_vec.shape[1]), device=z_vec.device)
+                # z_vec_c = z_vec
+                # for coupling in self.coupling_layers_z:
+                #     z_vec_c, sldj = coupling(z_vec_c, sldj)
+                pw = MultivariateNormal(self.mean_priorz, torch.diag(torch.exp(self.logvar_priorz)))
+                log_pz = pw.log_prob(z_vec)
 
                 # calculate log(p(x|z,s))
                 if self.model_name == "lstm":
@@ -985,9 +985,11 @@ class CRMF(nn.Module):
                     # px = self.past_decoder(obs_traj, torch.cat((z_vec, s_vec.repeat(1, z_vec.shape[1], 1)), dim=2))
                     px = self.past_decoder(z_vec, s_vec)
 
-                # log_px = - l2_loss(px, obs_traj_rel, mode="raw") - 0.5 * 2 * self.obs_len * torch.log(
-                #     torch.tensor(2 * math.pi)) - 0.5 * self.obs_len * torch.log(torch.tensor(0.25))
-                log_px = - l2_loss(px, obs_traj, mode="raw")
+                if self.decoupled_loss:
+                    log_px = - l2_loss(px, obs_traj, mode="raw")
+                else:
+                    log_px = - l2_loss(px, obs_traj, mode="raw") - 0.5 * 2 * self.obs_len * torch.log(
+                        torch.tensor(2 * math.pi)) - 0.5 * self.obs_len * torch.log(torch.tensor(0.25))
 
                 if self.decoupled_loss:
                     s_vec = q_sgx.rsample([self.best_k, ])
