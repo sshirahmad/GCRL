@@ -209,12 +209,6 @@ def exp_DomianAdaptation_cvpr():
     return ADE_out, FDE_out
 
 
-# def exp_DomianAdaptation_4():
-#
-#     # Exp4-Update (E25_exp4_Bn): Prior S (Weights of Gaussian), Posterior S, Decoders (input reconstruction, future prediction)
-#     # Fine-tune for 5 seeds plot mean abd var in a plot (number of experiments is 5x8=40)
-
-
 def vis_DA():
 
     exp1_ADE, exp1_FDE = exp_DomianAdaptation_1()
@@ -250,45 +244,198 @@ def vis_DA():
 def exp_Identifiability():
 
     # Number of Epochs
-    # E25 (seed = 1)
-    epoch = 686 - 372  # (=314)
-    ADE_E25_S1 = 0.1182
-    FDE_E25_S1 = 0.1480
+    # ##### E25 (seed = 1) epoch = 686 - 372=314 ##### #
+    ADE_E25_S1_ds1 = 0.0811
+    FDE_E25_S1_ds1 = 0.1083
 
-    # E25_S2 (Seed = 2)
-    epoch = 736 - 422
-    ADE_E25_S2 = 0.1221
-    FDE_E25_S2 = 0.1623
+    ADE_E25_S1_ds2 = 0.0798
+    FDE_E25_S1_ds2 = 0.1028
 
-    # E25_S3 (Seed = 3)
-    epoch = 736 - 422
-    ADE_E25_S3 = 0.1156
-    FDE_E25_S3 = 0.1555
+    ADE_E25_S1_ds3 = 0.0797
+    FDE_E25_S1_ds3 = 0.0998
 
-    # E25_S4 (Seed = 4)
-    epoch = 736 - 422
-    ADE_E25_S4 = 0.1171
-    FDE_E25_S4 = 0.1466
+    ADE_E25_S1_ds4 = 0.0794
+    FDE_E25_S1_ds4 = 0.1021
 
-    # E25_S5 (Seed = 5)
-    epoch = 736 - 422
-    ADE_E25_S5 = 0.1280
-    FDE_E25_S5 = 0.1537
+    ADE_E25_S1_ds5 = 0.0851
+    FDE_E25_S1_ds5 = 0.1142
 
-    ADE_seeds = [ADE_E25_S1, ADE_E25_S2, ADE_E25_S3, ADE_E25_S4, ADE_E25_S5]
-    FDE_seeds = [FDE_E25_S1, FDE_E25_S2, FDE_E25_S3, FDE_E25_S4, FDE_E25_S5]
+    ADE_E25_S1_ds6 = 0.1183
+    FDE_E25_S1_ds6 = 0.1484
+
+    ADE_E25_S1_ds7 = 0.1828
+    FDE_E25_S1_ds7 = 0.2132
+
+    ADE_E25_S1_ds8 = 0.2716
+    FDE_E25_S1_ds8 = 0.3126
+
+    # ##### E25_S2 (seed = 2) epoch=736-422=314 ##### #
+    ADE_E25_S2_ds1 = 0.0832
+    FDE_E25_S2_ds1 = 0.1077
+
+    ADE_E25_S2_ds2 = 0.0841
+    FDE_E25_S2_ds2 = 0.1067
+
+    ADE_E25_S2_ds3 = 0.0863
+    FDE_E25_S2_ds3 = 0.1083
+
+    ADE_E25_S2_ds4 = 0.0876
+    FDE_E25_S2_ds4 = 0.1151
+
+    ADE_E25_S2_ds5 = 0.0934
+    FDE_E25_S2_ds5 = 0.1308
+
+    ADE_E25_S2_ds6 = 0.1246
+    FDE_E25_S2_ds6 = 0.1672
+
+    ADE_E25_S2_ds7 = 0.1873
+    FDE_E25_S2_ds7 = 0.2325
+
+    ADE_E25_S2_ds8 = 0.2743
+    FDE_E25_S2_ds8 = 0.3312
+
+    # ##### E25_S3 (seed = 3) epoch=736-422=314 ##### #
+    ADE_E25_S3_ds1 = 0.0779
+    FDE_E25_S3_ds1 = 0.1071
+
+    ADE_E25_S3_ds2 = 0.0794
+    FDE_E25_S3_ds2 = 0.1049
+
+    ADE_E25_S3_ds3 = 0.0817
+    FDE_E25_S3_ds3 = 0.1061
+
+    ADE_E25_S3_ds4 = 0.0828
+    FDE_E25_S3_ds4 = 0.1113
+
+    ADE_E25_S3_ds5 = 0.0875
+    FDE_E25_S3_ds5 = 0.1242
+
+    ADE_E25_S3_ds6 = 0.1158
+    FDE_E25_S3_ds6 = 0.1558
+
+    ADE_E25_S3_ds7 = 0.1787
+    FDE_E25_S3_ds7 = 0.2195
+
+    ADE_E25_S3_ds8 = 0.2688
+    FDE_E25_S3_ds8 = 0.3197
+
+    # ##### E25_S4 (seed = 4) epoch=736-422=314 ##### #
+    ADE_E25_S4_ds1 = 0.0754
+    FDE_E25_S4_ds1 = 0.1037
+
+    ADE_E25_S4_ds2 = 0.0740
+    FDE_E25_S4_ds2 = 0.0973
+
+    ADE_E25_S4_ds3 = 0.0754
+    FDE_E25_S4_ds3 = 0.0950
+
+    ADE_E25_S4_ds4 = 0.0779
+    FDE_E25_S4_ds4 = 0.0994
+
+    ADE_E25_S4_ds5 = 0.0866
+    FDE_E25_S4_ds5 = 0.1141
+
+    ADE_E25_S4_ds6 = 0.1174
+    FDE_E25_S4_ds6 = 0.1467
+
+    ADE_E25_S4_ds7 = 0.1771
+    FDE_E25_S4_ds7 = 0.2069
+
+    ADE_E25_S4_ds8 = 0.2617
+    FDE_E25_S4_ds8 = 0.3002
+
+    # ##### E25_S5 (seed = 5) epoch=736-422=314 ##### #
+    ADE_E25_S5_ds1 = 0.0923
+    FDE_E25_S5_ds1 = 0.1267
+
+    ADE_E25_S5_ds2 = 0.0905
+    FDE_E25_S5_ds2 = 0.1200
+
+    ADE_E25_S5_ds3 = 0.0889
+    FDE_E25_S5_ds3 = 0.1141
+
+    ADE_E25_S5_ds4 = 0.0871
+    FDE_E25_S5_ds4 = 0.1129
+
+    ADE_E25_S5_ds5 = 0.0940
+    FDE_E25_S5_ds5 = 0.1228
+
+    ADE_E25_S5_ds6 = 0.1277
+    FDE_E25_S5_ds6 = 0.1544
+
+    ADE_E25_S5_ds7 = 0.1907
+    FDE_E25_S5_ds7 = 0.2156
+
+    ADE_E25_S5_ds8 = 0.2776
+    FDE_E25_S5_ds8 = 0.3121
+
+    ADE_seeds_ds1 = [ADE_E25_S1_ds1, ADE_E25_S2_ds1, ADE_E25_S3_ds1, ADE_E25_S4_ds1, ADE_E25_S5_ds1]
+    FDE_seeds_ds1 = [FDE_E25_S1_ds1, FDE_E25_S2_ds1, FDE_E25_S3_ds1, FDE_E25_S4_ds1, FDE_E25_S5_ds1]
+    m_ade1, m_fde1, s_ade1, s_fde1 = get_mean_std_over_seeds(ADE_seeds_ds1, FDE_seeds_ds1, ds=0.1)
+
+    ADE_seeds_ds2 = [ADE_E25_S1_ds2, ADE_E25_S2_ds2, ADE_E25_S3_ds2, ADE_E25_S4_ds2, ADE_E25_S5_ds2]
+    FDE_seeds_ds2 = [FDE_E25_S1_ds2, FDE_E25_S2_ds2, FDE_E25_S3_ds2, FDE_E25_S4_ds2, FDE_E25_S5_ds2]
+    m_ade2, m_fde2, s_ade2, s_fde2 = get_mean_std_over_seeds(ADE_seeds_ds2, FDE_seeds_ds2, ds=0.2)
+
+    ADE_seeds_ds3 = [ADE_E25_S1_ds3, ADE_E25_S2_ds3, ADE_E25_S3_ds3, ADE_E25_S4_ds3, ADE_E25_S5_ds3]
+    FDE_seeds_ds3 = [FDE_E25_S1_ds3, FDE_E25_S2_ds3, FDE_E25_S3_ds3, FDE_E25_S4_ds3, FDE_E25_S5_ds3]
+    m_ade3, m_fde3, s_ade3, s_fde3 = get_mean_std_over_seeds(ADE_seeds_ds3, FDE_seeds_ds3, ds=0.3)
+
+    ADE_seeds_ds4 = [ADE_E25_S1_ds4, ADE_E25_S2_ds4, ADE_E25_S3_ds4, ADE_E25_S4_ds4, ADE_E25_S5_ds4]
+    FDE_seeds_ds4 = [FDE_E25_S1_ds4, FDE_E25_S2_ds4, FDE_E25_S3_ds4, FDE_E25_S4_ds4, FDE_E25_S5_ds4]
+    m_ade4, m_fde4, s_ade4, s_fde4 = get_mean_std_over_seeds(ADE_seeds_ds4, FDE_seeds_ds4, ds=0.4)
+
+    ADE_seeds_ds5 = [ADE_E25_S1_ds5, ADE_E25_S2_ds5, ADE_E25_S3_ds5, ADE_E25_S4_ds5, ADE_E25_S5_ds5]
+    FDE_seeds_ds5 = [FDE_E25_S1_ds5, FDE_E25_S2_ds5, FDE_E25_S3_ds5, FDE_E25_S4_ds5, FDE_E25_S5_ds5]
+    m_ade5, m_fde5, s_ade5, s_fde5 = get_mean_std_over_seeds(ADE_seeds_ds5, FDE_seeds_ds5, ds=0.5)
+
+    ADE_seeds_ds6 = [ADE_E25_S1_ds6, ADE_E25_S2_ds6, ADE_E25_S3_ds6, ADE_E25_S4_ds6, ADE_E25_S5_ds6]
+    FDE_seeds_ds6 = [FDE_E25_S1_ds6, FDE_E25_S2_ds6, FDE_E25_S3_ds6, FDE_E25_S4_ds6, FDE_E25_S5_ds6]
+    m_ade6, m_fde6, s_ade6, s_fde6 = get_mean_std_over_seeds(ADE_seeds_ds6, FDE_seeds_ds6, ds=0.6)
+
+    ADE_seeds_ds7 = [ADE_E25_S1_ds7, ADE_E25_S2_ds7, ADE_E25_S3_ds7, ADE_E25_S4_ds7, ADE_E25_S5_ds7]
+    FDE_seeds_ds7 = [FDE_E25_S1_ds7, FDE_E25_S2_ds7, FDE_E25_S3_ds7, FDE_E25_S4_ds7, FDE_E25_S5_ds7]
+    m_ade7, m_fde7, s_ade7, s_fde7 = get_mean_std_over_seeds(ADE_seeds_ds7, FDE_seeds_ds7, ds=0.7)
+
+    ADE_seeds_ds8 = [ADE_E25_S1_ds8, ADE_E25_S2_ds8, ADE_E25_S3_ds8, ADE_E25_S4_ds8, ADE_E25_S5_ds8]
+    FDE_seeds_ds8 = [FDE_E25_S1_ds8, FDE_E25_S2_ds8, FDE_E25_S3_ds8, FDE_E25_S4_ds8, FDE_E25_S5_ds8]
+    m_ade8, m_fde8, s_ade8, s_fde8 = get_mean_std_over_seeds(ADE_seeds_ds8, FDE_seeds_ds8, ds=0.8)
+
+    means_ade = [m_ade1, m_ade2, m_ade3, m_ade4, m_ade5, m_ade6, m_ade7, m_ade8]
+    stds_ade = [s_ade1, s_ade2, s_ade3, s_ade4, s_ade5, s_ade6, s_ade7, s_ade8]
+    vis_mean_stds_seeds(means_ade, stds_ade)
+
+    means_fde = [m_fde1, m_fde2, m_fde3, m_fde4, m_fde5, m_fde6, m_fde7, m_fde8]
+    stds_fde = [s_fde1, s_fde2, s_fde3, s_fde4, s_fde5, s_fde6, s_fde7, s_fde8]
+
+    vis_mean_stds_seeds(means_fde, stds_fde)
+
+
+def get_mean_std_over_seeds(ADE_seeds, FDE_seeds, ds=0.6):
 
     ave_ADE_over_seeds = np.mean(ADE_seeds)
     ave_FDE_over_seeds = np.mean(FDE_seeds)
 
-    print('Mean ADE over seeds:', ave_ADE_over_seeds)
-    print('Mean FDE over seeds:', ave_FDE_over_seeds)
+
+    print(f'Mean ADE over seeds with test domain shift of {ds:g}:', ave_ADE_over_seeds)
+    print(f'Mean FDE over seeds with test domain shift of {ds:g}:', ave_FDE_over_seeds)
 
     std_ADE_over_seeds = np.std(ADE_seeds)
     std_FDE_over_seeds = np.std(FDE_seeds)
 
-    print('STD ADE over seeds:', std_ADE_over_seeds)
-    print('STD FDE over seeds:', std_FDE_over_seeds)
+    print(f'STD ADE over seeds with test domain shift of {ds:g}:', std_ADE_over_seeds)
+    print(f'STD FDE over seeds with test domain shift of {ds:g}:', std_FDE_over_seeds)
+
+    return ave_ADE_over_seeds, ave_FDE_over_seeds, std_ADE_over_seeds, std_FDE_over_seeds
+
+
+def vis_mean_stds_seeds(means, stds):
+
+    plt.figure()
+    plt.plot(means, "o-r")
+    ax = plt.fill_between(range(8), np.array(means) - np.array(stds), np.array(means) + np.array(stds), alpha=.4)
+    plt.show()
+
 
 def exp_AblationStudies():
 
@@ -312,6 +459,6 @@ def exp_AblationStudies():
 if __name__ == "__main__":
 
     # exp_StyleDomainShift()
-    vis_DA()
-    # exp_Identifiability()
+    # vis_DA()
+    exp_Identifiability()
     # exp_AblationStudies()
