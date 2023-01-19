@@ -779,6 +779,7 @@ def exp_gen_bestk():
     :return:
     """
 
+    best_k = [20, 30, 40, 50, 60, 70, 80, 90, 100]
     ADE_S1 = [0.1181, 0.1075, 0.1012, 0.0970, 0.0942, 0.0918, 0.0899, 0.0884, 0.0870]
     FDE_S1 = [0.1480, 0.1343, 0.1256, 0.1198, 0.1155, 0.1121, 0.1093, 0.1070, 0.1050]
 
@@ -788,15 +789,43 @@ def exp_gen_bestk():
     ADE_S3 = [0.1160, 0.1050, 0.0990, 0.0950, 0.0923, 0.0903, 0.0885, 0.0871, 0.0860]
     FDE_S3 = [0.1558, 0.1418, 0.1337, 0.1278, 0.1235, 0.1203, 0.1176, 0.1153, 0.1135]
 
-    ADE_S4 = [0.1174, 0.1058, ]
-    FDE_S4 = [0.1468, 0.1322, ]
+    ADE_S4 = [0.1174, 0.1058, 0.0992, 0.0948, 0.0920, 0.0892, 0.0873, 0.0858, 0.0845]
+    FDE_S4 = [0.1468, 0.1322, 0.1232, 0.1170, 0.1128, 0.1091, 0.1062, 0.1037, 0.1015]
 
-    ADE_S5 = []
-    FDE_S5 = []
+    ADE_S5 = [0.1274, 0.1164, 0.1096, 0.1048, 0.1018, 0.0994, 0.0973, 0.0957, 0.0943]
+    FDE_S5 = [0.1537, 0.1394, 0.1302, 0.1236, 0.1190, 0.1152, 0.1119, 0.1097, 0.1074]
+
+    M_ade_best = []
+    S_ade_best = []
+    for i in range(9):
+        seed_v = [ADE_S1[i], ADE_S2[i], ADE_S3[i], ADE_S4[i], ADE_S5[i]]
+        M_ade_best.append(np.mean(seed_v))
+        S_ade_best.append(np.std(seed_v))
+
+    M_fde_best = []
+    S_fde_best = []
+    for i in range(9):
+        seed_v = [FDE_S1[i], FDE_S2[i], FDE_S3[i], FDE_S4[i], FDE_S5[i]]
+        M_fde_best.append(np.mean(seed_v))
+        S_fde_best.append(np.std(seed_v))
+
+
+    # Visualizations
+    plt.plot(best_k, M_ade_best, "o-g", label="ADE")
+    plt.fill_between(best_k, np.array(M_ade_best) - np.array(S_ade_best), np.array(M_ade_best) + np.array(S_ade_best),
+                     alpha=.4, color='green')
+    plt.plot(best_k, M_fde_best, "o-r", label="FDE")
+    plt.fill_between(best_k, np.array(M_fde_best) - np.array(S_fde_best), np.array(M_fde_best) + np.array(S_fde_best),
+                     alpha=.4, color='red')
+    plt.xlabel("Best K", fontsize=15)
+    plt.ylabel("ADE/FDE", fontsize=15)
+    plt.legend(loc="upper right", fontsize=15)
+    plt.show()
 
 
 if __name__ == "__main__":
 
-    exp_StyleDomainShift()
+    # exp_StyleDomainShift()
     # vis_DA()
     # vis_mean_stds_seeds()
+    exp_gen_bestk()
