@@ -34,9 +34,9 @@ def get_parser():
     parser.add_argument("--log_dir", default="./log/", help="Directory containing logging file")
     parser.add_argument("--model_dir", default=model_dir, help="Directory containing logging file")
     parser.add_argument("--tfdir", default=tf_dir, type=str)
-    parser.add_argument("--dataset_name", default="v4", type=str)
-    parser.add_argument("--model_name", default="mlp", type=str)
-    parser.add_argument("--resume", default="./models/E25_S2/P6/CRMF_epoch_714.pth.tar",
+    parser.add_argument("--dataset_name", default="eth", type=str)
+    parser.add_argument("--model_name", default="lstm", type=str)
+    parser.add_argument("--resume", default="",
                         type=str, metavar="PATH", help="path to latest checkpoint (default: none)")
 
     # randomness
@@ -69,10 +69,10 @@ def get_parser():
     parser.add_argument("--skip", default=1, type=int)
     parser.add_argument("--delim", default="\t")
     parser.add_argument("--finetune_ratio", default=0.1/8, type=float, help="Number of batches to be used in finetuning (0.1 == 8 batches)")
-    parser.add_argument("--batch_method", default='het', type=str,
+    parser.add_argument("--batch_method", default='hom', type=str,
                         help='Use Homogeneous (hom), Heterogeneous (het) or alternated homogeneous (alt) batches during training')
     parser.add_argument("--contrastive", default=False, type=bool, help='add contrastive loss')
-    parser.add_argument("--decoupled_loss", default=True, type=bool, help='decouple ELBO from y')
+    parser.add_argument("--decoupled_loss", default=False, type=bool, help='decouple ELBO from y')
 
     parser.add_argument("--batch_size", default='64', type=str)
     parser.add_argument("--shuffle", default=True, type=bool)
@@ -111,7 +111,7 @@ def get_training_parser():
                         help="Say which env were used during pretraining (for contrastive loss) (i.e 0.1-0.3-0.5)")
 
     # training
-    parser.add_argument("--best_k", default=20, type=int)
+    parser.add_argument("--best_k", default=1, type=int)
     parser.add_argument("--start-epoch", default=1, type=int, metavar="N",
                         help="manual epoch number (useful on restarts)")
     parser.add_argument("--use_gpu", default=1, type=int)
