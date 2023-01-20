@@ -1,6 +1,6 @@
 import numpy as np
 
-from trajectories import TrajectoryDataset, seq_collate
+from trajectories import TrajectoryDataset, SynTrajectoryDataset
 from utils import *
 from parser_file import get_training_parser
 import seaborn as sns
@@ -17,6 +17,7 @@ def main(args):
     obs_traj = []
     fut_traj = []
     hue = []
+    total_ped = 0
     for i, (train_env_path, train_env_name) in enumerate(zip(train_envs_path, train_envs_name)):
         alpha_e = set_domain_shift(args.domain_shifts, train_env_name)
 
@@ -34,18 +35,19 @@ def main(args):
             ))
         dset = ConcatDataset(dsets).datasets[0]
 
-        obs_traj.append(dset.obs_traj)
-        fut_traj.append(dset.fut_traj)
-        hue_env = (i+1) * np.ones(dset.fut_traj.shape[0])
+        obs_traj.append(dset.obs_traj_rel)
+        fut_traj.append(dset.fut_traj_rel)
+        total_ped += dset.fut_traj.shape[0]
+        hue_env = (i + 1) * np.ones(dset.fut_traj.shape[0] * 8)
         hue.append(hue_env)
 
-    obs_traj = np.concatenate(obs_traj)
-    fut_traj = np.concatenate(fut_traj)
+    obs_traj = np.concatenate(obs_traj).reshape(-1, 2)
+    fut_traj = np.concatenate(fut_traj)[:, :, :8].reshape(-1, 2)
     hue = np.concatenate(hue)
     sns.set_style('whitegrid')
-    sns.jointplot(x=obs_traj[:, 0, 0], y=fut_traj[:, 0, 0], palette="bright", hue=hue, kind="kde", common_norm=False)
-    sns.jointplot(x=obs_traj[:, 1, 0], y=fut_traj[:, 1, 0], palette="dark", hue=hue, kind="kde", common_norm=False)
-    sns.jointplot(x=obs_traj[:, 1, 0], y=fut_traj[:, 1, 0], kind="kde", common_norm=False)
+    sns.jointplot(x=obs_traj[:, 0], y=fut_traj[:, 0], dropna=True, palette="bright", hue=hue, kind="kde", common_norm=False)
+    sns.jointplot(x=obs_traj[:, 1], y=fut_traj[:, 1], dropna=True, palette="dark", hue=hue, kind="kde", common_norm=False)
+    sns.jointplot(x=obs_traj[:, 1], y=fut_traj[:, 1], dropna=True, kind="kde", common_norm=False)
     plt.show()
 
 

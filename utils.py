@@ -169,27 +169,25 @@ def l2_loss(pred_fut_traj, fut_traj, mode="average"):
 
     Input:
     - pred_fut_traj: Tensor of shape (seq_len, batch, 2). Predicted trajectory.
-    - fut_traj: Tensor of shape (seq_len, batch, 2). Groud truth future trajectory.
+    - fut_traj: Tensor of shape (seq_len, batch, 2). Ground truth future trajectory.
     - mode: Can be one of sum, average, raw
     Output:
     - loss: l2 loss depending on mode
     """
-    if len(pred_fut_traj.size()) == 3:
-        loss = (fut_traj[:, :, :2].permute(1, 0, 2) - pred_fut_traj.permute(1, 0, 2)) ** 2
-    elif len(pred_fut_traj.size()) == 4:
+    if len(pred_fut_traj.size()) == 4:
         loss = (fut_traj[:, :, :2].repeat(pred_fut_traj.shape[1], 1, 1, 1).permute(0, 2, 1, 3) - pred_fut_traj.permute(1, 2, 0, 3)) ** 2
     else:
-        loss = (fut_traj - pred_fut_traj) ** 2
+        loss = (fut_traj[:, :, :2].permute(1, 0, 2) - pred_fut_traj.permute(1, 0, 2)) ** 2
 
     if mode == "sum":
         return torch.sum(loss)
     elif mode == "average":
         return torch.mean(loss)
     elif mode == "raw":
-        if len(pred_fut_traj.size()) == 4:
-            return loss.sum(dim=3).sum(dim=2)
-        else:
+        if len(pred_fut_traj.size()) == 3:
             return loss.sum(dim=2).sum(dim=1)
+        else:
+            return loss.sum(dim=3).sum(dim=2)
 
 
 def displacement_error(pred_fut_traj, fut_traj, consider_ped=None, mode="sum"):
@@ -268,14 +266,7 @@ def set_domain_shift(domain_shifts, env_name):
 
 def set_name_experiment(args, name='CRMF'):
 
-    if args.irm > 0:
-        name_risk = 'irm_' + str(args.irm)
-    elif args.vrex > 0:
-        name_risk = 'vrex_' + str(args.vrex)
-    else:
-        name_risk = 'erm_0.0'
-
-    return f'{name}_risk_{name_risk}_batch_{args.batch_method}_data_{args.dataset_name}_ds_{args.domain_shifts}_bk_{args.best_k}_ep_{args.num_epochs}_shuffle_{str(args.shuffle).lower()}_seed_{args.seed}'
+    return f'{name}_batch_{args.batch_method}_data_{args.dataset_name}_ds_{args.domain_shifts}_bk_{args.best_k}_ep_{args.num_epochs}_shuffle_{str(args.shuffle).lower()}_seed_{args.seed}'
 
 
 def set_batch_size(batch_method, batch_sizes, env_name):
@@ -442,26 +433,56 @@ def set_name_finetune(finetune):
 
 
 def save_all_model(args, model, model_name, optimizers, metric, epoch, training_step):
-    checkpoint = {
-        'epoch': epoch + 1,
-        'state_dicts': {
-            'variant_encoder': model.variant_encoder.state_dict(),
-            'invariant_encoder': model.invariant_encoder.state_dict(),
-            'x_to_z': model.x_to_z.state_dict(),
-            'coupling_layers_z': model.coupling_layers_z.state_dict(),
-            'coupling_layers_s': model.coupling_layers_s.state_dict(),
-            'coupling_layers_theta': model.coupling_layers_theta.state_dict(),
-            'x_to_s': model.x_to_s.state_dict(),
-            'future_decoder': model.future_decoder.state_dict(),
-            'past_decoder': model.past_decoder.state_dict(),
-            'mapping': model.mapping.state_dict(),
-            'theta': model.theta,
-        },
-        'optimizers': {
-            key: val.state_dict() for key, val in optimizers.items()
-        },
-        'metric': metric,
-    }
+
+    if training_step == "P4":
+        checkpoint = {
+            'epoch': epoch + 1,
+            'state_dicts': {
+                'variant_encoder': model.variant_encoder.state_dict(),
+                'invariant_encoder': model.invariant_encoder.state_dict(),
+                'x_to_z': model.x_to_z.state_dict(),
+                'x_to_s': model.x_to_s.state_dict(),
+                'future_decoder': model.future_decoder.state_dict(),
+                'past_decoder': model.past_decoder.state_dict(),
+                'coupling_layers_z': model.coupling_layers_z.state_dict(),
+                'coupling_layers_s': model.coupling_layers_s.state_dict(),
+                'pi_priore': torch.log(torch.from_numpy(model.gmm.weights_).cuda().float()) + torch.log(torch.from_numpy(model.gmm.weights_).cuda().float().sum()),
+                # 'mean_priors': torch.from_numpy(model.gmm.means_).cuda().float(),
+                # 'logvar_priors': torch.log(torch.from_numpy(model.gmm.covariances_).cuda().float()),
+                # 'mean_priorz': model.mean_priorz,
+                # 'logvar_priorz': model.logvar_priorz,
+
+            },
+            'optimizers': {
+                key: val.state_dict() for key, val in optimizers.items()
+            },
+            'metric': metric,
+        }
+    else:
+        checkpoint = {
+            'epoch': epoch + 1,
+            'state_dicts': {
+                'variant_encoder': model.variant_encoder.state_dict(),
+                'invariant_encoder': model.invariant_encoder.state_dict(),
+                'x_to_z': model.x_to_z.state_dict(),
+                'x_to_s': model.x_to_s.state_dict(),
+                'future_decoder': model.future_decoder.state_dict(),
+                'past_decoder': model.past_decoder.state_dict(),
+                'coupling_layers_z': model.coupling_layers_z.state_dict(),
+                'coupling_layers_s': model.coupling_layers_s.state_dict(),
+                'cont_classifier': model.cont_classifier.state_dict(),
+                'pi_priore': model.pi_priore,
+                # 'mean_priors': model.mean_priors,
+                # 'logvar_priors': model.logvar_priors,
+                # 'mean_priorz': model.mean_priorz,
+                # 'logvar_priorz': model.logvar_priorz,
+
+            },
+            'optimizers': {
+                key: val.state_dict() for key, val in optimizers.items()
+            },
+            'metric': metric,
+        }
 
     if args.model_dir:
         filefolder = f'{args.model_dir}/{training_step}'
@@ -513,11 +534,29 @@ def load_all_model(args, model, optimizers, lr_schedulers=None, training_steps=N
             update_lr(optimizers['past_decoder'], args.lrpast)
 
         # invariant encoder
-        model.x_to_z.load_state_dict(models_checkpoint['x_to_z'])
         model.coupling_layers_z.load_state_dict(models_checkpoint['coupling_layers_z'])
+        # model.mean_priorz.data = models_checkpoint['mean_priorz'].data.cuda()
+        # model.logvar_priorz.data = models_checkpoint['logvar_priorz'].data.cuda()
+        model.x_to_z.load_state_dict(models_checkpoint['x_to_z'])
         if optimizers != None:
             optimizers['inv'].load_state_dict(checkpoint['optimizers']['inv'])
             update_lr(optimizers['inv'], args.lrinv)
+
+        # variational models
+        if args.contrastive:
+            model.cont_classifier.load_state_dict(models_checkpoint['cont_classifier'])
+
+        model.pi_priore.data = models_checkpoint['pi_priore'].data.cuda()
+        print(torch.softmax(model.pi_priore, dim=0))
+        model.x_to_s.load_state_dict(models_checkpoint['x_to_s'])
+        model.coupling_layers_s.load_state_dict(models_checkpoint['coupling_layers_s'])
+        # model.mean_priors.data = models_checkpoint['mean_priors'].data.cuda()
+        # model.logvar_priors.data = models_checkpoint['logvar_priors'].data.cuda()
+        # model.x_to_s.fc_logvar.weight.data = models_checkpoint['x_to_s']['fc_mu.weight'].cuda()
+        # model.x_to_s.fc_logvar.bias.data = models_checkpoint['x_to_s']['fc_mu.bias'].cuda()
+        if optimizers != None:
+            optimizers['par'].load_state_dict(checkpoint['optimizers']['par'])
+            update_lr(optimizers['par'], args.lrpar)
 
         # variant encoder
         model.variant_encoder.load_state_dict(models_checkpoint['variant_encoder'])
@@ -525,21 +564,6 @@ def load_all_model(args, model, optimizers, lr_schedulers=None, training_steps=N
         if optimizers != None:
             optimizers['var'].load_state_dict(checkpoint['optimizers']['var'])
             update_lr(optimizers['var'], args.lrvar)
-
-        # Regressor
-        model.mapping.load_state_dict(models_checkpoint['mapping'])
-        if optimizers != None:
-            optimizers['map'].load_state_dict(checkpoint['optimizers']['map'])
-            update_lr(optimizers['map'], args.lrmap)
-
-        # variational models
-        model.coupling_layers_s.load_state_dict(models_checkpoint['coupling_layers_s'])
-        model.coupling_layers_theta.load_state_dict(models_checkpoint['coupling_layers_theta'])
-        model.x_to_s.load_state_dict(models_checkpoint['x_to_s'])
-        model.theta.data = models_checkpoint['theta'].data.cuda()
-        if optimizers != None:
-            optimizers['par'].load_state_dict(checkpoint['optimizers']['par'])
-            update_lr(optimizers['par'], args.lrpar)
 
         logging.info("=> loaded checkpoint '{}' (epoch {})".format(model_path, checkpoint["epoch"]))
 

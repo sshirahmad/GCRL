@@ -54,7 +54,6 @@ def evaluate(args, loader, generator, training_step):
     with torch.no_grad():
         for batch in loader:
             batch = [tensor.cuda() for tensor in batch]
-
             if args.dataset_name in ('eth', 'hotel', 'univ', 'zara1', 'zara2'):
                 (
                     obs_traj,
@@ -76,14 +75,16 @@ def evaluate(args, loader, generator, training_step):
             else:
                 raise ValueError('Unrecognized dataset name "%s"' % args.dataset_name)
 
+
             step += seq_start_end.shape[0]
             ade, fde = [], []
             total_traj += fut_traj.size(1)
-            for _ in range(args.best_k):
+            for k in range(args.best_k):
                 pred_fut_traj_rel = generator(batch, training_step)
+
                 pred_fut_traj = relative_to_abs(pred_fut_traj_rel, obs_traj[-1, :, :2])
 
-                ade_, fde_ = cal_ade_fde(fut_traj, pred_fut_traj)
+                ade_, fde_ = cal_ade_fde(fut_traj[:, :, :2], pred_fut_traj)
 
                 ade.append(ade_)
                 fde.append(fde_)
@@ -121,6 +122,10 @@ def sceneplot(obsv_scene, pred_scene, gt_scene, figname='scene.png', lim=9.0):
             plt.plot(pred_scene[i, k - 1:k + 1, 0], pred_scene[i, k - 1:k + 1, 1],
                      '--', color=colors[i], alpha=alpha, linewidth=width)
 
+        for k in range(1, pred_frame):
+            plt.plot(gt_scene[i, k - 1:k + 1, 0], gt_scene[i, k - 1:k + 1, 1],
+                     '--', color=colors[i], alpha=1.0)
+
     xc = obsv_scene[:, -1, 0].mean()
     yc = obsv_scene[:, -1, 1].mean()
     plt.xlim(xc - lim, xc + lim)
@@ -138,7 +143,7 @@ def visualize(args, loader, generator, training_step):
     Viasualize some scenes
     """
     keywords = args.resume.split('_')
-    suffix = 'ds_' + args.domain_shifts + '_' + keywords[1] + '_irm_' + keywords[3] + '.png'
+    suffix = 'ds_' + args.domain_shifts + '_' + keywords[1] + '.png'
 
     # range of idx for visualization
     lb_idx = 44
@@ -156,7 +161,7 @@ def visualize(args, loader, generator, training_step):
             ) = batch
 
             for k in range(args.best_k):
-                pred_fut_traj_rel = generator(batch, training_step)[0]
+                pred_fut_traj_rel = generator(batch, training_step)
                 pred_fut_traj = relative_to_abs(pred_fut_traj_rel, obs_traj[-1, :, :2])
                 idx_sample = seq_start_end.shape[0]
                 for i in range(idx_sample):
@@ -188,7 +193,7 @@ def main(args):
     print('Using GPU: ' + str(torch.cuda.is_available()))
     os.environ["CUDA_VISIBLE_DEVICES"] = args.gpu_num
     generator = get_generator(args)
-    valo_envs_path, valo_envs_name = get_envs_path(args.dataset_name, "test", "0.6")  # +'-'+args.filter_envs_pretrain)
+    valo_envs_path, valo_envs_name = get_envs_path(args.dataset_name, "test", '0.6')  # +'-'+args.filter_envs_pretrain)
     loaders = [data_loader(args, valo_env_path, valo_env_name) for valo_env_path, valo_env_name in zip(valo_envs_path, valo_envs_name)]
     logging.info('Model: {}'.format(args.resume))
     logging.info('Dataset: {}'.format(args.dataset_name))
@@ -197,17 +202,28 @@ def main(args):
 
     # quantitative
     if args.metrics == 'accuracy':
-        ade = 0
-        fde = 0
-        total_traj = 0
-        for loader in loaders:
-            ade_sum_i, fde_sum_i, total_traj_i = evaluate(args, loader, generator, training_step="P3")
-            ade += ade_sum_i
-            fde += fde_sum_i
-            total_traj += total_traj_i
-        ade = ade / (total_traj * args.fut_len)
-        fde = fde / total_traj
-        logging.info('ADE: {:.4f}\tFDE: {:.4f}'.format(ade, fde))
+
+        ade_outer = []
+        fde_outer = []
+        for _ in range(10):
+            ade = 0
+            fde = 0
+            total_traj = 0
+            for loader in loaders:
+
+                ade_sum_i, fde_sum_i, total_traj_i = evaluate(args, loader, generator, training_step="P6")
+                ade += ade_sum_i
+                fde += fde_sum_i
+                total_traj += total_traj_i
+            ade = ade / (total_traj * args.fut_len)
+            fde = fde / total_traj
+            logging.info('ADE: {:.4f}\tFDE: {:.4f}'.format(ade, fde))
+            ade_outer += [ade]
+            fde_outer += [fde]
+
+        ade_outer = torch.stack(ade_outer).mean(0)
+        fde_outer = torch.stack(fde_outer).mean(0)
+        print(ade_outer, fde_outer)
 
     # qualitative
     if args.metrics == 'qualitative':

@@ -202,14 +202,6 @@ class SynTrajectoryDataset(Dataset):
         if reduce:
             data = data[:reduce]
 
-        if finetune:
-            num_batches = round(finetune_ratio * len(data))
-            data = data[:num_batches]
-
-        if test:
-            num_batches = round(finetune_ratio * len(data))
-            data = data[num_batches:]
-
         # Compute social encoding
         # Use relative distance between agents instead of coordinates of each agent
         augm_data = torch.zeros((data.shape[0], NUMBER_COUPLES, data.shape[2], data.shape[3]))

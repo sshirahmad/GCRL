@@ -9,9 +9,6 @@ from models import CRMF
 from losses import erm_loss, irm_loss
 from torch.nn.utils import clip_grad_norm_
 import matplotlib.pyplot as plt
-import seaborn as sns
-from matplotlib.lines import Line2D
-from visualize import draw_image, draw_solo, draw_solo_all
 from sklearn.manifold import TSNE
 from sklearn.decomposition import PCA
 
@@ -25,8 +22,8 @@ def main(args):
     if not os.path.exists(args.tfdir + '/' + model_name):
         os.makedirs(args.tfdir + '/' + model_name)
 
-    training_step = "P7"
-    args.batch_size = "100000"
+    training_step = "P8"
+    args.batch_size = "10000"
 
     logging.info("Initializing Training Set")
     train_envs_path, train_envs_name = get_envs_path(args.dataset_name, "train", args.filter_envs)
@@ -40,7 +37,7 @@ def main(args):
                    zip(val_envs_path, val_envs_name)]
 
     logging.info("Initializing Validation O Set")
-    valo_envs_path, valo_envs_name = get_envs_path(args.dataset_name, "test", args.filter_envs)
+    valo_envs_path, valo_envs_name = get_envs_path(args.dataset_name, "test", "0.6")
     valo_loaders = [data_loader(args, valo_env_path, valo_env_name) for valo_env_path, valo_env_name in zip(valo_envs_path, valo_envs_name)]
 
     # training routine length
@@ -66,7 +63,11 @@ def main(args):
 
     # create the model
     model = CRMF(args).cuda()
-    if training_step == "P7":
+    if args.resume:
+        load_all_model(args, model, None)
+        model.cuda()
+
+    if training_step == "P8":
         calculate_distance_posteriors(model, valid_dataset, valido_dataset)
     else:
         calculate_distance_priors(model, valid_dataset, valido_dataset)
@@ -116,18 +117,19 @@ def calculate_distance_posteriors(model, valid_dataset, valido_dataset=None):
     cov_z_env = []
     mean_s_env = []
     cov_s_env = []
-    z_vec = []
-    s_vec = []
-    tsne = TSNE(n_components=2)
+
+    pca = TSNE(n_components=2)
     with torch.no_grad():
+        z_vec = []
+        s_vec = []
         for val_idx, (loader, loader_name) in enumerate(zip(valid_dataset['loaders'], valid_dataset['names'])):
             for batch_idx, batch in enumerate(loader):
                 batch = [tensor.cuda() for tensor in batch]
                 (obs_traj, fut_traj, _, _, _, _, _) = batch
 
-                z, s = model(batch, "P7", env_idx=val_idx)
-                z_vec += [z.rsample([20, ]).view(-1, 2)]
-                s_vec += [s.rsample([20, ]).view(-1, 2)]
+                z, s = model(batch, "P8", env_idx=val_idx)
+                z_vec += [z.rsample([20, ]).flatten(start_dim=0, end_dim=1)]
+                s_vec += [s.rsample([20, ]).flatten(start_dim=0, end_dim=1)]
 
                 mean_z = torch.mean(z.mean, dim=0)
                 covariance_z = torch.mean(z.covariance_matrix, dim=0)
@@ -142,22 +144,22 @@ def calculate_distance_posteriors(model, valid_dataset, valido_dataset=None):
         plt.figure(1)
         colors = ['b', 'g', 'r', 'c']
         for i in range(len(s_vec)):
-            z_pca = tsne.fit_transform(z_vec[i].cpu())
+            z_pca = z_vec[i].cpu()
             plt.scatter(z_pca[:, 0], z_pca[:, 1], color=colors[i])
-        plt.savefig('figure1.png')
+        plt.show()
 
         plt.figure(2)
         for i in range(len(s_vec)):
-            s_pca = tsne.fit_transform(s_vec[i].cpu())
+            s_pca = s_vec[i].cpu()
             plt.scatter(s_pca[:, 0], s_pca[:, 1], color=colors[i])
-        plt.savefig('figure2.png')
+        plt.show()
 
         for val_idx, (loader, loader_name) in enumerate(zip(valido_dataset['loaders'], valido_dataset['names'])):
             for batch_idx, batch in enumerate(loader):
                 batch = [tensor.cuda() for tensor in batch]
                 (obs_traj, fut_traj, _, _, _, _, _) = batch
 
-                z, s = model(batch, "P7")
+                z, s = model(batch, "P8")
                 mean_z = torch.mean(z.mean, dim=0)
                 covariance_z = torch.mean(z.covariance_matrix, dim=0)
                 mean_s = torch.mean(s.mean, dim=0)
