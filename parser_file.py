@@ -5,10 +5,10 @@ from utils import int_tuple
 Best_Model = "./models/E25_S1/P6/CRMF_epoch_626.pth.tar"
 
 # ##### Seeds test domain shifts ##### #
-seed = 5
+seed = 2
 epoch = 624
-model_dir = f"./models/E25_S{seed:g}"
-tf_dir = f"./runs/E25_S{seed:g}/"
+model_dir = f"./models/E28_S{seed:g}"
+tf_dir = f"./runs/E28_S{seed:g}/"
 pretrained_Model = f"./models/E25_S{seed:g}/P6/CRMF_epoch_{epoch:g}.pth.tar"
 n_samples = 0
 
@@ -36,7 +36,7 @@ def get_parser():
     parser.add_argument("--tfdir", default=tf_dir, type=str)
     parser.add_argument("--dataset_name", default="v4", type=str)
     parser.add_argument("--model_name", default="mlp", type=str)
-    parser.add_argument("--resume", default=pretrained_Model,
+    parser.add_argument("--resume", default="./models/E25_S2/P6/CRMF_epoch_714.pth.tar",
                         type=str, metavar="PATH", help="path to latest checkpoint (default: none)")
 
     # randomness
@@ -76,7 +76,7 @@ def get_parser():
 
     parser.add_argument("--batch_size", default='64', type=str)
     parser.add_argument("--shuffle", default=True, type=bool)
-    parser.add_argument('--reduce', default=n_samples, type=int)
+    parser.add_argument('--reduce', default=64, type=int)
     parser.add_argument('--reduceall', default=0, type=int, help="all data samples: 9000")
 
 
@@ -96,7 +96,7 @@ def get_parser():
 def get_evaluation_parser():
     parser = get_parser()
     parser.add_argument("--dset_type", default="test", type=str)
-    parser.add_argument("--best_k", default=20, type=int)
+    parser.add_argument("--best_k", default=200, type=int)
     parser.add_argument('--metrics', type=str, default='accuracy', choices=['accuracy', 'collision', 'qualitative'],
                         help='evaluate metrics')
 

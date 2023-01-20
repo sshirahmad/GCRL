@@ -783,17 +783,17 @@ class CRMF(nn.Module):
         self.beta_scheduler = get_beta(0, 1500, 1000)
         self.iter = 1
 
-        # self.coupling_layers_z = nn.ModuleList([
-        #     CouplingLayer(args.z_dim, reverse_mask=False),
-        #     CouplingLayer(args.z_dim, reverse_mask=True),
-        #     CouplingLayer(args.z_dim, reverse_mask=False)
-        # ])
-        #
-        # self.coupling_layers_s = nn.ModuleList([
-        #     CouplingLayer(args.s_dim, reverse_mask=False),
-        #     CouplingLayer(args.s_dim, reverse_mask=True),
-        #     CouplingLayer(args.s_dim, reverse_mask=False)
-        # ])
+        self.coupling_layers_z = nn.ModuleList([
+            CouplingLayer(args.z_dim, reverse_mask=False),
+            CouplingLayer(args.z_dim, reverse_mask=True),
+            CouplingLayer(args.z_dim, reverse_mask=False)
+        ])
+
+        self.coupling_layers_s = nn.ModuleList([
+            CouplingLayer(args.s_dim, reverse_mask=False),
+            CouplingLayer(args.s_dim, reverse_mask=True),
+            CouplingLayer(args.s_dim, reverse_mask=False)
+        ])
 
         self.pw = MultivariateNormal(torch.zeros(args.z_dim).cuda(), torch.diag(torch.ones(args.z_dim).cuda()))
 

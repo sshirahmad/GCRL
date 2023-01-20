@@ -213,7 +213,7 @@ def main(args):
         #     freeze(False, (model.invariant_encoder, model.variant_encoder, model.x_to_s, model.x_to_z, model.past_decoder, model.future_decoder, model.coupling_layers_z))
 
         elif training_step == "P7":
-            freeze(True, (model.invariant_encoder, model.x_to_z, model.coupling_layers_z, model.coupling_layers_s))
+            freeze(True, (model.invariant_encoder, model.x_to_z))
             freeze(False, (model.variant_encoder, model.x_to_s, model.future_decoder, model.past_decoder))
 
         if training_step in ["P1", "P2", "P3", "P5", "P6"]:
@@ -242,7 +242,7 @@ def main(args):
                 validate_ade(args, model, valido_dataset, epoch, training_step, writer, stage='validation o')
 
             elif training_step == "P7":
-                metric = validate_ade(args, model, valid_dataset, epoch, training_step, writer, stage='validation o')
+                metric = validate_ade(args, model, valid_dataset, epoch, training_step, writer, stage='validation')
 
         if training_step in ["P6", "P7"]:
             if metric < min_metric:
@@ -404,7 +404,7 @@ def train_all(args, model, optimizers, train_dataset, epoch, training_step, trai
                     env_embeddings.append(low_dim)
                     label_embeddings.append(torch.tensor(train_dataset['labels'][env_name]))
 
-                    batch_loss.append((- predict_loss) + (- elbo_loss1) + (- elbo_loss2) + (- elbo_loss3))
+                    batch_loss.append((- predict_loss) + (- elbo_loss1) + (- elbo_loss2))
 
                     e1_loss_meter.update(elbo_loss1.item(), fut_traj_rel.shape[1])
                     e2_loss_meter.update(elbo_loss2.item(), fut_traj_rel.shape[1])
