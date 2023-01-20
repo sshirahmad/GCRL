@@ -802,8 +802,8 @@ class CRMF(nn.Module):
             self.ps += [MultivariateNormal(i * torch.ones(args.s_dim).cuda(),
                                            torch.diag((i + 1) * torch.ones(args.s_dim).cuda()))]
 
-        self.x_to_z = Mapping(8, 0, args.z_dim)
-        self.x_to_s = Mapping(8 * 2, 0, args.s_dim)
+        self.x_to_z = Mapping(args.traj_lstm_hidden_size, args.graph_lstm_hidden_size, args.z_dim)
+        self.x_to_s = Mapping(args.traj_lstm_hidden_size, args.graph_lstm_hidden_size, args.s_dim)
         self.cont_classifier = nn.Sequential(nn.Linear(args.s_dim, 32),
                                              nn.ReLU(),
                                              nn.Linear(32, 8),
@@ -986,9 +986,9 @@ class CRMF(nn.Module):
                     px = self.past_decoder(z_vec, s_vec)
 
                 if self.decoupled_loss:
-                    log_px = - l2_loss(px, obs_traj, mode="raw")
+                    log_px = - l2_loss(px, obs_traj_rel, mode="raw")
                 else:
-                    log_px = - l2_loss(px, obs_traj, mode="raw") - 0.5 * 2 * self.obs_len * torch.log(
+                    log_px = - l2_loss(px, obs_traj_rel, mode="raw") - 0.5 * 2 * self.obs_len * torch.log(
                         torch.tensor(2 * math.pi)) - 0.5 * self.obs_len * torch.log(torch.tensor(0.25))
 
                 if self.decoupled_loss:

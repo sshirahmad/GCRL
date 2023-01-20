@@ -91,9 +91,9 @@ def main(args):
         'par': torch.optim.Adam(
             [
                 {"params": model.pi_priore, 'lr': args.lrpar},
-                {"params": model.mean_priors, 'lr': args.lrpar},
-                {"params": model.logvar_priors, 'lr': args.lrpar},
-                # {"params": model.coupling_layers_s.parameters(), 'lr': args.lrpar},
+                # {"params": model.mean_priors, 'lr': args.lrpar},
+                # {"params": model.logvar_priors, 'lr': args.lrpar},
+                {"params": model.coupling_layers_s.parameters(), 'lr': args.lrpar},
             ]
         ),
         'var': torch.optim.Adam(
@@ -104,9 +104,9 @@ def main(args):
         ),
         'inv': torch.optim.Adam(
             [
-                # {"params": model.coupling_layers_z.parameters(), 'lr': args.lrinv},
-                {"params": model.mean_priorz, 'lr': args.lrinv},
-                {"params": model.logvar_priorz, 'lr': args.lrinv},
+                {"params": model.coupling_layers_z.parameters(), 'lr': args.lrinv},
+                # {"params": model.mean_priorz, 'lr': args.lrinv},
+                # {"params": model.logvar_priorz, 'lr': args.lrinv},
                 {"params": model.x_to_z.parameters(), 'lr': args.lrinv},
                 {"params": model.invariant_encoder.parameters(), 'lr': args.lrinv},
             ]
