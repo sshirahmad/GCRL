@@ -9,7 +9,7 @@ def get_parser():
     parser.add_argument("--tfdir", default="", type=str)
     parser.add_argument("--dataset_name", default="eth", type=str)
     parser.add_argument("--model_name", default="lstm", type=str)
-    parser.add_argument("--resume", default="",
+    parser.add_argument("--resume", default="./models/E40/CRMF_epoch_880.pth.tar",
                         type=str, metavar="PATH", help="path to latest checkpoint (default: none)")
 
     # randomness
@@ -45,12 +45,14 @@ def get_parser():
                         help='Use Homogeneous (hom), Heterogeneous (het) or alternated homogeneous (alt) batches during training')
     parser.add_argument("--decoupled_loss", default=False, type=bool, help='decouple ELBO from y')
 
+    parser.add_argument("--finetune", default="", type=str, help="Select the components of S prior to finetune")
     parser.add_argument("--batch_size", default='64', type=str)
     parser.add_argument("--shuffle", default=True, type=bool)
     parser.add_argument('--reduce', default=0, type=int)
     parser.add_argument('--reduceall', default=0, type=int, help="all data samples: 9000")
 
     # architecture (VE)
+    parser.add_argument("--rel_recon", default=True, type=bool, help="Whether to reconstruct relative trajectories or absolute trajectories")
     parser.add_argument("--coupling", type=bool, default=True, help="Whether to use coupling layers or not")
     parser.add_argument("--z_dim", type=int, default=2, help="Dimension of z latent variable")
     parser.add_argument("--s_dim", type=int, default=2, help="Dimension of s latent variable")
@@ -68,7 +70,7 @@ def get_parser():
 def get_evaluation_parser():
     parser = get_parser()
     parser.add_argument("--dset_type", default="test", type=str)
-    parser.add_argument("--best_k", default=200, type=int)
+    parser.add_argument("--best_k", default=20, type=int)
     parser.add_argument('--metrics', type=str, default='accuracy', choices=['accuracy', 'collision', 'qualitative'],
                         help='evaluate metrics')
 
@@ -79,8 +81,6 @@ def get_training_parser():
     parser = get_parser()
 
     # training
-    parser.add_argument("--finetune", default="", type=str, help="Select the components of S prior to finetune")
-    parser.add_argument("--rel_recon", default=True, type=bool, help="Whether to reconstruct relative trajectories or absolute trajectories")
     parser.add_argument("--best_k", default=1, type=int)
     parser.add_argument("--start-epoch", default=1, type=int, metavar="N",
                         help="manual epoch number (useful on restarts)")

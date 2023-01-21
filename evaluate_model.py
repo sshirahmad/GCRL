@@ -80,7 +80,7 @@ def evaluate(args, loader, generator, training_step):
             ade, fde = [], []
             total_traj += fut_traj.size(1)
             for k in range(args.best_k):
-                pred_fut_traj_rel = generator(batch, training_step)
+                pred_fut_traj_rel = generator(batch)
 
                 pred_fut_traj = relative_to_abs(pred_fut_traj_rel, obs_traj[-1, :, :2])
 
@@ -197,33 +197,27 @@ def main(args):
     loaders = [data_loader(args, valo_env_path, valo_env_name) for valo_env_path, valo_env_name in zip(valo_envs_path, valo_envs_name)]
     logging.info('Model: {}'.format(args.resume))
     logging.info('Dataset: {}'.format(args.dataset_name))
-    logging.info('Eval shift: {}'.format(args.domain_shifts))
-    logging.info('Dataset type: {}'.format(args.dset_type))
+    logging.info('Split: {}'.format(args.dset_type))
+    logging.info('Shifts: {}'.format(args.domain_shifts))
+    logging.info('Envs: {}'.format(args.filter_envs))
+    logging.info('Seed: {}'.format(args.seed))
+
 
     # quantitative
     if args.metrics == 'accuracy':
 
-        ade_outer = []
-        fde_outer = []
-        for _ in range(10):
-            ade = 0
-            fde = 0
-            total_traj = 0
-            for loader in loaders:
+        ade = 0
+        fde = 0
+        total_traj = 0
+        for loader in loaders:
 
-                ade_sum_i, fde_sum_i, total_traj_i = evaluate(args, loader, generator, training_step="P6")
-                ade += ade_sum_i
-                fde += fde_sum_i
-                total_traj += total_traj_i
-            ade = ade / (total_traj * args.fut_len)
-            fde = fde / total_traj
-            logging.info('ADE: {:.4f}\tFDE: {:.4f}'.format(ade, fde))
-            ade_outer += [ade]
-            fde_outer += [fde]
-
-        ade_outer = torch.stack(ade_outer).mean(0)
-        fde_outer = torch.stack(fde_outer).mean(0)
-        print(ade_outer, fde_outer)
+            ade_sum_i, fde_sum_i, total_traj_i = evaluate(args, loader, generator, training_step="P6")
+            ade += ade_sum_i
+            fde += fde_sum_i
+            total_traj += total_traj_i
+        ade = ade / (total_traj * args.fut_len)
+        fde = fde / total_traj
+        logging.info('ADE: {:.4f}\tFDE: {:.4f}'.format(ade, fde))
 
     # qualitative
     if args.metrics == 'qualitative':
@@ -238,9 +232,18 @@ def main(args):
 
 if __name__ == "__main__":
     args = get_evaluation_parser().parse_args()
-    set_logger(os.path.join(args.log_dir, args.dataset_name,
-                            args.resume[:-8] + "_" + args.dset_type + "_ds_" + str(args.domain_shifts) + ".log"))
-    torch.manual_seed(args.seed)
-    torch.backends.cudnn.deterministic = True
-    torch.backends.cudnn.benchmark = False
+    if args.finetune:
+        model_param = args.resume.split('/')[5].split('.')[0]
+        path = args.log_dir + args.dataset_name + '/finetune/'
+        if not os.path.exists(path):
+            os.makedirs(path)
+        set_logger(path + model_param + '.log')
+
+    else:
+        model_param = args.resume.split('/')[3].split('.')[0]
+        path = args.log_dir + args.dataset_name + '/pretrain/'
+        if not os.path.exists(path):
+            os.makedirs(path)
+        set_logger(path + model_param + '.log')
+    set_seed_globally(args.seed)
     main(args)

@@ -1,6 +1,6 @@
 # PRETRAIN MODELS (v4 MLP)
 
-GPU=2 # 0. Set GPU
+GPU=0
 EVALUATION="--metrics accuracy"
 add_confidence=True
 exp="pretrain"
