@@ -163,10 +163,13 @@ def main(args):
             metric = validate_ade(args, model, valid_dataset, epoch, writer, stage='validation')
             validate_ade(args, model, valido_dataset, epoch, writer, stage='validation o')
 
-        if metric < min_metric:
-            min_metric = metric
+        if args.finetune:
+            if metric < min_metric:
+                min_metric = metric
+                save_all_model(args, model, model_name, optimizers, metric, epoch)
+                print(f'\n{"_" * 150}\n')
+        else:
             save_all_model(args, model, model_name, optimizers, metric, epoch)
-            print(f'\n{"_" * 150}\n')
 
     writer.close()
 
