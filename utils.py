@@ -277,7 +277,7 @@ def set_domain_shift(domain_shifts, env_name):
 
 def set_name_experiment(args, name='VCRL'):
 
-    return f'{name}_batch_{args.batch_method}_data_{args.dataset_name}_ds_{args.domain_shifts}_bk_{args.best_k}_ns_{args.num_samples}_ep_{args.num_epochs}_shuffle_{str(args.shuffle).lower()}_seed_{args.seed}_cl_{args.coupling}_dc_{args.decoupled_loss}'
+    return f'{name}_data_{args.dataset_name}_ds_{args.domain_shifts}_bk_{args.best_k}_ns_{args.num_samples}_ep_{args.num_epochs}_seed_{args.seed}_cl_{args.coupling}_dc_{args.decoupled_loss}'
 
 
 def set_batch_size(batch_method, batch_sizes, env_name):
@@ -370,19 +370,6 @@ def cal_ade_fde(fut_traj, pred_fut_traj, mode='sum'):
 
 best_ade = 100
 
-
-def save_checkpoint(state, ade, filename, is_best):
-    """
-    Save the model
-    """
-    global best_ade
-    best_ade = min(ade, best_ade)
-
-    if is_best:
-        torch.save(state, filename)
-        logging.info("Performances improved --> Model Saved")
-
-
 def set_seed_globally(seed):
     random.seed(seed)
     np.random.seed(seed)
@@ -467,7 +454,7 @@ def save_all_model(args, model, model_name, optimizers, metric, epoch):
             phase = 'finetune'
         else:
             phase = 'pretrain'
-        filefolder = f'./models/{args.dataset_name}/{model_name}/{phase}'
+        filefolder = f'./models/{args.dataset_name}/{phase}'
 
         if args.finetune:
             filefolder += f'/{args.finetune}/{args.seed}'
@@ -476,7 +463,7 @@ def save_all_model(args, model, model_name, optimizers, metric, epoch):
     if not os.path.exists(filefolder):
         os.makedirs(filefolder)
 
-    filename = f'{filefolder}/{get_model_name(epoch=epoch)}.pth.tar'
+    filename = f'{filefolder}/{get_model_name(model_name, epoch=epoch)}.pth.tar'
     torch.save(checkpoint, filename)
     logging.info(f" --> Model Saved in {filename}")
 
