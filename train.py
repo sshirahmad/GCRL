@@ -141,7 +141,7 @@ def main(args):
         model.cuda()
 
     min_metric = 1e10
-    for epoch in range(args.start_epoch, sum(args.num_epochs) + 1):
+    for epoch in range(args.start_epoch, args.num_epochs + 1):
         logging.info(f"\n===> EPOCH: {epoch}")
 
         if args.finetune == "all" and args.coupling:
