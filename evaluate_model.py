@@ -13,7 +13,7 @@ matplotlib.use('Agg')
 
 from loader import data_loader
 from parser_file import get_evaluation_parser
-from models import CRMF
+from models import VCRL
 from utils import *
 
 
@@ -27,7 +27,7 @@ def get_generator(args):
             + [args.graph_lstm_hidden_size]
     )
     args.n_heads = [int(x) for x in args.heads.strip().split(",")]
-    model = CRMF(args)
+    model = VCRL(args)
     load_all_model(args, model, None)
     model.cuda()
     model.eval()

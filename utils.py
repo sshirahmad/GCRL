@@ -99,6 +99,17 @@ def relative_to_abs(rel_traj, start_pos):
     return abs_traj.permute(1, 0, 2)
 
 
+def erm_loss(l2_loss_rel, seq_start_end):
+    loss_sum = torch.zeros(1).cuda()
+    for start, end in seq_start_end.data:
+        _l2_loss_rel = torch.narrow(l2_loss_rel, 0, start, end - start)
+        _l2_loss_rel = torch.sum(_l2_loss_rel, dim=0)  # [best_k elements]
+        _l2_loss_rel = torch.max(_l2_loss_rel) / (end - start)
+        loss_sum += _l2_loss_rel
+
+    return loss_sum
+
+
 def get_dset_path(dset_name, dset_type):
     _dir = os.path.dirname(__file__)
     return os.path.join(_dir, "datasets", dset_name, dset_type)
@@ -264,9 +275,9 @@ def set_domain_shift(domain_shifts, env_name):
     return alpha_e
 
 
-def set_name_experiment(args, name='CRMF'):
+def set_name_experiment(args, name='VCRL'):
 
-    return f'{name}_batch_{args.batch_method}_data_{args.dataset_name}_ds_{args.domain_shifts}_bk_{args.best_k}_ep_{args.num_epochs}_shuffle_{str(args.shuffle).lower()}_seed_{args.seed}'
+    return f'{name}_batch_{args.batch_method}_data_{args.dataset_name}_ds_{args.domain_shifts}_bk_{args.best_k}_ns_{args.num_samples}_ep_{args.num_epochs}_shuffle_{str(args.shuffle).lower()}_seed_{args.seed}_cl_{args.coupling}_dc_{args.decoupled_loss}'
 
 
 def set_batch_size(batch_method, batch_sizes, env_name):
@@ -380,18 +391,7 @@ def set_seed_globally(seed):
     torch.backends.cudnn.benchmark = False
 
 
-def get_method_name(args):
-    name_risk = 'erm_0.0'
-    if args.irm > 0:
-        name_risk += 'irm_' + str(args.irm)
-    elif args.vrex > 0:
-        name_risk += 'vrex_' + str(args.vrex)
-    else:
-        name_risk += 'erm_0.0'
-    return name_risk
-
-
-def get_model_name(name='CRMF', epoch=None, time=False):
+def get_model_name(name='VCRL', epoch=None, time=False):
     if time:
         name = datetime.now().strftime("%m-%d_%H:%M_") + name
 
@@ -432,80 +432,56 @@ def set_name_finetune(finetune):
         return 'Update f + Refinement'
 
 
-def save_all_model(args, model, model_name, optimizers, metric, epoch, training_step):
+def save_all_model(args, model, model_name, optimizers, metric, epoch):
 
-    if training_step == "P4":
-        checkpoint = {
-            'epoch': epoch + 1,
-            'state_dicts': {
-                'variant_encoder': model.variant_encoder.state_dict(),
-                'invariant_encoder': model.invariant_encoder.state_dict(),
-                'x_to_z': model.x_to_z.state_dict(),
-                'x_to_s': model.x_to_s.state_dict(),
-                'future_decoder': model.future_decoder.state_dict(),
-                'past_decoder': model.past_decoder.state_dict(),
-                'coupling_layers_z': model.coupling_layers_z.state_dict(),
-                'coupling_layers_s': model.coupling_layers_s.state_dict(),
-                'pi_priore': torch.log(torch.from_numpy(model.gmm.weights_).cuda().float()) + torch.log(torch.from_numpy(model.gmm.weights_).cuda().float().sum()),
-                # 'mean_priors': torch.from_numpy(model.gmm.means_).cuda().float(),
-                # 'logvar_priors': torch.log(torch.from_numpy(model.gmm.covariances_).cuda().float()),
-                # 'mean_priorz': model.mean_priorz,
-                # 'logvar_priorz': model.logvar_priorz,
+    checkpoint = {
+        'epoch': epoch + 1,
+        'state_dicts': {
+            'variant_encoder': model.variant_encoder.state_dict(),
+            'invariant_encoder': model.invariant_encoder.state_dict(),
+            'x_to_z': model.x_to_z.state_dict(),
+            'x_to_s': model.x_to_s.state_dict(),
+            'future_decoder': model.future_decoder.state_dict(),
+            'past_decoder': model.past_decoder.state_dict(),
+            'pi_priore': model.pi_priore,
+        },
+        'optimizers': {
+            key: val.state_dict() for key, val in optimizers.items()
+        },
+        'metric': metric,
+    }
 
-            },
-            'optimizers': {
-                key: val.state_dict() for key, val in optimizers.items()
-            },
-            'metric': metric,
-        }
+    if args.coupling:
+        checkpoint['state_dicts']['coupling_layers_z'] = model.coupling_layers_z.state_dict()
+        checkpoint['state_dicts']['coupling_layers_s'] = model.coupling_layers_s.state_dict()
     else:
-        checkpoint = {
-            'epoch': epoch + 1,
-            'state_dicts': {
-                'variant_encoder': model.variant_encoder.state_dict(),
-                'invariant_encoder': model.invariant_encoder.state_dict(),
-                'x_to_z': model.x_to_z.state_dict(),
-                'x_to_s': model.x_to_s.state_dict(),
-                'future_decoder': model.future_decoder.state_dict(),
-                'past_decoder': model.past_decoder.state_dict(),
-                'coupling_layers_z': model.coupling_layers_z.state_dict(),
-                'coupling_layers_s': model.coupling_layers_s.state_dict(),
-                'cont_classifier': model.cont_classifier.state_dict(),
-                'pi_priore': model.pi_priore,
-                # 'mean_priors': model.mean_priors,
-                # 'logvar_priors': model.logvar_priors,
-                # 'mean_priorz': model.mean_priorz,
-                # 'logvar_priorz': model.logvar_priorz,
-
-            },
-            'optimizers': {
-                key: val.state_dict() for key, val in optimizers.items()
-            },
-            'metric': metric,
-        }
+        checkpoint['state_dicts']['mean_priors'] = model.mean_priors
+        checkpoint['state_dicts']['logvar_priors'] = model.logvar_priors
+        checkpoint['state_dicts']['mean_priorz'] = model.mean_priorz
+        checkpoint['state_dicts']['logvar_priorz'] = model.logvar_priorz
 
     if args.model_dir:
-        filefolder = f'{args.model_dir}/{training_step}'
+        filefolder = f'{args.model_dir}'
     else:
         if args.finetune:
             phase = 'finetune'
         else:
             phase = 'pretrain'
-        # filefolder = f'./models/{args.dataset_name}/{phase}/{training_step}/{args.irm}/{real_style_integ}'
-        filefolder = f'./models/{args.dataset_name}/{model_name}/{phase}/{training_step}'
+        filefolder = f'./models/{args.dataset_name}/{model_name}/{phase}'
 
         if args.finetune:
-            filefolder += f'/{args.finetune}/{args.original_seed}'
+            filefolder += f'/{args.finetune}/{args.seed}'
 
     # Check whether the specified path exists or not
-    if not os.path.exists(filefolder): os.makedirs(filefolder)
+    if not os.path.exists(filefolder):
+        os.makedirs(filefolder)
 
     filename = f'{filefolder}/{get_model_name(epoch=epoch)}.pth.tar'
     torch.save(checkpoint, filename)
     logging.info(f" --> Model Saved in {filename}")
 
 
-def load_all_model(args, model, optimizers, lr_schedulers=None, training_steps=None, num_batches=0):
+def load_all_model(args, model, optimizers, lr_schedulers=None, num_batches=0):
     model_path = args.resume
 
     if os.path.isfile(model_path):
@@ -515,11 +491,9 @@ def load_all_model(args, model, optimizers, lr_schedulers=None, training_steps=N
         models_checkpoint = checkpoint['state_dicts']
 
         if lr_schedulers != None:
-            for phase, lr_scheduler_optims in lr_schedulers.items():
-                start_p = training_steps[phase][0]
-                if lr_scheduler_optims != None:
-                    for k, lr_scheduler in lr_scheduler_optims.items():
-                        lr_scheduler.last_epoch = (args.start_epoch - start_p - 1) * num_batches
+            for name, lr_scheduler_optim in lr_schedulers.items():
+                if lr_scheduler_optim != None:
+                    lr_scheduler_optim.last_epoch = (args.start_epoch - 1) * num_batches
 
         # future decoder
         model.future_decoder.load_state_dict(models_checkpoint['future_decoder'])
@@ -534,33 +508,26 @@ def load_all_model(args, model, optimizers, lr_schedulers=None, training_steps=N
             update_lr(optimizers['past_decoder'], args.lrpast)
 
         # invariant encoder
-        model.coupling_layers_z.load_state_dict(models_checkpoint['coupling_layers_z'])
-        # model.mean_priorz.data = models_checkpoint['mean_priorz'].data.cuda()
-        # model.logvar_priorz.data = models_checkpoint['logvar_priorz'].data.cuda()
+        if args.coupling:
+            model.coupling_layers_z.load_state_dict(models_checkpoint['coupling_layers_z'])
+        else:
+            model.mean_priorz.data = models_checkpoint['mean_priorz'].data.cuda()
+            model.logvar_priorz.data = models_checkpoint['logvar_priorz'].data.cuda()
+        model.invariant_encoder.load_state_dict(models_checkpoint['invariant_encoder'])
         model.x_to_z.load_state_dict(models_checkpoint['x_to_z'])
         if optimizers != None:
             optimizers['inv'].load_state_dict(checkpoint['optimizers']['inv'])
             update_lr(optimizers['inv'], args.lrinv)
 
-        # variational models
-        if args.contrastive:
-            model.cont_classifier.load_state_dict(models_checkpoint['cont_classifier'])
-
-        model.pi_priore.data = models_checkpoint['pi_priore'].data.cuda()
-        print(torch.softmax(model.pi_priore, dim=0))
-        model.x_to_s.load_state_dict(models_checkpoint['x_to_s'])
-        model.coupling_layers_s.load_state_dict(models_checkpoint['coupling_layers_s'])
-        # model.mean_priors.data = models_checkpoint['mean_priors'].data.cuda()
-        # model.logvar_priors.data = models_checkpoint['logvar_priors'].data.cuda()
-        # model.x_to_s.fc_logvar.weight.data = models_checkpoint['x_to_s']['fc_mu.weight'].cuda()
-        # model.x_to_s.fc_logvar.bias.data = models_checkpoint['x_to_s']['fc_mu.bias'].cuda()
-        if optimizers != None:
-            optimizers['par'].load_state_dict(checkpoint['optimizers']['par'])
-            update_lr(optimizers['par'], args.lrpar)
-
         # variant encoder
+        if args.coupling:
+            model.coupling_layers_s.load_state_dict(models_checkpoint['coupling_layers_s'])
+        else:
+            model.mean_priors.data = models_checkpoint['mean_priors'].data.cuda()
+            model.logvar_priors.data = models_checkpoint['logvar_priors'].data.cuda()
+        model.pi_priore.data = models_checkpoint['pi_priore'].data.cuda()
         model.variant_encoder.load_state_dict(models_checkpoint['variant_encoder'])
-        model.invariant_encoder.load_state_dict(models_checkpoint['invariant_encoder'])
+        model.x_to_s.load_state_dict(models_checkpoint['x_to_s'])
         if optimizers != None:
             optimizers['var'].load_state_dict(checkpoint['optimizers']['var'])
             update_lr(optimizers['var'], args.lrvar)
@@ -587,43 +554,3 @@ def freeze(freez, models):
 def update_lr(opt, lr):
     for param_group in opt.param_groups:
         param_group["lr"] = lr
-
-
-def from_abs_to_social(abs_coord):
-    res = []
-    for f in range(abs_coord.shape[0]):
-        sub = []
-        for k in range(abs_coord.shape[1] // NUMBER_PERSONS):
-            # for i in range(NUMBER_PERSONS):
-            #     for j in range(i+1, NUMBER_PERSONS):
-
-            #         sub.append(abs_coord[f, k*NUMBER_PERSONS+i]-abs_coord[f, k*NUMBER_PERSONS+j])
-
-            for i in range(NUMBER_PERSONS):
-                for j in range(NUMBER_PERSONS):  # each possible couple i,j
-                    if i == j: continue
-
-                    sub.append(abs_coord[f, k * NUMBER_PERSONS + i] - abs_coord[f, k * NUMBER_PERSONS + j])
-
-                    #     augm_data[idx, count, x, k] = data[idx, i, x, k] - data[idx, j, x, k]
-                    # count += 1
-
-        res.append(torch.stack(sub))
-    res = torch.stack(res)
-    return res
-
-
-class get_beta:
-    def __init__(self, start_epoch, interval, init_beta):
-        self.start_epoch = start_epoch
-        self.interval = interval
-        self.init_beta = init_beta
-
-    def beta_val(self, epoch):
-        if self.start_epoch < epoch <= self.start_epoch + self.interval:
-            beta = (1 - self.init_beta) / self.interval * (epoch - self.start_epoch - 1) + self.init_beta
-
-        else:
-            beta = 1.0
-
-        return beta

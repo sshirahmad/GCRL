@@ -20,9 +20,6 @@ def data_loader(args, paths, name, finetune=False, test=False, pt=False):
                 delim=args.delim,
                 n_coordinates=args.n_coordinates,
                 add_confidence=args.add_confidence,
-                finetune_ratio=args.finetune_ratio,
-                finetune=finetune,
-                test=test
             ))
         dset = ConcatDataset(dsets)
 
