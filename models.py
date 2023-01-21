@@ -259,15 +259,6 @@ class Encoder(nn.Module):
             graph_lstm_hidden_size
         )
 
-        self.traj_hidden2pos = nn.Linear(
-            traj_lstm_hidden_size,
-            n_coordinates
-        )
-        self.traj_gat_hidden2pos = nn.Linear(
-            traj_lstm_hidden_size + graph_lstm_hidden_size,
-            n_coordinates
-        )
-
         self._initialize_weights()
 
     def _initialize_weights(self):
@@ -297,7 +288,6 @@ class Encoder(nn.Module):
             self,
             obs_traj_rel,
             seq_start_end,
-            training_step=3,
     ):
 
         num_peds = obs_traj_rel.shape[1]
@@ -312,37 +302,23 @@ class Encoder(nn.Module):
             traj_lstm_h_t, traj_lstm_c_t = self.traj_lstm_model(
                 obs_traj_rel[i], (traj_lstm_h_t, traj_lstm_c_t)
             )
-            if training_step == "P1":
-                output = self.traj_hidden2pos(traj_lstm_h_t)
-                pred_traj_rel += [output]
-            else:
-                traj_lstm_hidden_states += [traj_lstm_h_t]
+
+            traj_lstm_hidden_states += [traj_lstm_h_t]
 
         # graph_lstm (used in step 2,3)
-        if training_step != "P1":
-            graph_lstm_input = self.gatencoder(
-                torch.stack(traj_lstm_hidden_states), seq_start_end
+        graph_lstm_input = self.gatencoder(
+            torch.stack(traj_lstm_hidden_states), seq_start_end
+        )
+        for i in range(self.obs_len):
+            graph_lstm_h_t, graph_lstm_c_t = self.graph_lstm_model(
+                graph_lstm_input[i], (graph_lstm_h_t, graph_lstm_c_t)
             )
-            for i in range(self.obs_len):
-                graph_lstm_h_t, graph_lstm_c_t = self.graph_lstm_model(
-                    graph_lstm_input[i], (graph_lstm_h_t, graph_lstm_c_t)
-                )
-                if training_step == "P2":
-                    encoded_before_noise_hidden = torch.cat(
-                        (traj_lstm_hidden_states[i], graph_lstm_h_t), dim=1
-                    )
-                    output = self.traj_gat_hidden2pos(encoded_before_noise_hidden)
-                    pred_traj_rel += [output]
-                else:
-                    graph_lstm_hidden_states += [graph_lstm_h_t]
 
-        if training_step in ["P1", "P2"]:
-            return torch.stack(pred_traj_rel)
+            graph_lstm_hidden_states += [graph_lstm_h_t]
 
-        else:
-            encoded_before_noise_hidden = torch.cat((traj_lstm_hidden_states[-1], graph_lstm_hidden_states[-1]), dim=1)
+        encoded_before_noise_hidden = torch.cat((traj_lstm_hidden_states[-1], graph_lstm_hidden_states[-1]), dim=1)
 
-            return encoded_before_noise_hidden
+        return encoded_before_noise_hidden
 
 
 class Predictor(nn.Module):
@@ -817,8 +793,8 @@ class VCRL(nn.Module):
         if self.training:
             # obtain the posterior distributions
             if self.model_name == "lstm":
-                q_zgx = self.x_to_z(self.invariant_encoder(obs_traj_rel, seq_start_end, training_step))
-                q_sgx = self.x_to_s(self.variant_encoder(obs_traj_rel, seq_start_end, training_step))
+                q_zgx = self.x_to_z(self.invariant_encoder(obs_traj_rel, seq_start_end))
+                q_sgx = self.x_to_s(self.variant_encoder(obs_traj_rel, seq_start_end))
             elif self.model_name == "mlp":
                 q_zgx = self.x_to_z(self.invariant_encoder(obs_traj))
                 q_sgx = self.x_to_s(self.variant_encoder(augm_data))
@@ -937,8 +913,8 @@ class VCRL(nn.Module):
             identify = kwargs.get("identify")
             if identify:
                 if self.model_name == "lstm":
-                    q_zgx = self.x_to_z(self.invariant_encoder(obs_traj_rel, seq_start_end, training_step))
-                    q_sgx = self.x_to_s(self.variant_encoder(obs_traj_rel, seq_start_end, training_step))
+                    q_zgx = self.x_to_z(self.invariant_encoder(obs_traj_rel, seq_start_end))
+                    q_sgx = self.x_to_s(self.variant_encoder(obs_traj_rel, seq_start_end))
                 elif self.model_name == "mlp":
                     q_zgx = self.x_to_z(self.invariant_encoder(obs_traj))
                     q_sgx = self.x_to_s(self.variant_encoder(augm_data))
@@ -947,8 +923,8 @@ class VCRL(nn.Module):
 
             else:
                 if self.model_name == "lstm":
-                    q_zgx = self.x_to_z(self.invariant_encoder(obs_traj_rel, seq_start_end, training_step))
-                    q_sgx = self.x_to_s(self.variant_encoder(obs_traj_rel, seq_start_end, training_step))
+                    q_zgx = self.x_to_z(self.invariant_encoder(obs_traj_rel, seq_start_end))
+                    q_sgx = self.x_to_s(self.variant_encoder(obs_traj_rel, seq_start_end))
                 elif self.model_name == "mlp":
                     q_zgx = self.x_to_z(self.invariant_encoder(obs_traj))
                     q_sgx = self.x_to_s(self.variant_encoder(augm_data))
