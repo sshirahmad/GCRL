@@ -735,7 +735,6 @@ class VCRL(nn.Module):
         self.fut_len = args.fut_len
         self.num_samples = args.num_samples
         self.n_coordinates = args.n_coordinates
-        self.contrastive = args.contrastive
         self.decoupled_loss = args.decoupled_loss
         self.best_k = args.best_k
         self.coupling = args.coupling
