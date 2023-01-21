@@ -805,7 +805,7 @@ class VCRL(nn.Module):
         else:
             raise ValueError('Unrecognized model name "%s"' % args.model_name)
 
-    def forward(self, batch, training_step, **kwargs):
+    def forward(self, batch, **kwargs):
         if self.dataset_name in ('eth', 'hotel', 'univ', 'zara1', 'zara2'):
             obs_traj, fut_traj, obs_traj_rel, fut_traj_rel, seq_start_end, = batch
 
