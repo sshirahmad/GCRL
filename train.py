@@ -134,7 +134,12 @@ def main(args):
                                        total_steps=int(total_steps), pct_start=0.3),
             }
     else:
-        lr_schedulers = None
+        lr_schedulers = {
+            'var': None,
+            'inv': None,
+            'future_decoder': None,
+            'past_decoder': None
+            }
 
     if args.resume:
         load_all_model(args, model, optimizers, lr_schedulers, num_batches)
