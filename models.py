@@ -259,15 +259,6 @@ class Encoder(nn.Module):
             graph_lstm_hidden_size
         )
 
-        self.traj_hidden2pos = nn.Linear(
-            traj_lstm_hidden_size,
-            n_coordinates
-        )
-        self.traj_gat_hidden2pos = nn.Linear(
-            traj_lstm_hidden_size + graph_lstm_hidden_size,
-            n_coordinates
-        )
-
         self._initialize_weights()
 
     def _initialize_weights(self):

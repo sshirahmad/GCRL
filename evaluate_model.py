@@ -232,18 +232,28 @@ def main(args):
 
 if __name__ == "__main__":
     args = get_evaluation_parser().parse_args()
-    if args.finetune:
-        model_param = args.resume.split('/')[5].split('.')[0]
-        path = args.log_dir + args.dataset_name + '/finetune/'
-        if not os.path.exists(path):
-            os.makedirs(path)
-        set_logger(path + model_param + '.log')
 
-    else:
+    if args.dataset_name in ["eth", "hotel", "zara1", "zara2", "univ"]:
         model_param = args.resume.split('/')[3].split('.')[0]
         path = args.log_dir + args.dataset_name + '/pretrain/'
         if not os.path.exists(path):
             os.makedirs(path)
-        set_logger(path + model_param + '.log')
+        set_logger(path + model_param + f'_{args.domain_shifts}' + '.log')
+
+    elif args.dataset_name == "v4":
+        if args.finetune:
+            model_param = args.resume.split('/')[5].split('.')[0]
+            path = args.log_dir + args.dataset_name + '/finetune/'
+            if not os.path.exists(path):
+                os.makedirs(path)
+            set_logger(path + model_param + '.log')
+
+        else:
+            model_param = args.resume.split('/')[3].split('.')[0]
+            path = args.log_dir + args.dataset_name + '/pretrain/'
+            if not os.path.exists(path):
+                os.makedirs(path)
+            set_logger(path + model_param + '.log')
+
     set_seed_globally(args.seed)
     main(args)

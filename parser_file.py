@@ -37,7 +37,7 @@ def get_parser():
     parser.add_argument("--obs_len", default=8, type=int)
     parser.add_argument("--fut_len", default=12, type=int)
     parser.add_argument("--n_coordinates", type=int, default=2, help="Number of coordinates")
-    parser.add_argument("--filter_envs", type=str, default="",
+    parser.add_argument("--filter_envs", type=str, default="0.6",
                         help="Filter only certain environments (i.e 0.1-0.3-0.5)")
     parser.add_argument("--skip", default=1, type=int)
     parser.add_argument("--delim", default="\t")
@@ -69,6 +69,7 @@ def get_parser():
 
 def get_evaluation_parser():
     parser = get_parser()
+    parser.add_argument("--exp", default='all', choices=['pretrain', 'finetune', 'all'], help="Select Experiment")
     parser.add_argument("--dset_type", default="test", type=str)
     parser.add_argument("--best_k", default=20, type=int)
     parser.add_argument('--metrics', type=str, default='accuracy', choices=['accuracy', 'collision', 'qualitative'],
