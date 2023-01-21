@@ -14,7 +14,7 @@ MODEL="--model_name $model"
 DIR="--tfdir runs/$dataset/$exp/"
 bs=64
 
-e=700
+e=300
 TRAINING="--num_epochs $e --batch_size $bs --batch_method $batch_method"
 
 for seed in 1 2 3 4

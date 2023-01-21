@@ -3,38 +3,33 @@ exp='finetune'
 GPU=0 # 0. Set GPU
 
 # data
-filter_envs='0.6' # 1. Set env(s) to filter for training
-filter_envs_pretrain='0.1-0.3-0.5'
+model="mlp"
+dc=True
+f_envs='0.6'
+batch_method="het"
+rel_recon=False
 dataset='v4'
-DATA="--dataset_name $dataset --filter_envs $filter_envs --filter_envs_pretrain $filter_envs_pretrain"
+DATA="--dataset_name $dataset --filter_envs $f_envs"
+MODEL="--model_name $model"
 bs=64
 
-# training
-step='P6'
-lrinteg=0.001
-contrastive=0.05
-
 ## TO CHANGE DEPENDING ON PREVIOUS STEPS
-p6=300 # number of finetuning steps
-oldreduceall=9000
-epoch_string='0-0-100-50-20-300'
-epoch=470 # sum of above
-irm=1.0 # 3. Set IRM (used in pretraining)
+steps=100 # number of finetuning steps
+epoch=400
 
-for finetune in 'all' 'integ+' 'integ'
+for finetune in 'all' 'weights+s'
 do
     for seed in 1 2 3 4 5
     do
         # pretrained model
-        model_dir="./models/$dataset/$exp/$step/$irm/$finetune/$seed"
-        DIR="--tfdir runs/$dataset/$exp/$step/$irm/$finetune/$seed"
+        DIR="--tfdir runs/$dataset/$exp/$finetune/$seed"
 
-        TRAINING="--num_epochs $epoch-0-0-0-0-$p6 --batch_size $bs --finetune $finetune --lrinteg $lrinteg --contrastive $contrastive --irm $irm"
+        TRAINING="--num_epochs $steps --batch_size $bs --batch_method $batch_method --finetune $finetune --decoupled_loss $dc --best_k 20 --rel_recon $rel_recon"
 
         for reduce in 64 128 192 256 320
         do
-            CUDA_VISIBLE_DEVICES=$GPU python train.py $DATA $TRAINING $MODEL $DIR --reduce $reduce --original_seed $seed --resume "models/$dataset/pretrain/$step/$irm/SSE_data_${dataset}_irm[${irm}]_filter_envs[0.1-0.3-0.5]_ep_[$epoch_string]_seed_${seed}_tstep_${step}_epoch_${epoch}_reduceall[$oldreduceall]_relsocial[True]stylefs[all].pth.tar" &
+            CUDA_VISIBLE_DEVICES=$GPU python train.py $DATA $TRAINING $MODEL $DIR --reduce $reduce --seed $seed --resume "models/$dataset/pretrain/VCRL_data_${dataset}_ds_0_bk_20_ns_10_ep_${epoch}_seed_${seed}_cl_True_dc_True_epoch_${epoch}.pth.tar" &
         done
-        CUDA_VISIBLE_DEVICES=$GPU python train.py $DATA $TRAINING $MODEL $DIR --reduce 384 --original_seed $seed --resume "models/$dataset/pretrain/$step/$irm/SSE_data_${dataset}_irm[${irm}]_filter_envs[0.1-0.3-0.5]_ep_[$epoch_string]_seed_${seed}_tstep_${step}_epoch_${epoch}_reduceall[$oldreduceall]_relsocial[True]stylefs[all].pth.tar"
+        CUDA_VISIBLE_DEVICES=$GPU python train.py $DATA $TRAINING $MODEL $DIR --reduce 384 --seed $seed --resume "models/$dataset/pretrain/VCRL_data_${dataset}_ds_0_bk_20_ns_10_ep_${epoch}_seed_${seed}_cl_True_dc_True_epoch_${epoch}.pth.tar"
     done
 done

@@ -15,11 +15,11 @@ MODEL="--model_name $model"
 DIR="--tfdir runs/$dataset/$exp/"
 bs=64
 
-e=700
+e=400
 TRAINING="--num_epochs $e --batch_size $bs --batch_method $batch_method --decoupled_loss $dc --best_k 20 --rel_recon $rel_recon"
 
 for seed in 1 2 3 4
 do  
     CUDA_VISIBLE_DEVICES=$GPU python train.py $DATA $TRAINING $DIR $MODEL --seed $seed &
 done
-CUDA_VISIBLE_DEVICES=$GPU python train.py $DATA $TRAINING $DIR $MODEL $USUAL --seed 5
+CUDA_VISIBLE_DEVICES=$GPU python train.py $DATA $TRAINING $DIR $MODEL --seed 5

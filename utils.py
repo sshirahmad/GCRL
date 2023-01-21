@@ -378,12 +378,15 @@ def set_seed_globally(seed):
     torch.backends.cudnn.benchmark = False
 
 
-def get_model_name(name='VCRL', epoch=None, time=False):
+def get_model_name(args, name='VCRL', epoch=None, time=False):
     if time:
         name = datetime.now().strftime("%m-%d_%H:%M_") + name
 
     if epoch:
         name += f'_epoch_{epoch}'
+
+    if args.finetune:
+        name = f'model_t{args.reduce}'
 
     return name
 
@@ -463,7 +466,7 @@ def save_all_model(args, model, model_name, optimizers, metric, epoch):
     if not os.path.exists(filefolder):
         os.makedirs(filefolder)
 
-    filename = f'{filefolder}/{get_model_name(model_name, epoch=epoch)}.pth.tar'
+    filename = f'{filefolder}/{get_model_name(args, model_name, epoch=epoch)}.pth.tar'
     torch.save(checkpoint, filename)
     logging.info(f" --> Model Saved in {filename}")
 
