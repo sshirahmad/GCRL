@@ -277,7 +277,7 @@ def set_domain_shift(domain_shifts, env_name):
 
 def set_name_experiment(args, name='VCRL'):
 
-    return f'{name}_data_{args.dataset_name}_ds_{args.domain_shifts}_bk_{args.best_k}_ns_{args.num_samples}_ep_{args.num_epochs}_seed_{args.seed}_cl_{args.coupling}_dc_{args.decoupled_loss}'
+    return f'{name}_data_{args.dataset_name}_ds_{args.domain_shifts}_bk_{args.best_k}_ns_{args.num_samples}_ep_{args.num_epochs}_seed_{args.seed}_cl_{args.coupling}_dc_{args.decoupled_loss}_latentdim_{args.z_dim}_cluster_{args.num_envs}'
 
 
 def set_batch_size(batch_method, batch_sizes, env_name):
