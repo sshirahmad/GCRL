@@ -14,6 +14,7 @@ MODEL="--model_name $model"
 DIR="--tfdir runs/$dataset/$exp/"
 TRAINING="--num_epochs $e --batch_size $bs --batch_method $batch_method"
 bs=64
+dim=8
 e=300
 
-CUDA_VISIBLE_DEVICES=$GPU python train.py $DEFAULTS $DATA $TRAINING $DIR $MODEL --lr_scheduler True --z_dim 8 --s_dim 8 --seed 1
+CUDA_VISIBLE_DEVICES=$GPU python train.py $DEFAULTS $DATA $TRAINING $DIR $MODEL --z_dim $dim --s_dim $dim --seed 1
