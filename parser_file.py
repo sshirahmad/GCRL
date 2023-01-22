@@ -43,7 +43,7 @@ def get_parser():
     parser.add_argument("--delim", default="\t")
     parser.add_argument("--batch_method", default='hom', type=str,
                         help='Use Homogeneous (hom), Heterogeneous (het) or alternated homogeneous (alt) batches during training')
-    parser.add_argument("--decoupled_loss", default=False, type=bool, help='decouple ELBO from y')
+    parser.add_argument("--decoupled_loss", action=argparse.BooleanOptionalAction, help='decouple ELBO from y')
 
     parser.add_argument("--finetune", default="", type=str, help="Select the components of S prior to finetune")
     parser.add_argument("--batch_size", default='64', type=str)
@@ -52,15 +52,19 @@ def get_parser():
     parser.add_argument('--reduceall', default=0, type=int, help="all data samples: 9000")
 
     # architecture (VE)
-    parser.add_argument("--rel_recon", default=True, type=bool, help="Whether to reconstruct relative trajectories or absolute trajectories")
-    parser.add_argument("--coupling", type=bool, default=True, help="Whether to use coupling layers or not")
+    parser.add_argument('--rel_recon', action='store_true', help="Whether to reconstruct relative trajectories or absolute trajectories")
+    parser.add_argument('--no-rel_recon', dest='rel_recon', action='store_false', help="Whether to reconstruct relative trajectories or absolute trajectories")
     parser.add_argument("--z_dim", type=int, default=2, help="Dimension of z latent variable")
     parser.add_argument("--s_dim", type=int, default=2, help="Dimension of s latent variable")
     parser.add_argument("--mlp_latent_dim", type=int, default=8, help="Dimension of mlp encoders outputs")
     parser.add_argument("--num_envs", default=5, type=int, help="Number of environments in the dataset")
+    parser.add_argument('--coupling', action='store_true', help="Whether to use coupling layers or not")
+    parser.add_argument('--no-coupling', dest='coupling', action='store_false', help="Whether to use coupling layers or not")
+
 
     # spurious feature
-    parser.add_argument("--add_confidence", default=False, type=bool)
+    parser.add_argument('--add_confidence', action='store_true')
+    parser.add_argument('--no-add_confidence', dest='add_confidence', action='store_false')
     parser.add_argument("--domain_shifts", default='0', type=str,
                         help='domain_shifts per environment: hotel,univ,zara1,zara2,eth')
 
@@ -91,7 +95,8 @@ def get_training_parser():
     parser.add_argument("--num_epochs", default=1000, type=int)
 
     # learning rates
-    parser.add_argument("--lr_scheduler", default=False, type=bool)  # '150-100-150',
+    parser.add_argument('--lr_scheduler', action='store_true')
+    parser.add_argument('--no-lr_scheduler', dest='lr_scheduler', action='store_false')
 
     parser.add_argument("--lrvar", default=5e-3, type=float,
                         help="initial learning rate for variant encoder optimizer")
