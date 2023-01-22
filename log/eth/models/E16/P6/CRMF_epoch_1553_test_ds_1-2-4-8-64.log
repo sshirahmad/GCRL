@@ -1,6 +1,0 @@
-2023-01-05 17:58:46,745:INFO: => loaded checkpoint './models/E16/P6/CRMF_epoch_1553.pth.tar' (epoch 1554)
-2023-01-05 17:58:47,544:INFO: Model: ./models/E16/P6/CRMF_epoch_1553.pth.tar
-2023-01-05 17:58:47,545:INFO: Dataset: eth
-2023-01-05 17:58:47,545:INFO: Eval shift: 1-2-4-8-64
-2023-01-05 17:58:47,545:INFO: Dataset type: test
-2023-01-05 17:58:57,112:INFO: ADE: 0.9031	FDE: 1.7333

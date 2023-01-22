@@ -1,6 +1,0 @@
-2022-11-08 20:56:51,074:INFO: => loaded checkpoint './models/eth/CRMF_risk_irm_5.0_batch_hom_data_eth_ds_0_bk_20_ep_(150, 100, 150, 300, 200)_shuffle_true_seed_72/CRMF_epoch_354.pth.tar' (epoch 355)
-2022-11-08 20:56:51,778:INFO: Model: ./models/eth/CRMF_risk_irm_5.0_batch_hom_data_eth_ds_0_bk_20_ep_(150, 100, 150, 300, 200)_shuffle_true_seed_72/CRMF_epoch_354.pth.tar
-2022-11-08 20:56:51,779:INFO: Dataset: eth
-2022-11-08 20:56:51,779:INFO: Eval shift: 0
-2022-11-08 20:56:51,779:INFO: Dataset type: test
-2022-11-08 20:56:57,588:INFO: ADE: 0.7476	FDE: 1.4373

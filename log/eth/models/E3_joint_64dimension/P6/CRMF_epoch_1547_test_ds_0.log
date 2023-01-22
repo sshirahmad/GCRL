@@ -1,5 +1,0 @@
-2022-11-21 20:57:35,015:INFO: => loaded checkpoint './models/E3_joint_64dimension/P6/CRMF_epoch_1547.pth.tar' (epoch 1548)
-2022-11-21 20:57:35,796:INFO: Model: ./models/E3_joint_64dimension/P6/CRMF_epoch_1547.pth.tar
-2022-11-21 20:57:35,796:INFO: Dataset: eth
-2022-11-21 20:57:35,797:INFO: Eval shift: 0
-2022-11-21 20:57:35,797:INFO: Dataset type: test

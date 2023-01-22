@@ -1,5 +1,0 @@
-with learning rate scheduler
-dimnesions=2 and env=3
-without model noise
-trained with q(y|x)
-one point per sample is predicted not a distribution

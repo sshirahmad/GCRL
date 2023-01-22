@@ -1,6 +1,0 @@
-2022-10-29 20:21:53,901:INFO: => loaded checkpoint './models/eth/pretrain/P3/5.0/SSE_data_eth_irm[5.0]_epoch_365.pth.tar' (epoch 366)
-2022-10-29 20:21:54,134:INFO: Model: ./models/eth/pretrain/P3/5.0/SSE_data_eth_irm[5.0]_epoch_365.pth.tar
-2022-10-29 20:21:54,134:INFO: Dataset: eth
-2022-10-29 20:21:54,134:INFO: Eval shift: 1-2-4-8-64
-2022-10-29 20:21:54,134:INFO: Dataset type: test
-2022-10-29 20:21:54,863:INFO: ADE: 1.6204	FDE: 2.5774

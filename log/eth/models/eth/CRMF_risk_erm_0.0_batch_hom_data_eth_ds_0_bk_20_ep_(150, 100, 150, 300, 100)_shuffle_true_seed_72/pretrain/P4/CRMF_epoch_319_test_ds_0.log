@@ -1,6 +1,0 @@
-2022-11-08 15:02:38,905:INFO: model ./models/eth/CRMF_risk_erm_0.0_batch_hom_data_eth_ds_0_bk_20_ep_(150, 100, 150, 300, 100)_shuffle_true_seed_72/pretrain/P4/CRMF_epoch_319.pth.tar not found
-2022-11-08 15:02:39,656:INFO: Model: ./models/eth/CRMF_risk_erm_0.0_batch_hom_data_eth_ds_0_bk_20_ep_(150, 100, 150, 300, 100)_shuffle_true_seed_72/pretrain/P4/CRMF_epoch_319.pth.tar
-2022-11-08 15:02:39,656:INFO: Dataset: eth
-2022-11-08 15:02:39,656:INFO: Eval shift: 0
-2022-11-08 15:02:39,656:INFO: Dataset type: test
-2022-11-08 15:02:43,073:INFO: ADE: 2.7667	FDE: 4.7306
