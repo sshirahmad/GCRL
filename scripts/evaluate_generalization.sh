@@ -1,8 +1,9 @@
 # PRETRAIN MODELS (v4 MLP)
-
-GPU=2 # 0. Set GPU
-EVALUATION="--metrics accuracy"
+GPU=0 # 0. Set GPU
 exp="pretrain"
+
+DEFAULTS="--decoupled_loss --coupling --no-rel_recon"
+EVALUATION="--metrics accuracy"
 dataset="v4"
 model="mlp"
 dset_type="test"
@@ -14,8 +15,8 @@ do
     DATA="--dataset_name $dataset --filter_envs $f_envs --batch_size $bs --dset_type $dset_type"
     for seed in 1 2 3 4
     do  
-        CUDA_VISIBLE_DEVICES=$GPU python evaluate_all.py $DATA $EVALUATION --model_name $model --resume "models/$dataset/$exp/VCRL_data_${dataset}_ds_0_bk_20_ns_10_ep_${epoch}_seed_${seed}_cl_True_dc_True_epoch_${epoch}.pth.tar" --seed $seed &
+        CUDA_VISIBLE_DEVICES=$GPU python evaluate_model.py $DEFAULTS $DATA $EVALUATION --model_name $model --resume "models/$dataset/$exp/VCRL_data_${dataset}_ds_0_bk_20_ns_10_ep_${epoch}_seed_${seed}_cl_True_dc_True_epoch_${epoch}.pth.tar" --seed $seed &
     done
     seed=5
-    CUDA_VISIBLE_DEVICES=$GPU python evaluate_all.py $DATA $EVALUATION --model_name $model --resume "models/$dataset/$exp/VCRL_data_${dataset}_ds_0_bk_20_ns_10_ep_${epoch}_seed_${seed}_cl_True_dc_True_epoch_${epoch}.pth.tar" --seed $seed
+    CUDA_VISIBLE_DEVICES=$GPU python evaluate_model.py $DEFAULTS $DATA $EVALUATION --model_name $model --resume "models/$dataset/$exp/VCRL_data_${dataset}_ds_0_bk_20_ns_10_ep_${epoch}_seed_${seed}_cl_True_dc_True_epoch_${epoch}.pth.tar" --seed $seed
 done

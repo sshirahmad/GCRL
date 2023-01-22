@@ -43,7 +43,8 @@ def get_parser():
     parser.add_argument("--delim", default="\t")
     parser.add_argument("--batch_method", default='hom', type=str,
                         help='Use Homogeneous (hom), Heterogeneous (het) or alternated homogeneous (alt) batches during training')
-    parser.add_argument("--decoupled_loss", action=argparse.BooleanOptionalAction, help='decouple ELBO from y')
+    parser.add_argument('--decoupled_loss', action='store_true', help='decoupled ELBO from y')
+    parser.add_argument('--no-decoupled_loss', dest='decoupled_loss', action='store_false', help='decoupled ELBO from y')
 
     parser.add_argument("--finetune", default="", type=str, help="Select the components of S prior to finetune")
     parser.add_argument("--batch_size", default='64', type=str)
