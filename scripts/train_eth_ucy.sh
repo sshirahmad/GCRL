@@ -17,8 +17,4 @@ bs=64
 e=300
 TRAINING="--num_epochs $e --batch_size $bs --batch_method $batch_method"
 
-for seed in 1 2 3 4
-do
-    CUDA_VISIBLE_DEVICES=$GPU python train.py $DATA $TRAINING $DIR $MODEL --seed $seed &
-done
-CUDA_VISIBLE_DEVICES=$GPU python train.py $DATA $TRAINING $DIR $MODEL $USUAL --seed 5
+CUDA_VISIBLE_DEVICES=$GPU python train.py $DATA $TRAINING $DIR $MODEL --lr_scheduler True --z_dim 8 --s_dim 8 --seed 1
