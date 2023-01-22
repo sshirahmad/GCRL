@@ -4,7 +4,7 @@
 GPU=0 # 1. Set GPU
 exp='pretrain'
 
-DEFAULTS="--no_decoupled_loss --coupling --rel_recon --lr_scheduler"
+DEFAULTS="--no-decoupled_loss --coupling --rel_recon --lr_scheduler"
 dataset='eth' # 2. Set dataset
 model="lstm"
 batch_method="hom"
