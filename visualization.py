@@ -1,6 +1,7 @@
 
 import numpy as np
 import matplotlib.pyplot as plt
+import cv2
 
 """
     Experiment name: E23
@@ -823,9 +824,42 @@ def exp_gen_bestk():
     plt.show()
 
 
+def plot_vanila_VCRL_UCY_ETH():
+
+    from svglib.svglib import svg2rlg
+    from reportlab.graphics import renderPDF, renderPM
+
+    drawing = svg2rlg("./eth_noshift_e1000_vanilaVCRL_images/ade_training.svg")
+    renderPDF.drawToFile(drawing, "./eth_noshift_e1000_vanilaVCRL_images/ade_training_.pdf")
+
+    drawing = svg2rlg("./eth_noshift_e1000_vanilaVCRL_images/ade_validation.svg")
+    renderPDF.drawToFile(drawing, "./eth_noshift_e1000_vanilaVCRL_images/ade_validation_.pdf")
+
+    drawing = svg2rlg("./eth_noshift_e1000_vanilaVCRL_images/fde_training.svg")
+    renderPDF.drawToFile(drawing, "./eth_noshift_e1000_vanilaVCRL_images/fde_training_.pdf")
+
+    drawing = svg2rlg("./eth_noshift_e1000_vanilaVCRL_images/fde_validation.svg")
+    renderPDF.drawToFile(drawing, "./eth_noshift_e1000_vanilaVCRL_images/fde_validation_.pdf")
+
+    drawing = svg2rlg("./eth_noshift_e1000_vanilaVCRL_images/pred_loss_training.svg")
+    renderPDF.drawToFile(drawing, "./eth_noshift_e1000_vanilaVCRL_images/pred_loss_training_.pdf")
+
+    drawing = svg2rlg("./eth_noshift_e1000_vanilaVCRL_images/recon_loss_training.svg")
+    renderPDF.drawToFile(drawing, "./eth_noshift_e1000_vanilaVCRL_images/recon_loss_training_.pdf")
+
+    drawing = svg2rlg("./eth_noshift_e1000_vanilaVCRL_images/sreg_training.svg")
+    renderPDF.drawToFile(drawing, "./eth_noshift_e1000_vanilaVCRL_images/sreg_training_.pdf")
+
+    drawing = svg2rlg("./eth_noshift_e1000_vanilaVCRL_images/zreg_training.svg")
+    renderPDF.drawToFile(drawing, "./eth_noshift_e1000_vanilaVCRL_images/zreg_training_.pdf")
+
+
+
+
 if __name__ == "__main__":
 
     # exp_StyleDomainShift()
     # vis_DA()
     # vis_mean_stds_seeds()
-    exp_gen_bestk()
+    # exp_gen_bestk()
+    plot_vanila_VCRL_UCY_ETH()
