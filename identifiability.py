@@ -13,54 +13,23 @@ def main(args):
     args.batch_size = "10000"
     args.shuffle = False
 
-    logging.info("Initializing Training Set")
-    train_envs_path, train_envs_name = get_envs_path(args.dataset_name, "train", args.filter_envs)
-    train_loaders = [data_loader(args, train_env_path, train_env_name) for train_env_path, train_env_name in
-                     zip(train_envs_path, train_envs_name)]
-
-    logging.info("Initializing Validation Set")
-    val_envs_path, val_envs_name = get_envs_path(args.dataset_name, "val",
-                                                 args.filter_envs)  # +'-'+args.filter_envs_pretrain)
-    val_loaders = [data_loader(args, val_env_path, val_env_name) for val_env_path, val_env_name in
-                   zip(val_envs_path, val_envs_name)]
-
-    logging.info("Initializing Validation O Set")
-    valo_envs_path, valo_envs_name = get_envs_path(args.dataset_name, "test", "0.6")
-    valo_loaders = [data_loader(args, valo_env_path, valo_env_name) for valo_env_path, valo_env_name in
-                    zip(valo_envs_path, valo_envs_name)]
+    logging.info("Initializing Sets")
+    envs_path, envs_name = get_envs_path(args.dataset_name, args.dset_type, args.filter_envs)
+    loaders = [data_loader(args, env_path, env_name) for env_path, env_name in
+                     zip(envs_path, envs_name)]
 
     # training routine length
-    num_batches_train = min([len(train_loader) for train_loader in train_loaders])
-    num_batches_val = min([len(val_loader) for val_loader in val_loaders])
-    num_batches_valo = min([len(valo_loader) for valo_loader in valo_loaders])
+    num_batches = min([len(loader) for loader in loaders])
 
     # bring different dataset all together for simplicity of the next functions
-    train_dataset = {'loaders': train_loaders, 'names': train_envs_name, 'num_batches': num_batches_train}
-    valid_dataset = {'loaders': val_loaders, 'names': val_envs_name, 'num_batches': num_batches_val}
-    valido_dataset = {'loaders': valo_loaders, 'names': valo_envs_name, 'num_batches': num_batches_valo}
+    dataset = {'loaders': loaders, 'names': envs_name, 'num_batches': num_batches}
 
-    for dataset, ds_name in zip((train_dataset, valid_dataset, valido_dataset), ('Train', 'Validation', 'Validation O')):
-        print(ds_name + ' dataset: ', dataset)
-
-    args.n_units = (
-            [args.traj_lstm_hidden_size]
-            + [int(x) for x in args.hidden_units.strip().split(",")]
-            + [args.graph_lstm_hidden_size]
-    )
-    args.n_heads = [int(x) for x in args.heads.strip().split(",")]
-
-    # paths = [
-    #          "./models/E25/P6/CRMF_epoch_626.pth.tar",
-    #          "./models/E25_S2/P6/CRMF_epoch_714.pth.tar",
-    #          "./models/E25_S3/P6/CRMF_epoch_614.pth.tar",
-    #          "./models/E25_S4/P6/CRMF_epoch_700.pth.tar",
-    #          "./models/E25_S5/P6/CRMF_epoch_624.pth.tar",
-    #          ]
+    paths = args.resume
 
     z_vec = []
     s_vec = []
-    for i in range(len(args.paths)):
-        args.resume = args.paths[i]
+    for i in range(len(paths)):
+        args.resume = paths[i]
         # create the model
         model = VCRL(args).cuda()
         load_all_model(args, model, None)
@@ -69,7 +38,7 @@ def main(args):
         with torch.no_grad():
             z_vec_seed = []
             s_vec_seed = []
-            for val_idx, (loader, loader_name) in enumerate(zip(valid_dataset['loaders'], valid_dataset['names'])):
+            for _, (loader, loader_name) in enumerate(zip(dataset['loaders'], dataset['names'])):
                 for batch_idx, batch in enumerate(loader):
                     batch = [tensor.cuda() for tensor in batch]
                     (obs_traj, fut_traj, _, _, _, _, _) = batch
