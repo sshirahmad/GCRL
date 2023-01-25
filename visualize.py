@@ -10,7 +10,7 @@ import pandas as pd
 import os
 import io
 import warnings
-from visualization import exp_StyleDomainShift_IM
+from visualization import exp_StyleDomainShift_IM, exp_DomianAdaptation_IM_seed3
 
 
 from utils import NUMBER_PERSONS, set_name_method, set_name_env, set_name_finetune
@@ -54,7 +54,7 @@ def main(args):
                                     sort=True
                                     ).round(decimals=3)
             best_N = result.columns.values
-            plt.figure(1)
+            plt.figure()
             fig, ax = plt.subplots(figsize=(9, 6))
             for label in (ax.get_xticklabels() + ax.get_yticklabels()):
                 label.set_fontsize(16)
@@ -83,7 +83,7 @@ def main(args):
                                     ).round(decimals=3)
             m_ade_im, m_fde_im, s_ade_im, s_fde_im = exp_StyleDomainShift_IM()
             domain_shifts = result.columns.values
-            plt.figure(2)
+            plt.figure()
             fig, ax = plt.subplots(figsize=(9, 6))
             for label in (ax.get_xticklabels() + ax.get_yticklabels()):
                 label.set_fontsize(16)
@@ -102,35 +102,32 @@ def main(args):
             else:
                 print(result)
 
-        else:
+        elif args.exp == 'finetune' or args.exp == 'all':
             # finetune exp
             print('\n\Finetune: ')
-            result = pd.read_csv(f'results/{args.dataset_name}/finetune/summary.csv', sep=', ', engine='python')
+            result = pd.read_csv(f'results/{args.dataset_name}/finetune/{args.finetune}/summary.csv', sep=', ', engine='python')
             result = result[result.split == 'test']
-            result = result[result.envs == args.env]
-            result = result.drop(['step', 'irm', 'envs', 'seed', 'split'], axis=1)
-            reduce = sorted(result.reduce.unique())
-            result['finetune'] = result['finetune'].apply(set_name_finetune)
+            result = result.drop(['envs', 'split'], axis=1)
+            batches = sorted(result.Batches.unique())
+            result = result.sort_values('Batches')
+            ade_im, fde_im = exp_DomianAdaptation_IM_seed3()
+
+            plt.figure()
+            fig, ax = plt.subplots(figsize=(9, 6))
+            for label in (ax.get_xticklabels() + ax.get_yticklabels()):
+                label.set_fontsize(16)
+
+            result_seed = result[result.seed == 1]
+            plt.plot(batches, result_seed.ADE, "o-g", label="GCRL")
+            plt.plot(batches, ade_im, "o-r", label="IM")
+            plt.xlabel("Number of Batches", fontsize=18)
+            plt.ylabel("ADE", fontsize=18)
+            plt.legend(loc="upper left", fontsize=15)
+            plt.show()
 
             if result.shape[0] == 0:
                 warnings.warn("No 'Finetune' experiments available.")
             else:
-                f, ax = plt.subplots(figsize=(5.5, 5))
-                sns.despine(f)
-                sns.lineplot(data=result, x="reduce", y="ADE", hue='finetune', marker='o')
-                ax.legend_.set_title(None)
-                ax.set_xlabel('# Batches')
-                ax.set_xticks(list(reduce), list([int(elem / 64) for elem in reduce]))
-                plt.savefig(f'images/{args.dataset_name}/finetune_ade.png', bbox_inches='tight', pad_inches=0)
-
-                f, ax = plt.subplots(figsize=(5.5, 5))
-                sns.despine(f)
-                sns.lineplot(data=result, x="reduce", y="FDE", hue='finetune', marker='o')
-                ax.legend_.set_title(None)
-                ax.set_xlabel('# Batches')
-                ax.set_xticks(list(reduce), list([int(elem / 64) for elem in reduce]))
-                plt.savefig(f'images/{args.dataset_name}/finetune_fde.png', bbox_inches='tight', pad_inches=0)
-
                 print(
                     f'see plots `images/{args.dataset_name}/finetune_ade.png` and `images/{args.dataset_name}/finetune_fde.png`')
 
