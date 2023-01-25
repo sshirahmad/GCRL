@@ -1,6 +1,6 @@
 
 from loader import data_loader
-from parser_file import get_training_parser
+from parser_file import get_evaluation_parser
 from utils import *
 from models import VCRL
 
@@ -24,12 +24,10 @@ def main(args):
     # bring different dataset all together for simplicity of the next functions
     dataset = {'loaders': loaders, 'names': envs_name, 'num_batches': num_batches}
 
-    paths = args.resume
-
     z_vec = []
     s_vec = []
-    for i in range(len(paths)):
-        args.resume = paths[i]
+    for i in range(len(args.paths)):
+        args.resume = args.paths[i]
         # create the model
         model = VCRL(args).cuda()
         load_all_model(args, model, None)
@@ -52,7 +50,7 @@ def main(args):
 
     s_vec = torch.stack(s_vec).cpu().numpy()
     z_vec = torch.stack(z_vec).cpu().numpy()
-    MCC(z_vec, s_vec, mode="weak")
+    MCC(z_vec, s_vec, mode=args.mcc)
 
 
 def MCC(z_vec, s_vec, mode="weak"):
@@ -86,7 +84,7 @@ def MCC(z_vec, s_vec, mode="weak"):
 
 if __name__ == "__main__":
     print('Using GPU: ' + str(torch.cuda.is_available()))
-    input_args = get_training_parser().parse_args()
+    input_args = get_evaluation_parser().parse_args()
     print('Arguments for training: ', input_args)
     set_logger(os.path.join(input_args.log_dir, "train.log"))
     main(input_args)
