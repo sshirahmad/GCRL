@@ -67,7 +67,7 @@ def main(args):
                              color='red')
             plt.xlabel("N", fontsize=18)
             plt.ylabel("ADE/FDE", fontsize=18)
-            plt.legend(loc="upper left", fontsize=15)
+            plt.legend(loc="upper right", fontsize=15)
             plt.savefig(f'images/{args.dataset_name}/Best_N.png', bbox_inches='tight', pad_inches=0)
 
             result = pd.read_csv(f'results/{args.dataset_name}/pretrain/summary.csv', sep=', ', engine='python')
@@ -135,7 +135,7 @@ def main(args):
                              np.array(m_ade_IM) + np.array(s_ade_IM), alpha=.4, color='red')
             plt.xlabel("Number of Batches", fontsize=18)
             plt.ylabel("ADE", fontsize=18)
-            plt.legend(loc="upper left", fontsize=15)
+            plt.legend(loc="upper right", fontsize=15)
             plt.savefig(f'images/{args.dataset_name}/DA.png', bbox_inches='tight', pad_inches=0)
 
             if result.shape[0] == 0:
