@@ -78,7 +78,7 @@ def get_evaluation_parser():
     parser.add_argument("--mcc", default="weak", type=str, help='Calculate strong or weak Mean Correlation Coefficient')
     parser.add_argument("--exp", default='all', choices=['pretrainN', 'pretrain', 'finetune', 'all'], help="Select Experiment")
     parser.add_argument("--dset_type", default="test", type=str)
-    parser.add_argument("--best_k", default=100, type=int)
+    parser.add_argument("--best_k", default=20, type=int)
     parser.add_argument('--metrics', type=str, default='accuracy', choices=['accuracy', 'collision', 'qualitative'],
                         help='evaluate metrics')
 
