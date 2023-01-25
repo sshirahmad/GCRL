@@ -7,7 +7,7 @@ def get_parser():
     parser.add_argument("--log_dir", default="./log/", help="Directory containing logging file")
     parser.add_argument("--model_dir", default="", help="Directory containing logging file")
     parser.add_argument("--tfdir", default="", type=str)
-    parser.add_argument("--dataset_name", default="v4", type=str)
+    parser.add_argument("--dataset_name", default="eth", type=str)
     parser.add_argument("--model_name", default="lstm", type=str)
     parser.add_argument("--resume", default="",
                         type=str, metavar="PATH", help="path to latest checkpoint (default: none)")
