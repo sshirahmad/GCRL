@@ -101,7 +101,8 @@ def main(args):
             if result.shape[0] == 0:
                 warnings.warn("No 'pretrain' experiments available.")
             else:
-                print(result)
+                print(
+                    f'see plots `images/{args.dataset_name}/DG.png` and `images/{args.dataset_name}/Best_N.png`')
 
         elif args.exp == 'finetune' or args.exp == 'all':
             # finetune exp
@@ -141,7 +142,7 @@ def main(args):
                 warnings.warn("No 'Finetune' experiments available.")
             else:
                 print(
-                    f'see plots `images/{args.dataset_name}/finetune_ade.png` and `images/{args.dataset_name}/finetune_fde.png`')
+                    f'see plots `images/{args.dataset_name}/DA.png`')
 
 
 if __name__ == "__main__":
