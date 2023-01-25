@@ -11,7 +11,7 @@ model="mlp"
 dset_type="val"
 bs=64
 f_envs='0.1-0.3-0.5'
-DATA="--dataset_name $dataset --filter_envs $f_envs --batch_size $bs --dset_type $dset_type"
+DATA="--dataset_name $dataset --filter_envs $f_envs --batch_size $bs --reduceall 9000 --dset_type $dset_type"
 z_dim=2
 num_envs=5
 
