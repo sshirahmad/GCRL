@@ -5,7 +5,6 @@ import random
 from utils import *
 import math
 from torch.distributions import MultivariateNormal, Categorical
-from sklearn.mixture import GaussianMixture as GMM
 
 
 class CouplingLayer(nn.Module):

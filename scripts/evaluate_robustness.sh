@@ -1,9 +1,9 @@
-# PRETRAIN MODELS (v4 MLP)
+# Used for Robustness Experiment
 
 GPU=0
 exp="pretrain"
 
-DEFAULTS="--no_decoupled_loss --coupling --rel_recon"
+DEFAULTS="--no-decoupled_loss --coupling --rel_recon"
 EVALUATION="--metrics accuracy"
 domain_shifts='1-2-4-8-64'
 dataset="eth"

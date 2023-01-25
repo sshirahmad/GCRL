@@ -1,4 +1,4 @@
-# PRETRAIN
+# USed to train models on v4 dataset
 
 ## General parameters
 GPU=0 # 1. Set GPU
@@ -14,7 +14,7 @@ MODEL="--model_name $model"
 DIR="--tfdir runs/$dataset/$exp/"
 bs=64
 
-e=400
+e=250
 TRAINING="--num_epochs $e --batch_size $bs --batch_method $batch_method --best_k 20"
 
 for seed in 1 2 3 4

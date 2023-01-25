@@ -7,7 +7,7 @@ def get_parser():
     parser.add_argument("--log_dir", default="./log/", help="Directory containing logging file")
     parser.add_argument("--model_dir", default="", help="Directory containing logging file")
     parser.add_argument("--tfdir", default="", type=str)
-    parser.add_argument("--dataset_name", default="eth", type=str)
+    parser.add_argument("--dataset_name", default="v4", type=str)
     parser.add_argument("--model_name", default="lstm", type=str)
     parser.add_argument("--resume", default="",
                         type=str, metavar="PATH", help="path to latest checkpoint (default: none)")
@@ -74,9 +74,9 @@ def get_parser():
 
 def get_evaluation_parser():
     parser = get_parser()
-    parser.add_argument("--exp", default='all', choices=['pretrain', 'finetune', 'all'], help="Select Experiment")
+    parser.add_argument("--exp", default='all', choices=['pretrainN', 'pretrain', 'finetune', 'all'], help="Select Experiment")
     parser.add_argument("--dset_type", default="test", type=str)
-    parser.add_argument("--best_k", default=20, type=int)
+    parser.add_argument("--best_k", default=100, type=int)
     parser.add_argument('--metrics', type=str, default='accuracy', choices=['accuracy', 'collision', 'qualitative'],
                         help='evaluate metrics')
 

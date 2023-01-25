@@ -1,7 +1,7 @@
 
 import numpy as np
 import matplotlib.pyplot as plt
-import cv2
+import matplotlib
 
 """
     Experiment name: E23
@@ -36,7 +36,7 @@ import cv2
 """
 
 
-# ############################## Style Domain Shifts Experiments ################################
+# ############################## Domain Generalization: Style Domain Shifts Experiments ##############################
 def exp_StyleDomainShift():
 
     # Experiment name: Invariant+Modular (IM) domain shift style
@@ -94,6 +94,7 @@ def exp_StyleDomainShift():
 def exp_StyleDomainShift_VCRL():
 
     """
+     -------------------- DOMAIN GENERALIZATION -----------------------
     Style Domain Shift for shifts of 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8 computed for 5 seeds of
         1, 2, 3, 4, 5.
         :returns Mean and Std of ADE and FDE
@@ -102,129 +103,129 @@ def exp_StyleDomainShift_VCRL():
 
     # E25
     # ##### E25 (seed = 1) epoch = 686 - 372=314 ##### #
-    ADE_E25_S1_ds1 = 0.0811
-    FDE_E25_S1_ds1 = 0.1083
+    ADE_E25_S1_ds1 = 0.0566
+    FDE_E25_S1_ds1 = 0.0783
 
-    ADE_E25_S1_ds2 = 0.0798
-    FDE_E25_S1_ds2 = 0.1028
+    ADE_E25_S1_ds2 = 0.0550
+    FDE_E25_S1_ds2 = 0.0723
 
-    ADE_E25_S1_ds3 = 0.0797
-    FDE_E25_S1_ds3 = 0.0998
+    ADE_E25_S1_ds3 = 0.0542
+    FDE_E25_S1_ds3 = 0.0677
 
-    ADE_E25_S1_ds4 = 0.0794
-    FDE_E25_S1_ds4 = 0.1021
+    ADE_E25_S1_ds4 = 0.0546
+    FDE_E25_S1_ds4 = 0.0688
 
-    ADE_E25_S1_ds5 = 0.0851
-    FDE_E25_S1_ds5 = 0.1142
+    ADE_E25_S1_ds5 = 0.0591
+    FDE_E25_S1_ds5 = 0.0778
 
-    ADE_E25_S1_ds6 = 0.1183
-    FDE_E25_S1_ds6 = 0.1484
+    ADE_E25_S1_ds6 = 0.0871
+    FDE_E25_S1_ds6 = 0.1047
 
-    ADE_E25_S1_ds7 = 0.1828
-    FDE_E25_S1_ds7 = 0.2132
+    ADE_E25_S1_ds7 = 0.1455
+    FDE_E25_S1_ds7 = 0.1620
 
-    ADE_E25_S1_ds8 = 0.2716
-    FDE_E25_S1_ds8 = 0.3126
+    ADE_E25_S1_ds8 = 0.2314
+    FDE_E25_S1_ds8 = 0.2568
 
     # ##### E25_S2 (seed = 2) epoch=736-422=314 ##### #
-    ADE_E25_S2_ds1 = 0.0832
-    FDE_E25_S2_ds1 = 0.1077
+    ADE_E25_S2_ds1 = 0.0569
+    FDE_E25_S2_ds1 = 0.0758
 
-    ADE_E25_S2_ds2 = 0.0841
-    FDE_E25_S2_ds2 = 0.1067
+    ADE_E25_S2_ds2 = 0.0574
+    FDE_E25_S2_ds2 = 0.0740
 
-    ADE_E25_S2_ds3 = 0.0863
-    FDE_E25_S2_ds3 = 0.1083
+    ADE_E25_S2_ds3 = 0.0586
+    FDE_E25_S2_ds3 = 0.0744
 
-    ADE_E25_S2_ds4 = 0.0876
-    FDE_E25_S2_ds4 = 0.1151
+    ADE_E25_S2_ds4 = 0.0598
+    FDE_E25_S2_ds4 = 0.0781
 
-    ADE_E25_S2_ds5 = 0.0934
-    FDE_E25_S2_ds5 = 0.1308
+    ADE_E25_S2_ds5 = 0.0634
+    FDE_E25_S2_ds5 = 0.0888
 
-    ADE_E25_S2_ds6 = 0.1246
-    FDE_E25_S2_ds6 = 0.1672
+    ADE_E25_S2_ds6 = 0.0906
+    FDE_E25_S2_ds6 = 0.1185
 
-    ADE_E25_S2_ds7 = 0.1873
-    FDE_E25_S2_ds7 = 0.2325
+    ADE_E25_S2_ds7 = 0.1512
+    FDE_E25_S2_ds7 = 0.1798
 
-    ADE_E25_S2_ds8 = 0.2743
-    FDE_E25_S2_ds8 = 0.3312
+    ADE_E25_S2_ds8 = 0.2365
+    FDE_E25_S2_ds8 = 0.2753
 
     # ##### E25_S3 (seed = 3) epoch=736-422=314 ##### #
-    ADE_E25_S3_ds1 = 0.0779
-    FDE_E25_S3_ds1 = 0.1071
+    ADE_E25_S3_ds1 = 0.0544
+    FDE_E25_S3_ds1 = 0.0774
 
-    ADE_E25_S3_ds2 = 0.0794
-    FDE_E25_S3_ds2 = 0.1049
+    ADE_E25_S3_ds2 = 0.0554
+    FDE_E25_S3_ds2 = 0.0747
 
-    ADE_E25_S3_ds3 = 0.0817
-    FDE_E25_S3_ds3 = 0.1061
+    ADE_E25_S3_ds3 = 0.0573
+    FDE_E25_S3_ds3 = 0.0756
 
-    ADE_E25_S3_ds4 = 0.0828
-    FDE_E25_S3_ds4 = 0.1113
+    ADE_E25_S3_ds4 = 0.0584
+    FDE_E25_S3_ds4 = 0.0783
 
-    ADE_E25_S3_ds5 = 0.0875
-    FDE_E25_S3_ds5 = 0.1242
+    ADE_E25_S3_ds5 = 0.0619
+    FDE_E25_S3_ds5 = 0.0876
 
-    ADE_E25_S3_ds6 = 0.1158
-    FDE_E25_S3_ds6 = 0.1558
+    ADE_E25_S3_ds6 = 0.0859
+    FDE_E25_S3_ds6 = 0.1134
 
-    ADE_E25_S3_ds7 = 0.1787
-    FDE_E25_S3_ds7 = 0.2195
+    ADE_E25_S3_ds7 = 0.1450
+    FDE_E25_S3_ds7 = 0.1722
 
-    ADE_E25_S3_ds8 = 0.2688
-    FDE_E25_S3_ds8 = 0.3197
+    ADE_E25_S3_ds8 = 0.2327
+    FDE_E25_S3_ds8 = 0.2697
 
     # ##### E25_S4 (seed = 4) epoch=736-422=314 ##### #
-    ADE_E25_S4_ds1 = 0.0754
-    FDE_E25_S4_ds1 = 0.1037
+    ADE_E25_S4_ds1 = 0.0519
+    FDE_E25_S4_ds1 = 0.0753
 
-    ADE_E25_S4_ds2 = 0.0740
-    FDE_E25_S4_ds2 = 0.0973
+    ADE_E25_S4_ds2 = 0.0497
+    FDE_E25_S4_ds2 = 0.0682
 
-    ADE_E25_S4_ds3 = 0.0754
-    FDE_E25_S4_ds3 = 0.0950
+    ADE_E25_S4_ds3 = 0.0501
+    FDE_E25_S4_ds3 = 0.0637
 
-    ADE_E25_S4_ds4 = 0.0779
-    FDE_E25_S4_ds4 = 0.0994
+    ADE_E25_S4_ds4 = 0.0524
+    FDE_E25_S4_ds4 = 0.0658
 
-    ADE_E25_S4_ds5 = 0.0866
-    FDE_E25_S4_ds5 = 0.1141
+    ADE_E25_S4_ds5 = 0.0586
+    FDE_E25_S4_ds5 = 0.0762
 
-    ADE_E25_S4_ds6 = 0.1174
-    FDE_E25_S4_ds6 = 0.1467
+    ADE_E25_S4_ds6 = 0.0844
+    FDE_E25_S4_ds6 = 0.1019
 
-    ADE_E25_S4_ds7 = 0.1771
-    FDE_E25_S4_ds7 = 0.2069
+    ADE_E25_S4_ds7 = 0.1387
+    FDE_E25_S4_ds7 = 0.1527
 
-    ADE_E25_S4_ds8 = 0.2617
-    FDE_E25_S4_ds8 = 0.3002
+    ADE_E25_S4_ds8 = 0.2171
+    FDE_E25_S4_ds8 = 0.2365
 
     # ##### E25_S5 (seed = 5) epoch=736-422=314 ##### #
-    ADE_E25_S5_ds1 = 0.0923
-    FDE_E25_S5_ds1 = 0.1267
+    ADE_E25_S5_ds1 = 0.0653
+    FDE_E25_S5_ds1 = 0.0929
 
-    ADE_E25_S5_ds2 = 0.0905
-    FDE_E25_S5_ds2 = 0.1200
+    ADE_E25_S5_ds2 = 0.0636
+    FDE_E25_S5_ds2 = 0.0862
 
-    ADE_E25_S5_ds3 = 0.0889
-    FDE_E25_S5_ds3 = 0.1141
+    ADE_E25_S5_ds3 = 0.0622
+    FDE_E25_S5_ds3 = 0.0796
 
-    ADE_E25_S5_ds4 = 0.0871
-    FDE_E25_S5_ds4 = 0.1129
+    ADE_E25_S5_ds4 = 0.0610
+    FDE_E25_S5_ds4 = 0.0769
 
-    ADE_E25_S5_ds5 = 0.0940
-    FDE_E25_S5_ds5 = 0.1228
+    ADE_E25_S5_ds5 = 0.0653
+    FDE_E25_S5_ds5 = 0.0824
 
-    ADE_E25_S5_ds6 = 0.1277
-    FDE_E25_S5_ds6 = 0.1544
+    ADE_E25_S5_ds6 = 0.0945
+    FDE_E25_S5_ds6 = 0.1075
 
-    ADE_E25_S5_ds7 = 0.1907
-    FDE_E25_S5_ds7 = 0.2156
+    ADE_E25_S5_ds7 = 0.1540
+    FDE_E25_S5_ds7 = 0.1623
 
-    ADE_E25_S5_ds8 = 0.2776
-    FDE_E25_S5_ds8 = 0.3121
+    ADE_E25_S5_ds8 = 0.2366
+    FDE_E25_S5_ds8 = 0.2530
 
     ADE_seeds_ds1 = [ADE_E25_S1_ds1, ADE_E25_S2_ds1, ADE_E25_S3_ds1, ADE_E25_S4_ds1, ADE_E25_S5_ds1]
     FDE_seeds_ds1 = [FDE_E25_S1_ds1, FDE_E25_S2_ds1, FDE_E25_S3_ds1, FDE_E25_S4_ds1, FDE_E25_S5_ds1]
@@ -270,6 +271,7 @@ def exp_StyleDomainShift_VCRL():
 def exp_StyleDomainShift_IM():
 
     """
+        -------------------- DOMAIN GENERALIZATION -----------------------
         Style Domain Shift for shifts of 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8 computed for 5 seeds of
             1, 2, 3, 4, 5.
             :returns Mean and Std of ADE and FDE
@@ -460,25 +462,28 @@ def get_mean_std_over_seeds(ADE_seeds, FDE_seeds, ds=0.6, model='VCRL'):
     return ave_ADE_over_seeds, ave_FDE_over_seeds, std_ADE_over_seeds, std_FDE_over_seeds
 
 
-def vis_mean_stds_seeds():
+def vis_DG():
 
     m_ade_vcrl, m_fde_vcrl, s_ade_vcrl, s_fde_vcrl = exp_StyleDomainShift_VCRL()
     m_ade_im, m_fde_im, s_ade_im, s_fde_im = exp_StyleDomainShift_IM()
 
     domain_shifts = [0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8]
     plt.figure()
+    fig, ax = plt.subplots(figsize=(9, 6))
+    for label in (ax.get_xticklabels() + ax.get_yticklabels()):
+        label.set_fontsize(16)
     plt.plot(domain_shifts, m_ade_vcrl, "o-g", label="VCRL")
     plt.fill_between(domain_shifts, np.array(m_ade_vcrl) - np.array(s_ade_vcrl), np.array(m_ade_vcrl) + np.array(s_ade_vcrl), alpha=.4, color='green')
     plt.plot(domain_shifts, m_ade_im, "o-r", label="IM")
     plt.fill_between(domain_shifts, np.array(m_ade_im) - np.array(s_ade_im), np.array(m_ade_im) + np.array(s_ade_im), alpha=.4, color='red')
-    plt.xlabel("Domain Shifts", fontsize=15)
-    plt.xlabel("ADE", fontsize=15)
+    plt.xlabel("Style Domain Shifts", fontsize=18)
+    plt.ylabel("ADE", fontsize=18)
     plt.legend(loc="upper left", fontsize=15)
     plt.show()
 
 
 # ############################## Domain Adaptation (DA) experiments with Fine-Tuning ################################
-def exp_DomianAdaptation_1():
+def exp_DomianAdaptation_1_VCRL():
 
     # Exp1-Update (E25_exp1_Bn): Prior S (Weights of Gaussian), Posterior S, Decoders (input reconstruction, future prediction)
     # Fine-Tuning the trained model with different number of test batches 1:8 for 100 epochs.
@@ -493,41 +498,43 @@ def exp_DomianAdaptation_1():
     # reduceall: cnt*64
     # cnt = [1, 2, 3, 4, 5, 6, 7, 8]
 
+    # seed=1, domain_shift(ds) = 0.6
+
     # Experiment name: E25 (No fine-tuning)
-    E25_ADE = 0.1182
-    E25_FDE = 0.1480
+    E25_ADE = 0.0871
+    E25_FDE = 0.1047
 
     # Experiment name: E25_exp1_B1 (fine-tuning of 1 batch: reduceall=1*64)
-    E25_B1_ADE = 0.1015
-    E25_B1_FDE = 0.1314
+    E25_B1_ADE = 0.0750
+    E25_B1_FDE = 0.0955
 
     # Experiment name: E25_exp1_B2 (fine-tuning of 2 batch: reduceall=2*64)
-    E25_B2_ADE = 0.0903
-    E25_B2_FDE = 0.1227
+    E25_B2_ADE = 0.0658
+    E25_B2_FDE = 0.0869
 
     # Experiment name: E25_exp1_B3 (fine-tuning of 3 batch: reduceall=3*64)
-    E25_B3_ADE = 0.0873
-    E25_B3_FDE = 0.1187
+    E25_B3_ADE = 0.0647
+    E25_B3_FDE = 0.0846
 
     # Experiment name: E25_exp1_B4 (fine-tuning of 4 batch: reduceall=4*64)
-    E25_B4_ADE = 0.0857
-    E25_B4_FDE = 0.1168
+    E25_B4_ADE = 0.0629
+    E25_B4_FDE = 0.0826
 
     # Experiment name: E25_exp1_B5 (fine-tuning of 5 batch: reduceall=5*64)
-    E25_B5_ADE = 0.0832
-    E25_B5_FDE = 0.1134
+    E25_B5_ADE = 0.0614
+    E25_B5_FDE = 0.0801
 
     # Experiment name: E25_exp1_B6 (fine-tuning of 6 batch: reduceall=6*64)
-    E25_B6_ADE = 0.0844
-    E25_B6_FDE = 0.1147
+    E25_B6_ADE = 0.0617
+    E25_B6_FDE = 0.0807
 
     # Experiment name: E25_exp1_B7 (fine-tuning of 7 batch: reduceall=7*64)
-    E25_B7_ADE = 0.0840
-    E25_B7_FDE = 0.1164
+    E25_B7_ADE = 0.0628
+    E25_B7_FDE = 0.0835
 
     # Experiment name: E25_exp1_B8 (fine-tuning of 8 batch: reduceall=8*64)
-    E25_B8_ADE = 0.0831
-    E25_B8_FDE = 0.1136
+    E25_B8_ADE = 0.0612
+    E25_B8_FDE = 0.0802
 
     # output
     ADE_out = [E25_B6_ADE, E25_B5_ADE, E25_B4_ADE, E25_B3_ADE, E25_B2_ADE, E25_B1_ADE, E25_ADE]
@@ -536,45 +543,45 @@ def exp_DomianAdaptation_1():
     return ADE_out, FDE_out
 
 
-def exp_DomianAdaptation_2():
+def exp_DomianAdaptation_2_VCRL():
 
     # Exp2-Update (E25_exp2_Bn): Prior S (Weights of Gaussian & Coupling layers), Posterior S, Decoders (input reconstruction, future prediction)
 
     # Experiment name: E25 (No fine-tuning)
-    E25_ADE = 0.1182
-    E25_FDE = 0.1480
+    E25_ADE = 0.0871
+    E25_FDE = 0.1047
 
     # Experiment name: E25_exp2_B1 (fine-tuning of 1 batch: reduceall=1*64)
-    E25_B1_ADE = 0.0990
-    E25_B1_FDE = 0.1285
+    E25_B1_ADE = 0.0743
+    E25_B1_FDE = 0.0918
 
     # Experiment name: E25_exp2_B2 (fine-tuning of 2 batch: reduceall=2*64)
-    E25_B2_ADE = 0.0904
-    E25_B2_FDE = 0.1206
+    E25_B2_ADE = 0.0672
+    E25_B2_FDE = 0.0860
 
     # Experiment name: E25_exp2_B3 (fine-tuning of 3 batch: reduceall=3*64)
-    E25_B3_ADE = 0.0885
-    E25_B3_FDE = 0.1222
+    E25_B3_ADE = 0.0656
+    E25_B3_FDE = 0.0874
 
     # Experiment name: E25_exp2_B4 (fine-tuning of 4 batch: reduceall=4*64)
-    E25_B4_ADE = 0.0858
-    E25_B4_FDE = 0.1160
+    E25_B4_ADE = 0.0627
+    E25_B4_FDE = 0.0819
 
     # Experiment name: E25_exp2_B5 (fine-tuning of 5 batch: reduceall=5*64)
-    E25_B5_ADE = 0.0857
-    E25_B5_FDE = 0.1178
+    E25_B5_ADE = 0.0625
+    E25_B5_FDE = 0.0830
 
     # Experiment name: E25_exp2_B6 (fine-tuning of 6 batch: reduceall=6*64)
-    E25_B6_ADE = 0.0829
-    E25_B6_FDE = 0.1149
+    E25_B6_ADE = 0.0607
+    E25_B6_FDE = 0.0806
 
     # Experiment name: E25_exp2_B7 (fine-tuning of 7 batch: reduceall=7*64)
-    E25_B7_ADE = 0.0835
-    E25_B7_FDE = 0.1152
+    E25_B7_ADE = 0.0617
+    E25_B7_FDE = 0.0821
 
     # Experiment name: E25_exp2_B8 (fine-tuning of 8 batch: reduceall=8*64)
-    E25_B8_ADE = 0.0838
-    E25_B8_FDE = 0.1192
+    E25_B8_ADE = 0.0628
+    E25_B8_FDE = 0.0860
 
     # output
     ADE_out = [E25_B6_ADE, E25_B5_ADE, E25_B4_ADE, E25_B3_ADE, E25_B2_ADE, E25_B1_ADE, E25_ADE]
@@ -583,7 +590,7 @@ def exp_DomianAdaptation_2():
     return ADE_out, FDE_out
 
 
-def exp_DomianAdaptation_3():
+def exp_DomianAdaptation_3_VCRL():
 
     # E28: E25 without coupling layers
     # Exp1-Update (E28_exp1_Bn): Prior S (Weights & Mean $ Variance of Gaussians), Posterior S, Decoders (input reconstruction, future prediction)
@@ -730,46 +737,45 @@ def exp_DomianAdaptation_IM_seed3():
 
 def vis_DA():
 
-    exp1_ADE, exp1_FDE = exp_DomianAdaptation_1()
-    exp2_ADE, exp2_FDE = exp_DomianAdaptation_2()
-    exp3_ADE, exp3_FDE = exp_DomianAdaptation_3()
+    exp1_ADE, exp1_FDE = exp_DomianAdaptation_1_VCRL()
+    exp2_ADE, exp2_FDE = exp_DomianAdaptation_2_VCRL()
+    # exp3_ADE, exp3_FDE = exp_DomianAdaptation_3_VCRL()
     exp_IM_ADE, exp_IM_FDE = exp_DomianAdaptation_IM_seed3()
 
     batch = [6, 5, 4, 3, 2, 1, 0]
 
     # Visualizations
     plt.figure()
+    fig, ax = plt.subplots(figsize=(8, 6))
+    for label in (ax.get_xticklabels() + ax.get_yticklabels()):
+        label.set_fontsize(16)
     plt.plot(batch, exp1_ADE, "-ob", label="VCRL-E1")
     plt.plot(batch, exp2_ADE, "-or", label="VCRL-E2")
-    plt.plot(batch, exp3_ADE, "-om", label="VCRL-E3")
+    # plt.plot(batch, exp3_ADE, "-om", label="VCRL-E3")
     plt.plot(batch, exp_IM_ADE, "-og", label="IM")
-    plt.legend(loc="lower left")
-    plt.xlim(-1, 9)
-    plt.xlabel('Number of Batches Used for Fine-Tuning')
+    plt.legend(loc="upper right", fontsize=15)
+    plt.xlim(-0.5, 6.5)
+    plt.xlabel('Number of Batches Used for Fine-Tuning', fontsize=18)
     plt.ylim(0.05, 0.13)
-    plt.ylabel('ADE')
+    plt.ylabel('ADE', fontsize=18)
     plt.show()
 
 
 # ############################## Ablation Studies experiments ################################
 def exp_AblationStudies():
 
-    # All Ablation studies are conducted with seed=1
-    # Exp1: Only Z
-    ADE_E26_z = 0.1404
-    FDE_E26_z = 0.1818
+    # All Ablation studies are conducted with seed=1, best_K=100
+    # E26:Exp1: Only Z
+    ADE_E26_z = 0.1054
+    FDE_E26_z = 0.1347
 
-    # Exp2: Only S
-    ADE_E27_z = 0.2737
-    FDE_E27_z = 0.3200
+    # E27:Exp2: Only S
+    ADE_E27_z = 0.2188
+    FDE_E27_z = 0.2418
 
-    # Exp3: No Coupling-Layers in S and Z Priors
-    ADE_E28_NoCL = 0.1078
-    FDE_E28_NoCL = 0.1351
-
-    # Exp4: Num-Samples 10, 10
-    ADE_E29_num_samp = 0.
-    FDE_E29_num_samp = 0.
+    # E28:Exp3: No Coupling-Layers in S and Z Priors
+    ADE_E28_NoCL = 0.0772
+    FDE_E28_NoCL = 0.0916
 
 
 def exp_gen_bestk():
@@ -810,56 +816,26 @@ def exp_gen_bestk():
         M_fde_best.append(np.mean(seed_v))
         S_fde_best.append(np.std(seed_v))
 
-
     # Visualizations
+    plt.figure()
+    fig, ax = plt.subplots(figsize=(8, 6))
+    for label in (ax.get_xticklabels() + ax.get_yticklabels()):
+        label.set_fontsize(16)
     plt.plot(best_k, M_ade_best, "o-g", label="ADE")
     plt.fill_between(best_k, np.array(M_ade_best) - np.array(S_ade_best), np.array(M_ade_best) + np.array(S_ade_best),
                      alpha=.4, color='green')
     plt.plot(best_k, M_fde_best, "o-r", label="FDE")
     plt.fill_between(best_k, np.array(M_fde_best) - np.array(S_fde_best), np.array(M_fde_best) + np.array(S_fde_best),
                      alpha=.4, color='red')
-    plt.xlabel("Best K", fontsize=15)
-    plt.ylabel("ADE/FDE", fontsize=15)
-    plt.legend(loc="upper right", fontsize=15)
+    plt.xlabel("N", fontsize=18)
+    plt.ylabel("ADE/FDE", fontsize=18)
+    plt.legend(loc="upper right", fontsize=18)
     plt.show()
-
-
-def plot_vanila_VCRL_UCY_ETH():
-
-    from svglib.svglib import svg2rlg
-    from reportlab.graphics import renderPDF, renderPM
-
-    drawing = svg2rlg("./eth_noshift_e1000_vanilaVCRL_images/ade_training.svg")
-    renderPDF.drawToFile(drawing, "./eth_noshift_e1000_vanilaVCRL_images/ade_training_.pdf")
-
-    drawing = svg2rlg("./eth_noshift_e1000_vanilaVCRL_images/ade_validation.svg")
-    renderPDF.drawToFile(drawing, "./eth_noshift_e1000_vanilaVCRL_images/ade_validation_.pdf")
-
-    drawing = svg2rlg("./eth_noshift_e1000_vanilaVCRL_images/fde_training.svg")
-    renderPDF.drawToFile(drawing, "./eth_noshift_e1000_vanilaVCRL_images/fde_training_.pdf")
-
-    drawing = svg2rlg("./eth_noshift_e1000_vanilaVCRL_images/fde_validation.svg")
-    renderPDF.drawToFile(drawing, "./eth_noshift_e1000_vanilaVCRL_images/fde_validation_.pdf")
-
-    drawing = svg2rlg("./eth_noshift_e1000_vanilaVCRL_images/pred_loss_training.svg")
-    renderPDF.drawToFile(drawing, "./eth_noshift_e1000_vanilaVCRL_images/pred_loss_training_.pdf")
-
-    drawing = svg2rlg("./eth_noshift_e1000_vanilaVCRL_images/recon_loss_training.svg")
-    renderPDF.drawToFile(drawing, "./eth_noshift_e1000_vanilaVCRL_images/recon_loss_training_.pdf")
-
-    drawing = svg2rlg("./eth_noshift_e1000_vanilaVCRL_images/sreg_training.svg")
-    renderPDF.drawToFile(drawing, "./eth_noshift_e1000_vanilaVCRL_images/sreg_training_.pdf")
-
-    drawing = svg2rlg("./eth_noshift_e1000_vanilaVCRL_images/zreg_training.svg")
-    renderPDF.drawToFile(drawing, "./eth_noshift_e1000_vanilaVCRL_images/zreg_training_.pdf")
-
-
 
 
 if __name__ == "__main__":
 
-    # exp_StyleDomainShift()
-    # vis_DA()
-    # vis_mean_stds_seeds()
+    vis_DG()
+    #vis_DA()
     # exp_gen_bestk()
-    plot_vanila_VCRL_UCY_ETH()
+    # vis_mean_stds_seeds()

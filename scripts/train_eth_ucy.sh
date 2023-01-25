@@ -1,4 +1,4 @@
-# PRETRAIN
+# Used to train Robustness experiment
 
 ## General parameters
 GPU=0 # 1. Set GPU

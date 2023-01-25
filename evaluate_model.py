@@ -197,6 +197,7 @@ def main(args):
     loaders = [data_loader(args, valo_env_path, valo_env_name) for valo_env_path, valo_env_name in zip(valo_envs_path, valo_envs_name)]
     logging.info('Model: {}'.format(args.resume))
     logging.info('Dataset: {}'.format(args.dataset_name))
+    logging.info('Best_N: {}'.format(args.best_k))
     logging.info('Split: {}'.format(args.dset_type))
     logging.info('Shifts: {}'.format(args.domain_shifts))
     logging.info('Envs: {}'.format(args.filter_envs))
@@ -246,14 +247,14 @@ if __name__ == "__main__":
             path = args.log_dir + args.dataset_name + '/finetune/'
             if not os.path.exists(path):
                 os.makedirs(path)
-            set_logger(path + model_param + '.log')
+            set_logger(path + model_param + f'_{args.filter_envs}' + f'_{args.best_k}' + '.log')
 
         else:
             model_param = args.resume.split('/')[3].split('.')[0]
             path = args.log_dir + args.dataset_name + '/pretrain/'
             if not os.path.exists(path):
                 os.makedirs(path)
-            set_logger(path + model_param + '.log')
+            set_logger(path + model_param + f'_{args.filter_envs}' + f'_{args.best_k}' + '.log')
 
     set_seed_globally(args.seed)
     main(args)

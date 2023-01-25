@@ -1,4 +1,4 @@
-#! /usr/bin/env bash
+# Used for Robustness and Domain Adaptation Results To be changed...
 
 dataset=v4
 exp='finetune'

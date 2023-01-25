@@ -1,3 +1,4 @@
+# Used for Domain Adaptation Experiment
 
 GPU=0
 exp='finetune'

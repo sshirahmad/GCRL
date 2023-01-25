@@ -20,7 +20,6 @@ def main(args):
         os.makedirs(args.tfdir + '/' + model_name)
 
     writer = SummaryWriter(log_dir=args.tfdir + '/' + model_name, flush_secs=10)
-
     logging.info("Initializing Training Set")
     train_envs_path, train_envs_name = get_envs_path(args.dataset_name, "train", args.filter_envs)
     train_loaders = [data_loader(args, train_env_path, train_env_name) for train_env_path, train_env_name in
@@ -146,6 +145,16 @@ def main(args):
         model.cuda()
 
     min_metric = 1e10
+    if args.finetune:
+        args.start_epoch = 1
+        with torch.no_grad():
+            validate_ade(args, model, train_dataset, 0, writer, stage='training')
+            metric = validate_ade(args, model, valid_dataset, 0, writer, stage='validation')
+            min_metric = metric
+            if args.reduce == 0:
+                save_all_model(args, model, model_name, optimizers, metric, 0)
+                return
+
     for epoch in range(args.start_epoch, args.num_epochs + 1):
         logging.info(f"\n===> EPOCH: {epoch}")
 
@@ -163,13 +172,10 @@ def main(args):
             metric = validate_ade(args, model, valid_dataset, epoch, writer, stage='validation')
             validate_ade(args, model, valido_dataset, epoch, writer, stage='validation o')
 
-        if args.finetune:
-            if metric < min_metric:
-                min_metric = metric
-                save_all_model(args, model, model_name, optimizers, metric, epoch)
-                print(f'\n{"_" * 150}\n')
-        else:
+        if metric < min_metric:
+            min_metric = metric
             save_all_model(args, model, model_name, optimizers, metric, epoch)
+            print(f'\n{"_" * 150}\n')
 
     writer.close()
 

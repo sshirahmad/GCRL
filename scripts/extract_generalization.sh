@@ -1,4 +1,4 @@
-#! /usr/bin/env bash
+# Used for Robustness and Domain Generalization Results
 
 dataset="v4"
 exp='pretrain'
@@ -18,4 +18,4 @@ for filename in log/$dataset/$exp/*.log; do
 	| tee -a results/$dataset/$exp/summary.csv
 done
 
-python visualize.py --exp $exp
+python visualize.py --exp $exp --dataset_name $dataset
