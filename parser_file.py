@@ -7,7 +7,7 @@ def get_parser():
     parser.add_argument("--log_dir", default="./log/", help="Directory containing logging file")
     parser.add_argument("--model_dir", default="", help="Directory containing logging file")
     parser.add_argument("--tfdir", default="", type=str)
-    parser.add_argument("--dataset_name", default="v4", type=str)
+    parser.add_argument("--dataset_name", default="eth", type=str)
     parser.add_argument("--model_name", default="lstm", type=str)
     parser.add_argument("--resume", default="",
                         type=str, metavar="PATH", help="path to latest checkpoint (default: none)")
@@ -46,7 +46,7 @@ def get_parser():
     parser.add_argument('--decoupled_loss', action='store_true', help='decoupled ELBO from y')
     parser.add_argument('--no-decoupled_loss', dest='decoupled_loss', action='store_false', help='decoupled ELBO from y')
 
-    parser.add_argument("--finetune", default="all", type=str, help="Select the components of S prior to finetune")
+    parser.add_argument("--finetune", default="", type=str, help="Select the components of S prior to finetune")
     parser.add_argument("--batch_size", default='64', type=str)
     parser.add_argument("--shuffle", default=True, type=bool)
     parser.add_argument('--reduce', default=0, type=int)
@@ -76,7 +76,7 @@ def get_evaluation_parser():
     parser = get_parser()
     parser.add_argument('--paths', nargs='+', help='paths to different models to evaluate identifiaility')
     parser.add_argument("--mcc", default="weak", type=str, help='Calculate strong or weak Mean Correlation Coefficient')
-    parser.add_argument("--exp", default='finetune', choices=['pretrainN', 'pretrain', 'finetune', 'all'], help="Select Experiment")
+    parser.add_argument("--exp", default='all', choices=['pretrainN', 'pretrain', 'finetune', 'all'], help="Select Experiment")
     parser.add_argument("--dset_type", default="test", type=str)
     parser.add_argument("--best_k", default=100, type=int)
     parser.add_argument('--metrics', type=str, default='accuracy', choices=['accuracy', 'collision', 'qualitative'],
