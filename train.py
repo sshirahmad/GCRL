@@ -30,32 +30,22 @@ def main(args):
     val_loaders = [data_loader(args, val_env_path, val_env_name) for val_env_path, val_env_name in
                    zip(val_envs_path, val_envs_name)]
 
-    logging.info("Initializing Validation O Set")
-    valo_envs_path, valo_envs_name = get_envs_path(args.dataset_name, "test", '0.6')
-
-    valo_loaders = [data_loader(args, valo_env_path, valo_env_name) for valo_env_path, valo_env_name in
-                    zip(valo_envs_path, valo_envs_name)]
-
     # training routine length
     num_batches_train = min([len(train_loader) for train_loader in train_loaders])
     num_batches_val = min([len(val_loader) for val_loader in val_loaders])
-    num_batches_valo = min([len(valo_loader) for valo_loader in valo_loaders])
 
     # get labels of envs and create dic linking env name and env label
     if args.dataset_name in ('eth', 'hotel', 'univ', 'zara1', 'zara2'):
         # assert (all_train_labels == all_valid_labels)
         train_labels = {name: train_envs_name.index(name) for name in train_envs_name}
         val_labels = {name: val_envs_name.index(name) for name in val_envs_name}
-        valo_labels = {name: valo_envs_name.index(name) for name in valo_envs_name}
 
     elif 'synthetic' in args.dataset_name or args.dataset_name in ['synthetic', 'v2', 'v2full', 'v4']:
         all_train_labels = sorted([float(d.split('_')[7]) for d in train_envs_name])
         all_valid_labels = sorted([float(d.split('_')[7]) for d in val_envs_name])
-        all_valid_labelso = sorted([float(d.split('_')[7]) for d in valo_envs_name])
         # assert (all_train_labels == all_valid_labels)
         train_labels = {name: all_train_labels.index(float(name.split('_')[7])) for name in train_envs_name}
         val_labels = {name: all_valid_labels.index(float(name.split('_')[7])) for name in val_envs_name}
-        valo_labels = {name: all_valid_labelso.index(float(name.split('_')[7])) for name in valo_envs_name}
     else:
         raise ValueError('Unrecognized dataset name "%s"' % args.dataset_name)
 
@@ -64,11 +54,8 @@ def main(args):
                      'num_batches': num_batches_train}
     valid_dataset = {'loaders': val_loaders, 'names': val_envs_name, 'labels': val_labels,
                      'num_batches': num_batches_val}
-    valido_dataset = {'loaders': valo_loaders, 'names': valo_envs_name, 'labels': valo_labels,
-                      'num_batches': num_batches_valo}
 
-    for dataset, ds_name in zip((train_dataset, valid_dataset, valido_dataset),
-                                ('Train', 'Validation', 'Validation O')):
+    for dataset, ds_name in zip((train_dataset, valid_dataset), ('Train', 'Validation')):
         print(ds_name + ' dataset: ', dataset)
 
     args.n_units = (
@@ -170,7 +157,6 @@ def main(args):
         with torch.no_grad():
             validate_ade(args, model, train_dataset, epoch, writer, stage='training')
             metric = validate_ade(args, model, valid_dataset, epoch, writer, stage='validation')
-            validate_ade(args, model, valido_dataset, epoch, writer, stage='validation o')
 
         if metric < min_metric:
             min_metric = metric
@@ -201,7 +187,6 @@ def train_all(args, model, optimizers, train_dataset, epoch, train_envs_name, wr
         e1_loss_meter = AverageMeter("ELBO Loss", ":.4f")
         e2_loss_meter = AverageMeter("ELBO Loss", ":.4f")
         e3_loss_meter = AverageMeter("ELBO Loss", ":.4f")
-        e4_loss_meter = AverageMeter("ELBO Loss", ":.4f")
         p_loss_meter = AverageMeter("Prediction Loss", ":.4f")
         progress = ProgressMeter(train_dataset['num_batches'], [loss_meter], prefix="")
         for batch_idx in range(train_dataset['num_batches']):

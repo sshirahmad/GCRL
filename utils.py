@@ -466,7 +466,7 @@ def save_all_model(args, model, model_name, optimizers, metric, epoch):
     if not os.path.exists(filefolder):
         os.makedirs(filefolder)
 
-    filename = f'{filefolder}/{get_model_name(args, model_name, epoch=epoch)}.pth.tar'
+    filename = f'{filefolder}/{get_model_name(args, model_name)}.pth.tar'
     torch.save(checkpoint, filename)
     logging.info(f" --> Model Saved in {filename}")
 
