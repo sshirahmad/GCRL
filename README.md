@@ -29,7 +29,7 @@ We learn the invariant representations Z, variant representations S, and the cau
 the observed trajectories X and future trajectories Y using variational inference in end-to-end manner. Our method can be incorporated into 
 the existing motion forecasting models that have an encoder, an interaction module, and a decoder. 
 
-<img src="images/model.png" height="240"/>
+<img src="images/model.png" height="300"/>
 
 --- 
 
@@ -74,7 +74,7 @@ Evaluate pretrained models on `synthetic` dataset for different number of genera
 ```
 bash scripts/evaluate_generative.sh
 ```
-Save all the quantitative results in `results/{dataset_name}/pretrain/summary_bestN.csv` and plot the performances (i.e. ADE, FDE) as a function of number of generated trajectories and different domain shifts.
+Save all the quantitative results in `results/{dataset_name}/pretrain/summary_bestN.csv` and `results/{dataset_name}/pretrain/summary.csv`. Plot the performances (i.e. ADE, FDE) as a function of number of generated trajectories and different domain shifts.
 ```
 bash scripts/extract_generalization.sh
 ```
