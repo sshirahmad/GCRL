@@ -275,7 +275,7 @@ def set_domain_shift(domain_shifts, env_name):
     return alpha_e
 
 
-def set_name_experiment(args, name='VCRL'):
+def set_name_experiment(args, name='GCRL'):
 
     return f'{name}_data_{args.dataset_name}_ds_{args.domain_shifts}_bk_{args.best_k}_ns_{args.num_samples}_ep_{args.num_epochs}_seed_{args.seed}_cl_{args.coupling}_dc_{args.decoupled_loss}_latentdim_{args.z_dim}_cluster_{args.num_envs}'
 
@@ -378,7 +378,7 @@ def set_seed_globally(seed):
     torch.backends.cudnn.benchmark = False
 
 
-def get_model_name(args, name='VCRL', epoch=None, time=False):
+def get_model_name(args, name='GCRL', epoch=None, time=False):
     if time:
         name = datetime.now().strftime("%m-%d_%H:%M_") + name
 

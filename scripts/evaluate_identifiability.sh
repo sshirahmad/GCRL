@@ -20,6 +20,6 @@ epoch=250
 paths=()
 for seed in 1 2 3 4 5
 do
-     paths+=("models/$dataset/$exp/VCRL_data_${dataset}_ds_0_bk_20_ns_10_ep_${epoch}_seed_${seed}_cl_True_dc_True_latentdim_${z_dim}_cluster_${num_envs}.pth.tar")
+     paths+=("models/$dataset/$exp/GCRL_data_${dataset}_ds_0_bk_20_ns_10_ep_${epoch}_seed_${seed}_cl_True_dc_True_latentdim_${z_dim}_cluster_${num_envs}.pth.tar")
 done
 CUDA_VISIBLE_DEVICES=$GPU python identifiability.py $DEFAULTS $DATA $EVALUATION --model_name $model --paths "${paths[@]}" --mcc $mcc --seed $seed
