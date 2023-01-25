@@ -28,7 +28,4 @@ urllib3
 Werkzeug
 tqdm
 tensorflow
-torch
-torchvision
-torchaudio
 seaborn
