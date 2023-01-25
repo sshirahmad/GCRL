@@ -2,7 +2,7 @@
 from loader import data_loader
 from parser_file import get_evaluation_parser
 from utils import *
-from models import VCRL
+from models import GCRL
 
 
 def main(args):

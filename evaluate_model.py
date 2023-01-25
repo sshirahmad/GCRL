@@ -13,7 +13,7 @@ matplotlib.use('Agg')
 
 from loader import data_loader
 from parser_file import get_evaluation_parser
-from models import VCRL
+from models import GCRL
 from utils import *
 
 
