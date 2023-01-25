@@ -10,7 +10,7 @@ import pandas as pd
 import os
 import io
 import warnings
-from visualization import exp_StyleDomainShift_IM, exp_DomianAdaptation_IM_seed3
+from visualization import exp_StyleDomainShift_IM, exp_DomianAdaptation_IM_seeds12345
 
 
 from utils import NUMBER_PERSONS, set_name_method, set_name_env, set_name_finetune
@@ -45,7 +45,7 @@ def main(args):
             result = pd.read_csv(f'results/{args.dataset_name}/pretrain/summary_bestN.csv', sep=', ', engine='python')
             result = result[result.split == 'test']
             result = result.drop(['seed', 'split'], axis=1)
-            result = result[result.envs.astype(bool)]
+            best_N = sorted(result.N.unique())
             result = pd.pivot_table(result,
                                     values=['ADE', 'FDE'],
                                     columns=['N'],
@@ -53,7 +53,6 @@ def main(args):
                                              'FDE': [np.mean, np.std]},
                                     sort=True
                                     ).round(decimals=3)
-            best_N = result.columns.values
             plt.figure()
             fig, ax = plt.subplots(figsize=(9, 6))
             for label in (ax.get_xticklabels() + ax.get_yticklabels()):
@@ -69,10 +68,12 @@ def main(args):
             plt.xlabel("N", fontsize=18)
             plt.ylabel("ADE/FDE", fontsize=18)
             plt.legend(loc="upper left", fontsize=15)
+            plt.savefig(f'images/{args.dataset_name}/Best_N.png', bbox_inches='tight', pad_inches=0)
 
             result = pd.read_csv(f'results/{args.dataset_name}/pretrain/summary.csv', sep=', ', engine='python')
             result = result[result.split == 'test']
             result = result.drop(['seed', 'split'], axis=1)
+            domain_shifts = sorted(result.envs.unique())
             result = result[result.envs.astype(bool)]
             result = pd.pivot_table(result,
                                     values=['ADE', 'FDE'],
@@ -82,12 +83,12 @@ def main(args):
                                     sort=True
                                     ).round(decimals=3)
             m_ade_im, m_fde_im, s_ade_im, s_fde_im = exp_StyleDomainShift_IM()
-            domain_shifts = result.columns.values
+
             plt.figure()
             fig, ax = plt.subplots(figsize=(9, 6))
             for label in (ax.get_xticklabels() + ax.get_yticklabels()):
                 label.set_fontsize(16)
-            plt.plot(domain_shifts, result.values[0], "o-g", label="VCRL")
+            plt.plot(domain_shifts, result.values[0], "o-g", label="GCRL")
             plt.fill_between(domain_shifts, result.values[0] - result.values[1],
                              result.values[0] + result.values[1], alpha=.4, color='green')
             plt.plot(domain_shifts, m_ade_im, "o-r", label="IM")
@@ -96,7 +97,7 @@ def main(args):
             plt.xlabel("Style Domain Shifts", fontsize=18)
             plt.ylabel("ADE", fontsize=18)
             plt.legend(loc="upper left", fontsize=15)
-            plt.show()
+            plt.savefig(f'images/{args.dataset_name}/DG.png', bbox_inches='tight', pad_inches=0)
             if result.shape[0] == 0:
                 warnings.warn("No 'pretrain' experiments available.")
             else:
@@ -108,22 +109,33 @@ def main(args):
             result = pd.read_csv(f'results/{args.dataset_name}/finetune/{args.finetune}/summary.csv', sep=', ', engine='python')
             result = result[result.split == 'test']
             result = result.drop(['envs', 'split'], axis=1)
-            batches = sorted(result.Batches.unique())
-            result = result.sort_values('Batches')
-            ade_im, fde_im = exp_DomianAdaptation_IM_seed3()
+            batches = sorted(result.batches.unique())
+            result = pd.pivot_table(result,
+                                    values=['ADE', 'FDE'],
+                                    columns=['batches'],
+                                    aggfunc={'ADE': [np.mean, np.std],
+                                             'FDE': [np.mean, np.std]},
+                                    sort=True
+                                    ).round(decimals=3)
+
+            m_ade_IM, s_ade_IM, m_fde_IM, s_fde_IM = exp_DomianAdaptation_IM_seeds12345()
 
             plt.figure()
             fig, ax = plt.subplots(figsize=(9, 6))
             for label in (ax.get_xticklabels() + ax.get_yticklabels()):
                 label.set_fontsize(16)
 
-            result_seed = result[result.seed == 1]
-            plt.plot(batches, result_seed.ADE, "o-g", label="GCRL")
-            plt.plot(batches, ade_im, "o-r", label="IM")
+            plt.plot(batches, result.values[0], "o-g", label="GCRL")
+            plt.fill_between(batches, result.values[0] - result.values[1],
+                             result.values[0] + result.values[1], alpha=.4, color='green')
+
+            plt.plot(batches, m_ade_IM, "o-r", label="IM")
+            plt.fill_between(batches, np.array(m_ade_IM) - np.array(s_ade_IM),
+                             np.array(m_ade_IM) + np.array(s_ade_IM), alpha=.4, color='red')
             plt.xlabel("Number of Batches", fontsize=18)
             plt.ylabel("ADE", fontsize=18)
             plt.legend(loc="upper left", fontsize=15)
-            plt.show()
+            plt.savefig(f'images/{args.dataset_name}/DA.png', bbox_inches='tight', pad_inches=0)
 
             if result.shape[0] == 0:
                 warnings.warn("No 'Finetune' experiments available.")

@@ -268,6 +268,28 @@ def exp_StyleDomainShift_VCRL():
     return means_ade, means_fde, stds_ade, stds_fde
 
 
+def exp_DomianAdaptation_IM_seeds12345():
+    """
+    In this function Domain Adaptation results of fine-tuning for 6 batches at inference for 5 seeds of 1,2,3,4,5
+    are presented for IM-Synthetic with IM model.
+    :return:
+
+         # \Finetune:
+    reduce      0      64     128    192    256    320    384
+    ADE mean  0.106  0.102  0.098  0.096  0.096  0.094  0.092
+         std   0.004  0.005  0.004  0.004  0.004  0.003  0.004
+     FDE mean  0.128  0.123  0.120  0.118  0.118  0.115  0.114
+         std   0.004  0.005  0.005  0.005  0.005  0.005  0.005
+    """
+
+    m_ade_IM = [0.106, 0.102, 0.098, 0.096, 0.096, 0.094, 0.092]
+    s_ade_IM = [0.004, 0.005, 0.004, 0.004, 0.004, 0.003, 0.004]
+
+    m_fde_IM = [0.128, 0.123, 0.120, 0.118, 0.118, 0.115, 0.114]
+    s_fde_IM = [0.004, 0.005, 0.005, 0.005, 0.005, 0.005, 0.005]
+
+    return m_ade_IM, s_ade_IM, m_fde_IM, s_fde_IM
+
 def exp_StyleDomainShift_IM():
 
     """
