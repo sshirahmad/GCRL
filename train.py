@@ -5,7 +5,7 @@ from tqdm import tqdm
 from loader import data_loader
 from parser_file import get_training_parser
 from utils import *
-from models import VCRL
+from models import GCRL
 import math
 from torch.optim.lr_scheduler import OneCycleLR
 
@@ -79,7 +79,7 @@ def main(args):
     args.n_heads = [int(x) for x in args.heads.strip().split(",")]
 
     # create the model
-    model = VCRL(args).cuda()
+    model = GCRL(args).cuda()
 
     # optimizers
     optimizers = {

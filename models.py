@@ -696,9 +696,9 @@ class SimpleDecoder(nn.Module):
         return out
 
 
-class VCRL(nn.Module):
+class GCRL(nn.Module):
     def __init__(self, args):
-        super(VCRL, self).__init__()
+        super(GCRL, self).__init__()
 
         if args.best_k == 1 and args.decoupled_loss:
             raise ValueError("best_k must be greater than one in decoupled loss")

@@ -2,7 +2,7 @@
 from loader import data_loader
 from parser_file import get_evaluation_parser
 from utils import *
-from models import VCRL
+from models import GCRL
 
 
 def main(args):
@@ -29,7 +29,7 @@ def main(args):
     for i in range(len(args.paths)):
         args.resume = args.paths[i]
         # create the model
-        model = VCRL(args).cuda()
+        model = GCRL(args).cuda()
         load_all_model(args, model, None)
         model.cuda()
         model.eval()
