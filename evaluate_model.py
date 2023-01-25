@@ -27,7 +27,7 @@ def get_generator(args):
             + [args.graph_lstm_hidden_size]
     )
     args.n_heads = [int(x) for x in args.heads.strip().split(",")]
-    model = VCRL(args)
+    model = GCRL(args)
     load_all_model(args, model, None)
     model.cuda()
     model.eval()

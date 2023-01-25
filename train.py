@@ -79,7 +79,7 @@ def main(args):
     args.n_heads = [int(x) for x in args.heads.strip().split(",")]
 
     # create the model
-    model = VCRL(args).cuda()
+    model = GCRL(args).cuda()
 
     # optimizers
     optimizers = {
