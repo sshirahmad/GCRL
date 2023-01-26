@@ -16,8 +16,8 @@ for reduce in  0 64 128 192 256 320 384
 do
     for seed in 1 2 3 4
     do
-        CUDA_VISIBLE_DEVICES=$GPU python evaluate_model.py $DEFAULTS $DATA $EVALUATION --model_name $model --reduce $reduce --finetune $finetune --resume "models/$dataset/$exp/$finetune/$seed/model_t${reduce}.pth.tar" --seed $seed &
+        CUDA_VISIBLE_DEVICES=$GPU python evaluate_model.py $DEFAULTS $DATA $EVALUATION --model_name $model --exp $exp --reduce $reduce --finetune $finetune --resume "models/$dataset/$exp/$finetune/$seed/model_t${reduce}.pth.tar" --seed $seed &
     done
     seed=5
-    CUDA_VISIBLE_DEVICES=$GPU python evaluate_model.py $DEFAULTS $DATA $EVALUATION --model_name $model --reduce $reduce --finetune $finetune --resume "models/$dataset/$exp/$finetune/$seed/model_t${reduce}.pth.tar" --seed $seed
+    CUDA_VISIBLE_DEVICES=$GPU python evaluate_model.py $DEFAULTS $DATA $EVALUATION --model_name $model --exp $exp --reduce $reduce --finetune $finetune --resume "models/$dataset/$exp/$finetune/$seed/model_t${reduce}.pth.tar" --seed $seed
 done
