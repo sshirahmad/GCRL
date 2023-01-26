@@ -245,7 +245,7 @@ if __name__ == "__main__":
     elif args.dataset_name == "v4":
         if args.finetune:
             model_param = args.resume.split('/')[5].split('.')[0]
-            path = args.log_dir + args.dataset_name + f'/{args.exp}/'
+            path = args.log_dir + args.dataset_name + f'/{args.exp}/' + f'/{args.finetune}/'
             if not os.path.exists(path):
                 os.makedirs(path)
             set_logger(path + model_param + f'_{args.seed}' + f'_{args.filter_envs}' + f'_{args.best_k}' + '.log')
