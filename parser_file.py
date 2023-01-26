@@ -47,7 +47,7 @@ def get_parser():
     parser.add_argument('--no-decoupled_loss', dest='decoupled_loss', action='store_false', help='decoupled ELBO from y')
 
     parser.add_argument("--finetune", default="", type=str, help="Select the components of S prior to finetune")
-    parser.add_argument("--batch_size", default='64', type=str)
+    parser.add_argument("--batch_size", default=64, type=int)
     parser.add_argument("--shuffle", default=True, type=bool)
     parser.add_argument('--reduce', default=0, type=int)
     parser.add_argument('--reduceall', default=0, type=int, help="all data samples: 9000")
