@@ -29,7 +29,7 @@ do
 
     for reduce in 0 64 128 192 256 320
     do
-        CUDA_VISIBLE_DEVICES=$GPU python train.py $DEFAULTS $DATA $TRAINING $MODEL $DIR --reduce $reduce --seed $seed --resume "models/$dataset/pretrain/VCRL_data_${dataset}_ds_0_bk_20_ns_10_ep_${epoch}_seed_${seed}_cl_True_dc_True_latentdim_${ldim}_cluster_${num_envs}.pth.tar" &
+        CUDA_VISIBLE_DEVICES=$GPU python train.py $DEFAULTS $DATA $TRAINING $MODEL $DIR --reduce $reduce --seed $seed --resume "models/$dataset/pretrain/GCRL_data_${dataset}_ds_0_bk_20_ns_10_ep_${epoch}_seed_${seed}_cl_True_dc_True_latentdim_${ldim}_cluster_${num_envs}.pth.tar" &
     done
-    CUDA_VISIBLE_DEVICES=$GPU python train.py $DEFAULTS $DATA $TRAINING $MODEL $DIR --reduce 384 --seed $seed --resume "models/$dataset/pretrain/VCRL_data_${dataset}_ds_0_bk_20_ns_10_ep_${epoch}_seed_${seed}_cl_True_dc_True_latentdim_${ldim}_cluster_${num_envs}.pth.tar"
+    CUDA_VISIBLE_DEVICES=$GPU python train.py $DEFAULTS $DATA $TRAINING $MODEL $DIR --reduce 384 --seed $seed --resume "models/$dataset/pretrain/GCRL_data_${dataset}_ds_0_bk_20_ns_10_ep_${epoch}_seed_${seed}_cl_True_dc_True_latentdim_${ldim}_cluster_${num_envs}.pth.tar"
 done

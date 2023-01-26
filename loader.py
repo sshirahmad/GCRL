@@ -1,7 +1,7 @@
 from torch.utils.data import DataLoader, ConcatDataset
 
 from trajectories import TrajectoryDataset, SynTrajectoryDataset, seq_collate_social, seq_collate
-from utils import set_domain_shift, set_batch_size
+from utils import set_domain_shift
 
 
 def data_loader(args, paths, name, finetune=False, test=False, pt=False):
@@ -23,7 +23,7 @@ def data_loader(args, paths, name, finetune=False, test=False, pt=False):
             ))
         dset = ConcatDataset(dsets)
 
-        batch_size = set_batch_size(args.batch_method, args.batch_size, name)
+        batch_size = args.batch_size
 
         loader = DataLoader(
             dset,
@@ -53,7 +53,7 @@ def data_loader(args, paths, name, finetune=False, test=False, pt=False):
             reduce=reduce,
         )
 
-        batch_size = set_batch_size(args.batch_method, args.batch_size, name)
+        batch_size = args.batch_size
 
         loader = DataLoader(
             dset,
