@@ -194,15 +194,8 @@ def get_mean_std_over_seeds(ADE_seeds, FDE_seeds, ds=0.6, model='IM'):
     ave_ADE_over_seeds = np.mean(ADE_seeds)
     ave_FDE_over_seeds = np.mean(FDE_seeds)
 
-    print('******* MODEL is {}'.format(model))
-    print(f'Mean ADE over seeds with test domain shift of {ds:g}:', ave_ADE_over_seeds)
-    print(f'Mean FDE over seeds with test domain shift of {ds:g}:', ave_FDE_over_seeds)
-
     std_ADE_over_seeds = np.std(ADE_seeds)
     std_FDE_over_seeds = np.std(FDE_seeds)
-
-    print(f'STD ADE over seeds with test domain shift of {ds:g}:', std_ADE_over_seeds)
-    print(f'STD FDE over seeds with test domain shift of {ds:g}:', std_FDE_over_seeds)
 
     return ave_ADE_over_seeds, ave_FDE_over_seeds, std_ADE_over_seeds, std_FDE_over_seeds
 
@@ -215,11 +208,11 @@ def exp_DomianAdaptation_IM_seeds12345():
     :return ADE-MEAN, ADE-STD, FDE-MEAN, FDE-STD:
 
     # \Finetune:
-    reduce       64x0=0     64x1   64x2=128    64x3=192    64x4=256    64x5=320    64x6=384
-    ADE mean     0.106      0.102  0.098       0.096       0.096       0.094       0.092
-         std     0.004      0.005  0.004       0.004       0.004       0.003       0.004
-     FDE mean    0.128      0.123  0.120       0.118       0.118       0.115       0.114
-         std     0.004      0.005  0.005       0.005       0.005       0.005       0.005
+    reduce       64x0=0     64x1=64   64x2=128    64x3=192    64x4=256    64x5=320    64x6=384
+    ADE mean     0.106      0.102     0.098       0.096       0.096       0.094       0.092
+         std     0.004      0.005     0.004       0.004       0.004       0.003       0.004
+     FDE mean    0.128      0.123     0.120       0.118       0.118       0.115       0.114
+         std     0.004      0.005     0.005       0.005       0.005       0.005       0.005
     """
 
     m_ade_IM = [0.106,  0.102,  0.098,  0.096,  0.096,  0.094,  0.092]
