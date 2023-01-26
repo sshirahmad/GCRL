@@ -1,13 +1,13 @@
 #! /usr/bin/env bash
 
-dataset=v4
+dataset="v4"
 exp='finetune'
 finetune='all'
 
 mkdir -p results/$dataset/$exp/$finetune
 echo 'batches, split, envs, seed, ADE, FDE' | tee results/$dataset/$exp/$finetune/summary.csv
 
-for filename in log/$dataset/$exp/*.log; do
+for filename in log/$dataset/$exp/$finetune/*.log; do
 	cat ${filename} \
 	| grep "Batches:\|Split:\|Envs:\|Seed:\|ADE:" \
 	| sed "s/.*Batches: \([0-9]*\).*/\1,/g" \
@@ -19,4 +19,4 @@ for filename in log/$dataset/$exp/*.log; do
 	| tee -a results/$dataset/$exp/$finetune/summary.csv
 done
 
-python visualize.py --exp $exp --finetune $finetune
+python visualize.py --exp $exp --finetune $finetune --dataset_name $dataset
