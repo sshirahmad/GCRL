@@ -69,14 +69,18 @@ Evaluate pretrained models on `synthetic` dataset for different domains, includi
 bash scripts/evaluate_generalization.sh
 ```
 
+Save all the quantitative results in `results/{dataset_name}/pretrain/summary.csv` and plot the performances (i.e. ADE, FDE) as a function of different domain shifts.
+```
+bash scripts/extract_generalization.sh
+```
 
 Evaluate pretrained models on `synthetic` dataset for different number of generated future trajectories per sample.
 ```
 bash scripts/evaluate_generative.sh
 ```
-Save all the quantitative results in `results/{dataset_name}/pretrain/summary_bestN.csv` and `results/{dataset_name}/pretrain/summary.csv`. Plot the performances (i.e. ADE, FDE) as a function of number of generated trajectories and different domain shifts.
+Save all the quantitative results in `results/{dataset_name}/pretrainN/summary.csv` and plot the performances (i.e. ADE, FDE) as a function of number of generated trajectories.
 ```
-bash scripts/extract_generalization.sh
+bash scripts/extract_generative.sh
 ```
 
 --- 

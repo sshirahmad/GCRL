@@ -237,7 +237,7 @@ if __name__ == "__main__":
 
     if args.dataset_name in ["eth", "hotel", "zara1", "zara2", "univ"]:
         model_param = args.resume.split('/')[3].split('.')[0]
-        path = args.log_dir + args.dataset_name + '/pretrain/'
+        path = args.log_dir + args.dataset_name + f'/{args.exp}/'
         if not os.path.exists(path):
             os.makedirs(path)
         set_logger(path + model_param + f'_{args.domain_shifts}' + '.log')
@@ -245,14 +245,14 @@ if __name__ == "__main__":
     elif args.dataset_name == "v4":
         if args.finetune:
             model_param = args.resume.split('/')[5].split('.')[0]
-            path = args.log_dir + args.dataset_name + '/finetune/'
+            path = args.log_dir + args.dataset_name + f'/{args.exp}/'
             if not os.path.exists(path):
                 os.makedirs(path)
             set_logger(path + model_param + f'_{args.seed}' + f'_{args.filter_envs}' + f'_{args.best_k}' + '.log')
 
         else:
             model_param = args.resume.split('/')[3].split('.')[0]
-            path = args.log_dir + args.dataset_name + '/pretrain/'
+            path = args.log_dir + args.dataset_name + f'/{args.exp}/'
             if not os.path.exists(path):
                 os.makedirs(path)
             set_logger(path + model_param + f'_{args.filter_envs}' + f'_{args.best_k}' + '.log')

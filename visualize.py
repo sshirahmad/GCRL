@@ -248,9 +248,9 @@ def main(args):
 
     # pretrain exp
     if args.dataset_name == "v4":
-        if args.exp == 'pretrain' or args.exp == 'all':
-            print(f'\nRESULTS\nDataset: {args.dataset_name}\n\nPretrain: ')
-            result = pd.read_csv(f'results/{args.dataset_name}/pretrain/summary_bestN.csv', sep=', ', engine='python')
+        if args.exp == 'pretrainN' or args.exp == 'all':
+            print(f'\nRESULTS\nDataset: {args.dataset_name}\n\nPretrainN: ')
+            result = pd.read_csv(f'results/{args.dataset_name}/pretrainN/summary.csv', sep=', ', engine='python')
             result = result[result.split == 'test']
             result = result.drop(['seed', 'split'], axis=1)
             best_N = sorted(result.N.unique())
@@ -278,6 +278,13 @@ def main(args):
             plt.legend(loc="upper right", fontsize=15)
             plt.savefig(f'images/{args.dataset_name}/Best_N.png', bbox_inches='tight', pad_inches=0)
 
+            if result.shape[0] == 0:
+                warnings.warn("No 'pretrain' experiments available.")
+            else:
+                print(f'see plot `images/{args.dataset_name}/Best_N.png`')
+
+        elif args.exp == 'pretrain' or args.exp == 'all':
+            print(f'\nRESULTS\nDataset: {args.dataset_name}\n\nPretrain: ')
             result = pd.read_csv(f'results/{args.dataset_name}/pretrain/summary.csv', sep=', ', engine='python')
             result = result[result.split == 'test']
             result = result.drop(['seed', 'split'], axis=1)
@@ -309,8 +316,7 @@ def main(args):
             if result.shape[0] == 0:
                 warnings.warn("No 'pretrain' experiments available.")
             else:
-                print(
-                    f'see plots `images/{args.dataset_name}/DG.png` and `images/{args.dataset_name}/Best_N.png`')
+                print(f'see plot `images/{args.dataset_name}/DG.png`')
 
         elif args.exp == 'finetune' or args.exp == 'all':
             # finetune exp
