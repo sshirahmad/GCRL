@@ -44,6 +44,14 @@ pip3 install torch torchvision torchaudio
 
 ---
 
+---
+
+### Dataset
+
+Synthetic dataset can be downloaded from [here](https://github.com/vita-epfl/causalmotion). All datasets should be saved in `/datasets/{dataset_name}`. 
+
+--- 
+
 ### Training
 
 Train GRCL on ETH-UCY dataset for robustness experiment.
