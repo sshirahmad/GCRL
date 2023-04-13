@@ -7,8 +7,8 @@ def get_parser():
     parser.add_argument("--log_dir", default="./log/", help="Directory containing logging file")
     parser.add_argument("--model_dir", default="", help="Directory containing logging file")
     parser.add_argument("--tfdir", default="", type=str)
-    parser.add_argument("--dataset_name", default="eth", type=str)
-    parser.add_argument("--model_name", default="lstm", type=str)
+    parser.add_argument("--dataset_name", default="sdd_domain0", type=str)
+    parser.add_argument("--model_name", default="ynet", type=str)
     parser.add_argument("--resume", default="",
                         type=str, metavar="PATH", help="path to latest checkpoint (default: none)")
 
@@ -33,13 +33,29 @@ def get_parser():
     parser.add_argument('--teachingratio', default=0.0, type=float,
                         help="The probability of using ground truth future trajectories instead of model predictions during training")
 
+
+    # architecture (Y-Net)
+    parser.add_argument("--encoder_channels", default="32-32-64-64-64", type=str, help="Y-net encoder parameters")
+    parser.add_argument("--decoder_channels", default="64-64-64-32-32", type=str, help="Y-net decoder parameters")
+    parser.add_argument("--waypoints", default=11, type=int, help="list of selected goal and waypoints as timestep idx, e.g. 14 means the 14th future timestep"
+                                                                  " is used as a waypoint, last element is goal timestep")
+    parser.add_argument("--segmentation_model_fp", default="./models/segmentation_models/SDD_segmentation.pth", help="path to pretrained semantic model")
+    parser.add_argument("--semantic_classes", default=6, type=int, help="path to pretrained semantic model")
+    parser.add_argument("--use_features_only", action='store_true', help="If True the segmentation model only uses the features")
+    parser.add_argument("--unfreeze", default=150, type=int, help="Unfreeze semantic segmentation model weights after this # of epochs")
+    parser.add_argument("--kernlen", default=31, type=int, help="(image) size of Gaussian kernel used for ground-truth Gaussian heatmap")
+    parser.add_argument("--nsig", default=4, type=int, help="sigma of Gaussian kernel used for ground-truth Gaussian heatmap")
+
+
     # dataset
     parser.add_argument("--obs_len", default=8, type=int)
     parser.add_argument("--fut_len", default=12, type=int)
+    parser.add_argument("--resize", type=float, default=0.25, help="Resize factor of images (Only for sdd dataset)")
+    parser.add_argument('--augment', action='store_true', help="If True, it will augment data (Only for sdd dataset)")
     parser.add_argument("--n_coordinates", type=int, default=2, help="Number of coordinates")
     parser.add_argument("--filter_envs", type=str, default="0.6",
                         help="Filter only certain environments (i.e 0.1-0.3-0.5)")
-    parser.add_argument("--skip", default=1, type=int)
+    parser.add_argument("--skip", default=12, type=int)
     parser.add_argument("--delim", default="\t")
     parser.add_argument("--batch_method", default='hom', type=str,
                         help='Use Homogeneous (hom), Heterogeneous (het) or alternated homogeneous (alt) batches during training')
@@ -47,7 +63,7 @@ def get_parser():
     parser.add_argument('--no-decoupled_loss', dest='decoupled_loss', action='store_false', help='decoupled ELBO from y')
 
     parser.add_argument("--finetune", default="", type=str, help="Select the components of S prior to finetune")
-    parser.add_argument("--batch_size", default=64, type=int)
+    parser.add_argument("--batch_size", default=2, type=int)
     parser.add_argument("--shuffle", default=True, type=bool)
     parser.add_argument('--reduce', default=0, type=int)
     parser.add_argument('--reduceall', default=0, type=int, help="all data samples: 9000")
