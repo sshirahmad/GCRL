@@ -1,12 +1,8 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project version="4">
   <component name="ChangeListManager">
-    <list default="true" id="8147b731-440c-4981-a21f-e4c8b1f0cd9a" name="Changes" comment="Added bash files">
-      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/models.py" beforeDir="false" afterPath="$PROJECT_DIR$/models.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/parser_file.py" beforeDir="false" afterPath="$PROJECT_DIR$/parser_file.py" afterDir="false" />
+    <list default="true" id="8147b731-440c-4981-a21f-e4c8b1f0cd9a" name="Changes" comment="Added sdd">
       <change beforePath="$PROJECT_DIR$/train.py" beforeDir="false" afterPath="$PROJECT_DIR$/train.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/trajectories.py" beforeDir="false" afterPath="$PROJECT_DIR$/trajectories.py" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -221,21 +217,7 @@
       <workItem from="1681866698752" duration="2208000" />
       <workItem from="1682189114531" duration="620000" />
       <workItem from="1682373713721" duration="5000" />
-      <workItem from="1682454315243" duration="944000" />
-    </task>
-    <task id="LOCAL-00064" summary="Added bash files">
-      <created>1674371091846</created>
-      <option name="number" value="00064" />
-      <option name="presentableId" value="LOCAL-00064" />
-      <option name="project" value="LOCAL" />
-      <updated>1674371091847</updated>
-    </task>
-    <task id="LOCAL-00065" summary="Added bash files">
-      <created>1674371772253</created>
-      <option name="number" value="00065" />
-      <option name="presentableId" value="LOCAL-00065" />
-      <option name="project" value="LOCAL" />
-      <updated>1674371772253</updated>
+      <workItem from="1682454315243" duration="1260000" />
     </task>
     <task id="LOCAL-00066" summary="Added bash files">
       <created>1674377900961</created>
@@ -566,7 +548,21 @@
       <option name="project" value="LOCAL" />
       <updated>1681429371237</updated>
     </task>
-    <option name="localTasksCounter" value="113" />
+    <task id="LOCAL-00113" summary="Added sdd">
+      <created>1682457219542</created>
+      <option name="number" value="00113" />
+      <option name="presentableId" value="LOCAL-00113" />
+      <option name="project" value="LOCAL" />
+      <updated>1682457219543</updated>
+    </task>
+    <task id="LOCAL-00114" summary="Added sdd">
+      <created>1682457339479</created>
+      <option name="number" value="00114" />
+      <option name="presentableId" value="LOCAL-00114" />
+      <option name="project" value="LOCAL" />
+      <updated>1682457339479</updated>
+    </task>
+    <option name="localTasksCounter" value="115" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
@@ -598,7 +594,8 @@
     <MESSAGE value="Added contrastive learning codes" />
     <MESSAGE value="Experiments" />
     <MESSAGE value="Added bash files" />
-    <option name="LAST_COMMIT_MESSAGE" value="Added bash files" />
+    <MESSAGE value="Added sdd" />
+    <option name="LAST_COMMIT_MESSAGE" value="Added sdd" />
   </component>
   <component name="XDebuggerManager">
     <breakpoint-manager>
@@ -610,7 +607,7 @@
         </line-breakpoint>
         <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
           <url>file://$PROJECT_DIR$/models.py</url>
-          <line>718</line>
+          <line>560</line>
           <option name="timeStamp" value="47" />
         </line-breakpoint>
       </breakpoints>

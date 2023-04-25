@@ -5,7 +5,7 @@ from tqdm import tqdm
 from loader import data_loader
 from parser_file import get_training_parser
 from utils import *
-from models import GCRL, GCRL_Ynet
+from models import GCRL
 import math
 from torch.optim.lr_scheduler import OneCycleLR
 
@@ -67,7 +67,7 @@ def main(args):
 
     # create the model
     if args.model_name == "ynet":
-        model = GCRL_Ynet(args).cuda()
+        model = GCRL(args).cuda()
     else:
         model = GCRL(args).cuda()
 
