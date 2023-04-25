@@ -38,8 +38,7 @@ class TrajectoryDatasetsdd(Dataset):
 
         # Preprocess images, in particular resize, pad and normalize as semantic segmentation backbone requires
         resize_image(images, factor=resize, seg_mask=False)
-        pad(images,
-            division_factor=division_factor)  # make sure that image shape is divisible by 32, for UNet segmentation
+        pad(images, division_factor=division_factor)  # make sure that image shape is divisible by 32, for UNet segmentation
         preprocess_image_for_segmentation(images, seg_mask=False)
 
         self.images = images

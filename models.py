@@ -5,6 +5,7 @@ import random
 from utils import *
 import math
 from torch.distributions import MultivariateNormal, Categorical
+from torchvision.transforms import Resize
 
 class YNetTorch(nn.Module):
     def __init__(self, obs_len, pred_len, segmentation_model_fp, use_features_only=False, semantic_classes=6,
@@ -648,20 +649,22 @@ class CNN_Mapping(nn.Module):
 
         self.fc_mu = nn.ModuleList()
         self.fc_logvar = nn.ModuleList()
-        for in_channels in encoder_dim:
+        self.resize = [224, 224 // 2, 224 // 4, 224 // 8, 224 // 16, 224 // 32]
+        for i, in_channels in enumerate(encoder_dim):
             self.fc_mu.append(
-                nn.Sequential(
-                    nn.Conv2d(in_channels, s_dim, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1))
-                )
-            )
+                nn.Conv2d(in_channels, s_dim, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1))
+                              )
             self.fc_logvar.append(
-                nn.Sequential(
-                    nn.Conv2d(in_channels, s_dim, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1))
-                )
+                nn.Conv2d(in_channels, s_dim, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1))
             )
 
-        self.fc_mu.append(nn.Sequential(nn.Conv2d(in_channels, s_dim, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1))))
-        self.fc_logvar.append(nn.Sequential(nn.Conv2d(in_channels, s_dim, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1))))
+        self.fc_mu.append(nn.Conv2d(in_channels, s_dim, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1))
+                          )
+
+        self.fc_logvar.append(nn.Conv2d(in_channels, s_dim, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1))
+                              )
+
+        self.s_dim = s_dim
 
         self._initialize_weights()
 
@@ -677,14 +680,45 @@ class CNN_Mapping(nn.Module):
                 m.bias.data.zero_()
 
     def forward(self, hidden_states):
-
-        ps = []
+        batch_size = hidden_states[0].size(0)
+        mu = []
+        logvar = []
         for i, hidden in enumerate(hidden_states):
-            mu = self.fc_mu[i](hidden)
-            logvar = self.fc_logvar[i](hidden)
-            ps += [MultivariateNormal(mu, torch.diag_embed(torch.exp(logvar) + 1e-16))]
+            mu += [self.fc_mu[i](hidden)]
+            logvar += [self.fc_logvar[i](hidden)]
+            # ps += [MultivariateNormal(mu.permute(0, 2, 3, 1).flatten(end_dim=2),
+            #                           torch.diag_embed(torch.exp(logvar.permute(0, 2, 3, 1).flatten(end_dim=2)) + 1e-16))]
 
-        return ps
+        return mu, logvar
+
+    def rsample(self, mu, logvar):
+        """
+        Will a single z be enough ti compute the expectation
+        for the loss??
+        :param mu: (Tensor) Mean of the latent Gaussian
+        :param logvar: (Tensor) Standard deviation of the latent Gaussian
+        :return:
+        """
+
+        std = torch.exp(0.5 * logvar)
+        eps = torch.randn_like(std)
+        map = eps * std + mu
+
+        return map
+
+    def log_prob(self, vec, mu, log_var):
+        limit = 100
+
+        # log_prob = []
+        # for i in range(0, vec.size(0), limit):
+        #     temp = (vec[i:i+limit] - mu[i:i+limit]) ** 2 / torch.exp(log_var[i:i+limit])
+        #     log_prob += [-0.5 * torch.matmul(torch.matmul((vec[i:i+limit] - mu[i:i+limit]).unsqueeze(1),
+        #                                                   torch.diag_embed(1 / torch.exp(log_var[i:i+limit]))), (vec[i:i+limit] - mu[i:i+limit]).T)
+        #                  - 0.5 * torch.sum(log_var)]
+
+        log_prob = -0.5 * (vec - mu) ** 2 / torch.exp(log_var) - 0.5 * torch.sum(log_var) - 0.5 * self.s_dim * torch.log(torch.tensor(2 * math.pi))
+
+        return log_prob
 
 
 class YNetEncoder(nn.Module):
@@ -1011,32 +1045,6 @@ class GCRL(nn.Module):
 
             self.future_decoder = SimpleDecoder(args.fut_len, args.z_dim, args.s_dim, NUMBER_PERSONS)
 
-        elif args.model_name == "ynet":
-            semantic_classes = args.semantic_classes
-            encoder_channels = [int(i) for i in args.encoder_channels.split('-')]
-            decoder_channels = [int(i) for i in args.decoder_channels.split('-')]
-
-            if args.segmentation_model_fp is not None:
-                self.semantic_segmentation = torch.load(args.segmentation_model_fp)
-                if args.use_features_only:
-                    self.semantic_segmentation.segmentation_head = nn.Identity()
-                    semantic_classes = 16  # instead of classes use number of feature_dim
-            else:
-                self.semantic_segmentation = nn.Identity()
-
-            self.variant_encoder = YNetEncoder(in_channels=semantic_classes + args.obs_len, channels=encoder_channels)
-            self.invariant_encoder = YNetEncoder(in_channels=semantic_classes + args.obs_len, channels=encoder_channels)
-
-            self.goal_decoder = YNetDecoder(encoder_channels, decoder_channels, output_len=args.fut_len)
-
-            self.future_decoder = YNetDecoder(encoder_channels, decoder_channels, output_len=args.fut_len, traj=args.waypoints)
-            self.past_decoder = YNetDecoder(encoder_channels, decoder_channels, output_len=args.fut_len, traj=args.waypoints)
-
-            self.softargmax_ = SoftArgmax2D(normalized_coordinates=False)
-
-            self.x_to_z = CNN_Mapping(encoder_channels, args.z_dim)
-            self.x_to_s = CNN_Mapping(encoder_channels, args.s_dim)
-
         else:
             raise ValueError('Unrecognized model name "%s"' % args.model_name)
 
@@ -1046,9 +1054,6 @@ class GCRL(nn.Module):
 
         elif 'synthetic' in self.dataset_name or self.dataset_name in ['synthetic', 'v2', 'v2full', 'v4']:
             obs_traj, fut_traj, obs_traj_rel, fut_traj_rel, seq_start_end, augm_data, seq_start_end_augm = batch
-        elif self.dataset_name in ['sdd_domain0', 'sdd_domain1', 'sdd_domain2', 'sdd_domain3']:
-            concat_maps = batch
-
         else:
             raise ValueError('Unrecognized dataset name "%s"' % self.dataset_name)
 
@@ -1060,10 +1065,6 @@ class GCRL(nn.Module):
             elif self.model_name == "mlp":
                 q_zgx = self.x_to_z(self.invariant_encoder(obs_traj))
                 q_sgx = self.x_to_s(self.variant_encoder(augm_data))
-
-            elif self.model_name == "ynet":
-                q_zgx = self.invariant_encoder(concat_maps)
-                q_sgx = self.x_to_s(self.variant_encoder(concat_maps))
 
             # obtain the GMM weights distribution
             pe = Categorical(logits=self.pi_priore)
@@ -1144,6 +1145,225 @@ class GCRL(nn.Module):
                                              torch.cat((z_vec, s_vec), dim=2))
                 if self.model_name == "mlp":
                     py = self.future_decoder(z_vec, s_vec)
+
+                log_py = py
+
+                E1 = (log_px).mean(0)
+                E2 = (log_ps - log_qsgx).mean(0)
+                E3 = (log_pz - log_qzgx).mean(0)
+
+            else:
+                if self.rel_recon:
+                    log_px = - l2_loss(px, obs_traj_rel, mode="raw") - 0.5 * 2 * self.obs_len * torch.log(
+                        torch.tensor(2 * math.pi)) - 0.5 * self.obs_len * torch.log(torch.tensor(0.25))
+                else:
+                    log_px = - l2_loss(px, obs_traj, mode="raw") - 0.5 * 2 * self.obs_len * torch.log(
+                        torch.tensor(2 * math.pi)) - 0.5 * self.obs_len * torch.log(torch.tensor(0.25))
+
+                # calculate q(y|x)
+                if self.model_name == "lstm":
+                    py = self.future_decoder(obs_traj_rel, fut_traj_rel, seq_start_end,
+                                             torch.cat((z_vec, s_vec), dim=2))
+                if self.model_name == "mlp":
+                    py = self.future_decoder(z_vec, s_vec)
+
+                log_py = - l2_loss(py, fut_traj_rel, mode="raw") - 0.5 * 2 * self.fut_len * torch.log(
+                    torch.tensor(2 * math.pi)) - 0.5 * self.fut_len * torch.log(torch.tensor(0.25))
+
+                E1 = torch.multiply(torch.exp(log_py), log_px).mean(0)
+                E2 = torch.multiply(torch.exp(log_py), log_ps - log_qsgx).mean(0)
+                E3 = torch.multiply(torch.exp(log_py), log_pz - log_qzgx).mean(0)
+
+            return log_py, E1, E2, E3
+
+        else:
+            identify = kwargs.get("identify")
+            if identify:
+                if self.model_name == "lstm":
+                    q_zgx = self.x_to_z(self.invariant_encoder(obs_traj_rel, seq_start_end))
+                    q_sgx = self.x_to_s(self.variant_encoder(obs_traj_rel, seq_start_end))
+                elif self.model_name == "mlp":
+                    q_zgx = self.x_to_z(self.invariant_encoder(obs_traj))
+                    q_sgx = self.x_to_s(self.variant_encoder(augm_data))
+
+                return q_zgx, q_sgx
+
+            else:
+                if self.model_name == "lstm":
+                    q_zgx = self.x_to_z(self.invariant_encoder(obs_traj_rel, seq_start_end))
+                    q_sgx = self.x_to_s(self.variant_encoder(obs_traj_rel, seq_start_end))
+                elif self.model_name == "mlp":
+                    q_zgx = self.x_to_z(self.invariant_encoder(obs_traj))
+                    q_sgx = self.x_to_s(self.variant_encoder(augm_data))
+
+                # predict future trajectories
+                z_vec = q_zgx.rsample([1, ])
+                s_vec = q_sgx.rsample([1, ])
+                if self.model_name == "lstm":
+                    pred_fut_Rel = self.future_decoder(obs_traj_rel, fut_traj_rel, seq_start_end,
+                                                       torch.cat((z_vec, s_vec), dim=2))
+                elif self.model_name == "mlp":
+                    pred_fut_Rel = self.future_decoder(z_vec, s_vec)
+
+                return pred_fut_Rel[:, 0, :, :]
+
+
+class GCRL_Ynet(nn.Module):
+    def __init__(self, args):
+        super(GCRL_Ynet, self).__init__()
+
+        if args.best_k == 1 and args.decoupled_loss:
+            raise ValueError("best_k must be greater than one in decoupled loss")
+
+        self.dataset_name = args.dataset_name
+        self.model_name = args.model_name
+        self.obs_len = args.obs_len
+        self.z_dim = args.z_dim
+        self.fut_len = args.fut_len
+        self.num_samples = args.num_samples
+        self.n_coordinates = args.n_coordinates
+        self.decoupled_loss = args.decoupled_loss
+        self.best_k = args.best_k
+        self.coupling = args.coupling
+        self.rel_recon = args.rel_recon
+
+        self.num_envs = args.num_envs
+        self.pi_priore = nn.Parameter(-1 * torch.ones(args.num_envs))
+
+        if args.coupling:
+            self.coupling_layers_z = nn.ModuleList([
+                CouplingLayer(args.z_dim, reverse_mask=False),
+                CouplingLayer(args.z_dim, reverse_mask=True),
+                CouplingLayer(args.z_dim, reverse_mask=False)
+            ])
+
+            self.coupling_layers_s = nn.ModuleList([
+                CouplingLayer(args.s_dim, reverse_mask=False),
+                CouplingLayer(args.s_dim, reverse_mask=True),
+                CouplingLayer(args.s_dim, reverse_mask=False)
+            ])
+
+            self.pw = MultivariateNormal(torch.zeros(args.z_dim).cuda(), torch.diag(torch.ones(args.z_dim).cuda()))
+
+            self.ps = []
+            for i in range(self.num_envs):
+                self.ps += [MultivariateNormal(i * torch.ones(args.s_dim).cuda(),
+                                               torch.diag((i + 1) * torch.ones(args.s_dim).cuda()))]
+
+        else:
+            self.logvar_priors = nn.Parameter(torch.randn(args.num_envs, args.s_dim))
+            self.mean_priors = nn.Parameter(torch.zeros(args.num_envs, args.s_dim))
+            self.logvar_priorz = nn.Parameter(torch.randn(args.z_dim))
+            self.mean_priorz = nn.Parameter(torch.zeros(args.z_dim))
+
+
+        semantic_classes = args.semantic_classes
+        encoder_channels = [int(i) for i in args.encoder_channels.split('-')]
+        decoder_channels = [int(i) for i in args.decoder_channels.split('-')]
+
+        if args.segmentation_model_fp is not None:
+            self.semantic_segmentation = torch.load(args.segmentation_model_fp)
+            if args.use_features_only:
+                self.semantic_segmentation.segmentation_head = nn.Identity()
+                semantic_classes = 16  # instead of classes use number of feature_dim
+        else:
+            self.semantic_segmentation = nn.Identity()
+
+        self.variant_encoder = YNetEncoder(in_channels=semantic_classes + args.obs_len, channels=encoder_channels)
+        self.invariant_encoder = YNetEncoder(in_channels=semantic_classes + args.obs_len, channels=encoder_channels)
+
+        self.goal_decoder = YNetDecoder(encoder_channels, decoder_channels, output_len=args.fut_len)
+
+        self.future_decoder = YNetDecoder(encoder_channels, decoder_channels, output_len=args.fut_len, traj=args.waypoints)
+        self.past_decoder = YNetDecoder(encoder_channels, decoder_channels, output_len=args.fut_len, traj=args.waypoints)
+
+        self.softargmax_ = SoftArgmax2D(normalized_coordinates=False)
+
+        self.x_to_z = CNN_Mapping(encoder_channels, args.z_dim)
+        self.x_to_s = CNN_Mapping(encoder_channels, args.s_dim)
+
+    def forward(self, batch, **kwargs):
+        #TODO implement CNN without resize. The channels should be treated as dimensions i.e. the pixels would be samples
+
+        concat_maps = batch
+
+        if self.training:
+            list_muz, list_logvarz = self.x_to_z(self.invariant_encoder(concat_maps))
+            list_mus, list_logvars = self.x_to_s(self.variant_encoder(concat_maps))
+
+            # obtain the GMM weights distribution
+            pe = Categorical(logits=self.pi_priore)
+
+            # log_ps = torch.zeros(s_vec[0].size(0), device=s_vec[0].device)
+
+            # Sample from posteriors
+            for i, (muz, mus, logvarz, logvars) in enumerate(zip(list_muz, list_mus, list_logvarz, list_logvars)):
+                s_vec = self.x_to_s.rsample(mus, logvars)
+                z_vec = self.x_to_z.rsample(muz, logvarz)
+
+                if self.coupling:
+                    sldj_s = torch.zeros((self.num_samples, s_vec.shape[1]), device=z_vec.device)
+                    s_vec_c = s_vec
+                    for coupling in self.coupling_layers_s:
+                        s_vec_c, sldj_s = coupling(s_vec_c, sldj_s)
+
+                    # calculate log(p(s))
+                    Et = []
+                    for j in range(self.num_envs):
+                        psge = self.ps[j]
+                        log_psge = psge.log_prob(s_vec_c)
+                        log_pe = pe.log_prob(torch.tensor(j).cuda())
+                        Et.append(torch.exp(log_psge) * torch.exp(log_pe))
+
+                    log_ps = torch.log(torch.stack(Et).sum(0) + 1e-16) + sldj_s
+                    log_ps_zeros = torch.zeros_like(log_ps, device=log_ps.device)  # For numerical stability
+                    if log_ps.mean() == torch.tensor(- math.inf):
+                        log_ps = log_ps_zeros
+
+                    # calculate log(p(z))
+                    sldj_z = torch.zeros((self.num_samples, z_vec.shape[1]), device=z_vec.device)
+                    z_vec_c = z_vec
+                    for coupling in self.coupling_layers_z:
+                        z_vec_c, sldj_z = coupling(z_vec_c, sldj_z)
+
+                    log_pz = self.pw.log_prob(z_vec_c) + sldj_z
+
+                else:
+                    # calculate log(p(s))
+                    Et = []
+                    for j in range(self.num_envs):
+                        psge = MultivariateNormal(self.mean_priors[j], torch.diag(torch.exp(self.logvar_priors[j])))
+                        log_psge = psge.log_prob(s_vec.permute(0, 2, 3, 1).flatten(end_dim=2))
+                        log_pe = pe.log_prob(torch.tensor(j).cuda())
+                        Et.append(torch.exp(log_psge) * torch.exp(log_pe))
+
+                    log_ps = torch.log(torch.stack(Et).sum(0) + 1e-16)
+                    log_ps_zeros = torch.zeros_like(log_ps, device=log_ps.device)  # For numerical stability
+                    if log_ps.mean() == torch.tensor(- math.inf):
+                        log_ps = log_ps_zeros
+
+                    # calculate log(p(z))
+                    pw = MultivariateNormal(self.mean_priorz, torch.diag(torch.exp(self.logvar_priorz)))
+                    log_pz = pw.log_prob(z_vec.permute(0, 2, 3, 1).flatten(end_dim=2))
+
+                # calculate log(q(z|x))
+                log_qzgx = self.x_to_z.log_prob(z_vec.permute(0, 2, 3, 1).flatten(end_dim=2),
+                                                muz.permute(0, 2, 3, 1).flatten(end_dim=2), logvarz.permute(0, 2, 3, 1).flatten(end_dim=2))
+
+                # calculate log(q(s|x))
+                log_qsgx = self.x_to_s.log_prob(s_vec.permute(0, 2, 3, 1).flatten(end_dim=2),
+                                                mus.permute(0, 2, 3, 1).flatten(end_dim=2), logvars.permute(0, 2, 3, 1).flatten(end_dim=2))
+
+            if self.decoupled_loss:
+                if self.rel_recon:
+                    log_px = - l2_loss(px, obs_traj_rel, mode="raw")
+                else:
+                    log_px = - l2_loss(px, obs_traj, mode="raw")
+
+                s_vec = q_sgx.rsample([self.best_k, ])
+                z_vec = q_zgx.rsample([self.best_k, ])
+
+
 
                 log_py = py
 
