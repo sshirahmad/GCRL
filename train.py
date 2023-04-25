@@ -26,7 +26,7 @@ def main(args):
                      zip(train_envs_path, train_envs_name)]
 
     logging.info("Initializing Validation Set")
-    val_envs_path, val_envs_name = get_envs_path(args.dataset_name, "test", args.filter_envs)
+    val_envs_path, val_envs_name = get_envs_path(args.dataset_name, "val", args.filter_envs)
     val_loaders = [data_loader(args, val_env_path, val_env_name) for val_env_path, val_env_name in
                    zip(val_envs_path, val_envs_name)]
 
@@ -46,11 +46,6 @@ def main(args):
         # assert (all_train_labels == all_valid_labels)
         train_labels = {name: all_train_labels.index(float(name.split('_')[7])) for name in train_envs_name}
         val_labels = {name: all_valid_labels.index(float(name.split('_')[7])) for name in val_envs_name}
-
-    elif args.dataset_name in ['sdd_domain0', 'sdd_domain1', 'sdd_domain2', 'sdd_domain3']:
-        train_labels = {name: train_envs_name.index(name) for name in train_envs_name}
-        val_labels = {name: val_envs_name.index(name) for name in val_envs_name}
-
     else:
         raise ValueError('Unrecognized dataset name "%s"' % args.dataset_name)
 
@@ -110,10 +105,6 @@ def main(args):
         optimizers["inv"].add_param_group({"params": model.mean_priorz, 'lr': args.lrinv})
         optimizers["inv"].add_param_group({"params": model.logvar_priorz, 'lr': args.lrinv})
 
-    if args.model_name == "ynet":
-        optimizers["var"].add_param_group({"params": model.semantic_segmentation.parameters(), 'lr': args.lrvar})
-        optimizers["future_decoder"].add_param_group({"params": model.goal_decoder.parameters(), 'lr': args.lrfut})
-
     num_batches = 0
     for train_loader in train_loaders:
         num_batches += len(train_loader)
@@ -157,10 +148,6 @@ def main(args):
     for epoch in range(args.start_epoch, args.num_epochs + 1):
         logging.info(f"\n===> EPOCH: {epoch}")
 
-        # Freeze segmentation model
-        if args.model_name == "ynet":
-            freeze(True, (model.semantic_segmentation,))
-
         if args.finetune == "all" and args.coupling:
             freeze(True, (model.invariant_encoder, model.x_to_z, model.coupling_layers_z))
             freeze(False, (model.variant_encoder, model.x_to_s, model.future_decoder, model.past_decoder, model.coupling_layers_s))
@@ -168,10 +155,7 @@ def main(args):
             freeze(True, (model.invariant_encoder, model.x_to_z, model.coupling_layers_z, model.coupling_layers_s))
             freeze(False, (model.variant_encoder, model.x_to_s, model.future_decoder, model.past_decoder))
 
-        if args.model_name == "ynet":
-            train_sdd(args, model, optimizers, train_dataset, epoch, train_envs_name, writer, lr_schedulers, stage='training')
-        else:
-            train_all(args, model, optimizers, train_dataset, epoch, train_envs_name, writer, lr_schedulers, stage='training')
+        train_all(args, model, optimizers, train_dataset, epoch, train_envs_name, writer, lr_schedulers, stage='training')
 
         with torch.no_grad():
             validate_ade(args, model, train_dataset, epoch, writer, stage='training')
@@ -183,86 +167,6 @@ def main(args):
             print(f'\n{"_" * 150}\n')
 
     writer.close()
-
-
-def train_sdd(args, model, optimizers, train_dataset, epoch, train_envs_name, writer, lr_schedulers, stage):
-    total_loss_meter = AverageMeter("Total Loss", ":.4f")
-    e1_loss_meter = AverageMeter("ELBO Loss", ":.4f")
-    e2_loss_meter = AverageMeter("ELBO Loss", ":.4f")
-    e3_loss_meter = AverageMeter("ELBO Loss", ":.4f")
-    p_loss_meter = AverageMeter("Prediction Loss", ":.4f")
-    for batch_idx, batch in enumerate(train_dataset['loaders'][0]):
-        (
-            trajectories,
-            meta_Data,
-            scene_image,
-        ) = batch
-
-        if epoch < args.unfreeze:  # before unfreeze only need to do semantic segmentation once
-            model.eval()
-            scene_image = scene_image.cuda().unsqueeze(0)
-            scene_image = model.semantic_segmentation(scene_image)
-            model.train()
-
-        # inner loop, for each trajectory in the scene
-        for i in range(0, len(trajectories), args.batch_size):
-            if epoch >= args.unfreeze:
-                scene_image = scene_image.cuda().unsqueeze(0)
-                scene_image = model.segmentation(scene_image)
-
-            # Create Heatmaps for past and ground-truth future trajectories
-            _, _, H, W = scene_image.shape  # image shape
-
-            # Create template
-            size = int(4200 * args.resize)
-
-            input_template = create_dist_mat(size=size)
-            input_template = torch.Tensor(input_template).cuda()
-
-            gt_template = create_gaussian_heatmap_template(size=size, kernlen=args.kernlen, nsig=args.nsig, normalize=False)
-            gt_template = torch.Tensor(gt_template).cuda()
-
-            observed = trajectories[i:i + args.batch_size, :args.obs_len, :].reshape(-1, 2).cpu().numpy()
-            observed_map = get_patch(input_template, observed, H, W)
-            observed_map = torch.stack(observed_map).reshape([-1, args.obs_len, H, W])
-
-            gt_future = trajectories[i:i + args.batch_size, args.obs_len:].cuda()
-            gt_future_map = get_patch(gt_template, gt_future.reshape(-1, 2).cpu().numpy(), H, W)
-            gt_future_map = torch.stack(gt_future_map).reshape([-1, args.fut_len, H, W])
-
-            gt_waypoints = gt_future[:, args.waypoints]
-            gt_waypoint_map = get_patch(input_template, gt_waypoints.reshape(-1, 2).cpu().numpy(), H, W)
-            gt_waypoint_map = torch.stack(gt_waypoint_map).reshape([-1, gt_waypoints.shape[1], H, W])
-
-            # Concatenate heatmap and semantic map
-            semantic_map = scene_image.expand(observed_map.shape[0], -1, -1, -1)  # expand to match heatmap size
-            feature_input = torch.cat([semantic_map, observed_map], dim=1)
-
-            # Forward pass
-            # Calculate features
-            features = model(feature_input)
-
-            # Predict goal and waypoint probability distribution
-            pred_goal_map = model.pred_goal(features)
-            goal_loss = criterion(pred_goal_map, gt_future_map) * params['loss_scale']  # BCEWithLogitsLoss
-
-            # Prepare (downsample) ground-truth goal and trajectory heatmap representation for conditioning trajectory decoder
-            gt_waypoints_maps_downsampled = [nn.AvgPool2d(kernel_size=2 ** i, stride=2 ** i)(gt_waypoint_map) for i in
-                                             range(1, len(features))]
-            gt_waypoints_maps_downsampled = [gt_waypoint_map] + gt_waypoints_maps_downsampled
-
-            # Predict trajectory distribution conditioned on goal and waypoints
-            traj_input = [torch.cat([feature, goal], dim=1) for feature, goal in
-                          zip(features, gt_waypoints_maps_downsampled)]
-            pred_traj_map = model.pred_traj(traj_input)
-            traj_loss = criterion(pred_traj_map, gt_future_map) * params['loss_scale']  # BCEWithLogitsLoss
-
-            # Backprop
-            loss = goal_loss + traj_loss
-            optimizer.zero_grad()
-            loss.backward()
-            optimizer.step()
-
 
 
 def train_all(args, model, optimizers, train_dataset, epoch, train_envs_name, writer, lr_schedulers, stage):
@@ -475,10 +379,9 @@ def train_all(args, model, optimizers, train_dataset, epoch, train_envs_name, wr
             progress = ProgressMeter(len(train_loader), [loss_meter],
                                      prefix="Dataset: {:<20}".format(train_envs_name[train_idx]))
             for batch_idx, batch in enumerate(train_loader):
+                batch = [tensor.cuda() for tensor in batch]
 
                 if args.dataset_name in ('eth', 'hotel', 'univ', 'zara1', 'zara2'):
-                    batch = [tensor.cuda() for tensor in batch]
-
                     (
                         obs_traj,
                         fut_traj,
@@ -487,8 +390,6 @@ def train_all(args, model, optimizers, train_dataset, epoch, train_envs_name, wr
                         seq_start_end,
                     ) = batch
                 elif 'synthetic' in args.dataset_name or args.dataset_name in ['synthetic', 'v2', 'v2full', 'v4']:
-                    batch = [tensor.cuda() for tensor in batch]
-
                     (
                         obs_traj,
                         _,
@@ -498,7 +399,6 @@ def train_all(args, model, optimizers, train_dataset, epoch, train_envs_name, wr
                         _,
                         _
                     ) = batch
-
                 else:
                     raise ValueError('Unrecognized dataset name "%s"' % args.dataset_name)
 

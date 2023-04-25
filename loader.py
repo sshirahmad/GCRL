@@ -1,6 +1,6 @@
 from torch.utils.data import DataLoader, ConcatDataset
 
-from trajectories import TrajectoryDataset, TrajectoryDatasetsdd, SynTrajectoryDataset, seq_collate_social, seq_collate, scene_collate
+from trajectories import TrajectoryDataset, SynTrajectoryDataset, seq_collate_social, seq_collate
 from utils import set_domain_shift
 
 
@@ -61,25 +61,6 @@ def data_loader(args, paths, name, finetune=False, test=False, pt=False):
             shuffle=args.shuffle,
             num_workers=args.loader_num_workers,
             collate_fn=seq_collate_social,
-            pin_memory=False
-        )
-
-    elif args.dataset_name in ['sdd_domain0', 'sdd_domain1', 'sdd_domain2', 'sdd_domain3']:
-        dset = TrajectoryDatasetsdd(
-            paths,
-            resize=args.resize,
-            obs_len=args.obs_len,
-            fut_len=args.fut_len,
-            encoder_channels=args.encoder_channels,
-            augment=args.augment
-        )
-
-        loader = DataLoader(
-            dset,
-            batch_size=1,
-            shuffle=args.shuffle,
-            num_workers=args.loader_num_workers,
-            collate_fn=scene_collate,
             pin_memory=False
         )
 

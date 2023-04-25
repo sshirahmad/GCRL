@@ -1,91 +1,14 @@
 import logging
 import math
 import numpy as np
-import os
 
 import torch
 from torch.utils.data import Dataset
 from tqdm import tqdm
-import pandas as pd
-from utils import *
 
 from utils import NUMBER_COUPLES, NUMBER_PERSONS
 
 logger = logging.getLogger(__name__)
-
-
-class TrajectoryDatasetsdd(Dataset):
-    def __init__(self, data_dir, resize, obs_len, fut_len, encoder_channels, augment=False):
-        """ Dataset that contains the trajectories of one scene as one element in the list. It doesn't contain the
-        images to save memory.
-        :params data (pd.DataFrame): Contains all trajectories
-        :params resize (float): image resize factor, to also resize the trajectories to fit image scale
-        :params total_len (int): total time steps, i.e. obs_len + pred_len
-        """
-
-        division_factor = 2 ** len([int(i) for i in encoder_channels.split('-')])
-
-        mode = data_dir.split("\\")[-1]
-        dir = os.path.join(data_dir, f"{mode}_trajs.pkl")
-        image_file_name = 'reference.jpg'
-        data = pd.read_pickle(dir)
-
-        images = read_images(data, image_path=data_dir, image_file=image_file_name, seg_mask=False)
-
-        if augment:
-            data, images = augment_data(data, image_path=data_dir, images=images, image_file=image_file_name,
-                                        seg_mask=False)
-
-        # Preprocess images, in particular resize, pad and normalize as semantic segmentation backbone requires
-        resize_image(images, factor=resize, seg_mask=False)
-        pad(images, division_factor=division_factor)  # make sure that image shape is divisible by 32, for UNet segmentation
-        preprocess_image_for_segmentation(images, seg_mask=False)
-
-        self.images = images
-
-        self.trajectories, self.meta, self.scene_list = self.split_trajectories_by_scene(data, obs_len + fut_len)
-        self.trajectories = self.trajectories * resize
-
-    def __len__(self):
-        return len(self.trajectories)
-
-    def __getitem__(self, idx):
-        trajectory = self.trajectories[idx]
-        meta = self.meta[idx]
-        scene = self.scene_list[idx]
-        image = self.images[scene[0]][scene[1]]
-
-        return trajectory, meta, image
-
-    def split_trajectories_by_scene(self, data, total_len):
-        trajectories = []
-        meta = []
-        scene_list = []
-        for meta_id, meta_df in tqdm(data.groupby(['envId', 'sceneId'], as_index=False), desc='Prepare Dataset'):
-            trajectories.append(meta_df[['x', 'y']].to_numpy().astype('float32').reshape(-1, total_len, 2))
-            meta.append(meta_df)
-            scene_list.append((meta_df.iloc()[0:1].envId.item(), meta_df.iloc()[0:1].sceneId.item()))
-
-        return np.array(trajectories), meta, scene_list
-
-
-def read_trajnet(mode='train'):
-    root = 'data/SDD_trajnet/'
-    path = os.path.join(root, mode)
-
-    fp = os.listdir(path)
-    df_list = []
-    for file in fp:
-        name = file.split('.txt')[0]
-
-        df = pd.read_csv(os.path.join(path, file), sep=' ', names=['frame', 'trackId', 'x', 'y'])
-        df['sceneId'] = name
-        df_list.append(df)
-
-    df = pd.concat(df_list, ignore_index=True)
-    df['metaId'] = [recId + '_' + str(trackId).zfill(4) for recId, trackId in zip(df.sceneId, df.trackId)]
-    df['metaId'] = pd.factorize(df['metaId'], sort=False)[0]
-    return df
 
 
 class TrajectoryDataset(Dataset):
@@ -397,17 +320,6 @@ def seq_collate(data):
     ]
 
     return tuple(out)
-
-
-def scene_collate(batch):
-    trajectories = []
-    meta = []
-    scene = []
-    for _batch in batch:
-        trajectories.append(_batch[0])
-        meta.append(_batch[1])
-        scene.append(_batch[2])
-    return torch.Tensor(trajectories).squeeze(0), meta[0], scene[0]  # index 0 because batch size is 1
 
 
 def read_file(_path, delim="\t"):

@@ -2,14 +2,9 @@ import os
 import logging
 import random
 from re import L
-import numpy as np
-import cv2
-from collections import defaultdict
-
-from typing import Optional
-
 import torch
-import torch.nn as nn
+import numpy as np
+from torch.distributions import MultivariateNormal, Gamma, Poisson
 
 NUMBER_PERSONS = 2
 NUMBER_COUPLES = 2
@@ -171,12 +166,6 @@ def get_envs_path(dataset_name, dset_type, filter_envs):
         envs_path = [os.path.join(dset_path, env_name) for env_name in envs_name]
         return envs_path, envs_name
 
-    elif dataset_name in ['sdd_domain0', 'sdd_domain1', 'sdd_domain2', 'sdd_domain3']:
-        envs_path = [dset_path]
-        envs_name = [dataset_name]
-
-        return envs_path, envs_name
-
     else:
         logging.raiseExceptions(dataset_name + ' dataset doesn\'t exists')
 
@@ -197,8 +186,7 @@ def l2_loss(pred_fut_traj, fut_traj, mode="average"):
     - loss: l2 loss depending on mode
     """
     if len(pred_fut_traj.size()) == 4:
-        loss = (fut_traj[:, :, :2].repeat(pred_fut_traj.shape[1], 1, 1, 1).permute(0, 2, 1, 3) - pred_fut_traj.permute(
-            1, 2, 0, 3)) ** 2
+        loss = (fut_traj[:, :, :2].repeat(pred_fut_traj.shape[1], 1, 1, 1).permute(0, 2, 1, 3) - pred_fut_traj.permute(1, 2, 0, 3)) ** 2
     else:
         loss = (fut_traj[:, :, :2].permute(1, 0, 2) - pred_fut_traj.permute(1, 0, 2)) ** 2
 
@@ -288,6 +276,7 @@ def set_domain_shift(domain_shifts, env_name):
 
 
 def set_name_experiment(args, name='GCRL'):
+
     return f'{name}_data_{args.dataset_name}_ds_{args.domain_shifts}_bk_{args.best_k}_ns_{args.num_samples}_ep_{args.num_epochs}_seed_{args.seed}_cl_{args.coupling}_dc_{args.decoupled_loss}_latentdim_{args.z_dim}_cluster_{args.num_envs}'
 
 
@@ -381,7 +370,6 @@ def cal_ade_fde(fut_traj, pred_fut_traj, mode='sum'):
 
 best_ade = 100
 
-
 def set_seed_globally(seed):
     random.seed(seed)
     np.random.seed(seed)
@@ -435,6 +423,7 @@ def set_name_finetune(finetune):
 
 
 def save_all_model(args, model, model_name, optimizers, metric, epoch):
+
     checkpoint = {
         'epoch': epoch + 1,
         'state_dicts': {
@@ -555,348 +544,3 @@ def freeze(freez, models):
 def update_lr(opt, lr):
     for param_group in opt.param_groups:
         param_group["lr"] = lr
-
-
-def gkern(kernlen=31, nsig=4):
-    """	creates gaussian kernel with side length l and a sigma of sig """
-    ax = np.linspace(-(kernlen - 1) / 2., (kernlen - 1) / 2., kernlen)
-    xx, yy = np.meshgrid(ax, ax)
-    kernel = np.exp(-0.5 * (np.square(xx) + np.square(yy)) / np.square(nsig))
-    return kernel / np.sum(kernel)
-
-
-def create_gaussian_heatmap_template(size, kernlen=81, nsig=4, normalize=True):
-    """ Create a big gaussian heatmap template to later get patches out """
-    template = np.zeros([size, size])
-    kernel = gkern(kernlen=kernlen, nsig=nsig)
-    m = kernel.shape[0]
-    x_low = template.shape[1] // 2 - int(np.floor(m / 2))
-    x_up = template.shape[1] // 2 + int(np.ceil(m / 2))
-    y_low = template.shape[0] // 2 - int(np.floor(m / 2))
-    y_up = template.shape[0] // 2 + int(np.ceil(m / 2))
-    template[y_low:y_up, x_low:x_up] = kernel
-    if normalize:
-        template = template / template.max()
-    return template
-
-
-def create_dist_mat(size, normalize=True):
-    """ Create a big distance matrix template to later get patches out """
-    middle = size // 2
-    dist_mat = np.linalg.norm(np.indices([size, size]) - np.array([middle, middle])[:, None, None], axis=0)
-    if normalize:
-        dist_mat = dist_mat / dist_mat.max() * 2
-    return dist_mat
-
-
-def get_patch(template, traj, H, W):
-    x = np.round(traj[:, 0]).astype('int')
-    y = np.round(traj[:, 1]).astype('int')
-
-    x_low = template.shape[1] // 2 - x
-    x_up = template.shape[1] // 2 + W - x
-    y_low = template.shape[0] // 2 - y
-    y_up = template.shape[0] // 2 + H - y
-
-    patch = [template[y_l:y_u, x_l:x_u] for x_l, x_u, y_l, y_u in zip(x_low, x_up, y_low, y_up)]
-
-    return patch
-
-
-def preprocess_image_for_segmentation(images, encoder='resnet101', encoder_weights='imagenet', seg_mask=False,
-                                      classes=6):
-    """
-     Preprocess image for pretrained semantic segmentation,
-     input is dictionary containing images
-     In case input is segmentation map,
-     then it will create one-hot-encoding from discrete values
-     """
-    import segmentation_models_pytorch as smp
-
-    preprocessing_fn = smp.encoders.get_preprocessing_fn(encoder, encoder_weights)
-
-    for key, im_dict in images.items():
-        for key2, im in im_dict.items():
-            if seg_mask:
-                im = [(im == v) for v in range(classes)]
-                im = np.stack(im, axis=-1)  # .astype('int16')
-            else:
-                im = preprocessing_fn(im)
-            im = im.transpose(2, 0, 1).astype('float32')
-            im = torch.Tensor(im)
-            images[key][key2] = im
-
-
-def resize_image(images, factor, seg_mask=False):
-    for key, image_dict in images.items():
-        for key2, image in image_dict.items():
-            if seg_mask:
-                images[key][key2] = cv2.resize(image, (0, 0), fx=factor, fy=factor, interpolation=cv2.INTER_NEAREST)
-            else:
-                images[key][key2] = cv2.resize(image, (0, 0), fx=factor, fy=factor, interpolation=cv2.INTER_AREA)
-
-
-def pad(images, division_factor=32):
-    """
-    Pad image so that it can be divided by division_factor, as many architectures such as UNet needs a specific size
-    at it's bottlenet layer
-    """
-
-    for key, im_dict in images.items():
-        for key2, im in im_dict.items():
-            if im.ndim == 3:
-                H, W, C = im.shape
-            else:
-                H, W = im.shape
-            H_new = int(np.ceil(H / division_factor) * division_factor)
-            W_new = int(np.ceil(W / division_factor) * division_factor)
-            im = cv2.copyMakeBorder(im, 0, H_new - H, 0, W_new - W, cv2.BORDER_CONSTANT)
-            images[key][key2] = im
-
-
-def sampling(probability_map, num_samples, rel_threshold=None, replacement=False):
-    # new view that has shape=[batch*timestep, H*W]
-    prob_map = probability_map.view(probability_map.size(0) * probability_map.size(1), -1)
-    if rel_threshold is not None:
-        thresh_values = prob_map.max(dim=1)[0].unsqueeze(1).expand(-1, prob_map.size(1))
-        mask = prob_map < thresh_values * rel_threshold
-        prob_map = prob_map * (~mask).int()
-        prob_map = prob_map / prob_map.sum()
-
-    # samples.shape=[batch*timestep, num_samples]
-    samples = torch.multinomial(prob_map, num_samples=num_samples, replacement=replacement)
-    # samples.shape=[batch, timestep, num_samples]
-
-    # unravel sampled idx into coordinates of shape [batch, time, sample, 2]
-    samples = samples.view(probability_map.size(0), probability_map.size(1), -1)
-    idx = samples.unsqueeze(3)
-    preds = idx.repeat(1, 1, 1, 2).float()
-    preds[:, :, :, 0] = (preds[:, :, :, 0]) % probability_map.size(3)
-    preds[:, :, :, 1] = torch.floor((preds[:, :, :, 1]) / probability_map.size(3))
-
-    return preds
-
-
-def image2world(image_coords, scene, homo_mat, resize):
-    """
-	Transform trajectories of one scene from image_coordinates to world_coordinates
-	:param image_coords: torch.Tensor, shape=[num_person, (optional: num_samples), timesteps, xy]
-	:param scene: string indicating current scene, options=['eth', 'hotel', 'student01', 'student03', 'zara1', 'zara2']
-	:param homo_mat: dict, key is scene, value is torch.Tensor containing homography matrix (data/eth_ucy/scene_name.H)
-	:param resize: float, resize factor
-	:return: trajectories in world_coordinates
-	"""
-    traj_image2world = image_coords.clone()
-    if traj_image2world.dim() == 4:
-        traj_image2world = traj_image2world.reshape(-1, image_coords.shape[2], 2)
-    if scene in ['eth', 'hotel']:
-        # eth and hotel have different coordinate system than ucy data
-        traj_image2world[:, :, [0, 1]] = traj_image2world[:, :, [1, 0]]
-    traj_image2world = traj_image2world / resize
-    traj_image2world = F.pad(input=traj_image2world, pad=(0, 1, 0, 0), mode='constant', value=1)
-    traj_image2world = traj_image2world.reshape(-1, 3)
-    traj_image2world = torch.matmul(homo_mat[scene], traj_image2world.T).T
-    traj_image2world = traj_image2world / traj_image2world[:, 2:]
-    traj_image2world = traj_image2world[:, :2]
-    traj_image2world = traj_image2world.view_as(image_coords)
-    return traj_image2world
-
-
-def read_images(data, image_path, image_file, seg_mask=False):
-
-    images = defaultdict(dict)
-    for env in data.envId.unique():
-        for scene in data.sceneId.unique():
-            im_path = os.path.join(image_path, f"{env}_{scene}_{image_file}")
-            if seg_mask:
-                im = cv2.imread(im_path, 0)
-            else:
-                im = cv2.imread(im_path)
-            if im is not None:
-                images[env][scene] = im
-
-    return images
-
-
-def augment_data(data, image_path='data/SDD/train', images={}, image_file='reference.jpg', seg_mask=False):
-    """
-    Perform data augmentation
-    :param data: Pandas df, needs x,y,metaId,sceneId columns
-    :param image_path: example - 'data/SDD/val'
-    :param images: dict with key being sceneId, value being PIL image
-    :param image_file: str, image file name
-    :param seg_mask: whether it's a segmentation mask or an image file
-    :return:
-    """
-
-    ks = [1, 2, 3]
-    data_ = data.copy()  # data without rotation, used so rotated data can be appended to original df
-    k2rot = {1: '_rot90', 2: '_rot180', 3: '_rot270'}
-    for k in ks:
-        metaId_max = data['metaId'].max()
-        for env in data_.envId.unique():
-            for scene in data_.sceneId.unique():
-                im_path = os.path.join(image_path, f"{env}_{scene}_{image_file}")
-                if seg_mask:
-                    im = cv2.imread(im_path, 0)
-                else:
-                    im = cv2.imread(im_path)
-
-                if im is not None:
-                    data_rot, im = rot(data_[(data_.sceneId == scene) & (data_.envId == env)], im, k)
-                    # image
-                    rot_angle = k2rot[k]
-                    images[env][scene + rot_angle] = im
-
-                    data_rot['sceneId'] = scene + rot_angle
-                    data_rot['metaId'] = data_rot['metaId'] + metaId_max + 1
-                    data = data.append(data_rot)
-
-    metaId_max = data['metaId'].max()
-    for env in data.envId.unique():
-        for scene in data.sceneId.unique():
-            try:
-                im = images[env][scene]
-                data_flip, im_flip = fliplr(data[(data.sceneId == scene) & (data.envId == env)], im)
-                data_flip['sceneId'] = data_flip['sceneId'] + '_fliplr'
-                data_flip['metaId'] = data_flip['metaId'] + metaId_max + 1
-                data = data.append(data_flip)
-                images[env][scene + '_fliplr'] = im_flip
-            except:
-                continue
-
-    return data, images
-
-
-def rot(df, image, k=1):
-    """
-    Rotates image and coordinates counter-clockwise by k * 90° within image origin
-    :param df: Pandas DataFrame with at least columns 'x' and 'y'
-    :param image: PIL Image
-    :param k: Number of times to rotate by 90°
-    :return: Rotated Dataframe and image
-    """
-
-    xy = df.copy()
-    if image.ndim == 3:
-        y0, x0, channels = image.shape
-    else:
-        y0, x0 = image.shape
-
-    xy.loc()[:, 'x'] = xy['x'] - x0 / 2
-    xy.loc()[:, 'y'] = xy['y'] - y0 / 2
-    c, s = np.cos(-k * np.pi / 2), np.sin(-k * np.pi / 2)
-    R = np.array([[c, s], [-s, c]])
-    xy.loc()[:, ['x', 'y']] = np.dot(xy[['x', 'y']], R)
-    for i in range(k):
-        image = cv2.rotate(image, cv2.ROTATE_90_COUNTERCLOCKWISE)
-
-    if image.ndim == 3:
-        y0, x0, channels = image.shape
-    else:
-        y0, x0 = image.shape
-
-    xy.loc()[:, 'x'] = xy['x'] + x0 / 2
-    xy.loc()[:, 'y'] = xy['y'] + y0 / 2
-    return xy, image
-
-
-def fliplr(df, image):
-    """
-    Flip image and coordinates horizontally
-    :param df: Pandas DataFrame with at least columns 'x' and 'y'
-    :param image: PIL Image
-    :return: Flipped Dataframe and image
-    """
-
-    xy = df.copy()
-    if image.ndim == 3:
-        y0, x0, channels = image.shape
-    else:
-        y0, x0 = image.shape
-
-    xy.loc()[:, 'x'] = xy['x'] - x0 / 2
-    xy.loc()[:, 'y'] = xy['y'] - y0 / 2
-    R = np.array([[-1, 0], [0, 1]])
-    xy.loc()[:, ['x', 'y']] = np.dot(xy[['x', 'y']], R)
-    image = cv2.flip(image, 1)
-
-    if image.ndim == 3:
-        y0, x0, channels = image.shape
-    else:
-        y0, x0 = image.shape
-
-    xy.loc()[:, 'x'] = xy['x'] + x0 / 2
-    xy.loc()[:, 'y'] = xy['y'] + y0 / 2
-    return xy, image
-
-
-def create_meshgrid(x: torch.Tensor, normalized_coordinates: Optional[bool]) -> torch.Tensor:
-
-    assert len(x.shape) == 4, x.shape
-
-    _, _, height, width = x.shape
-    _device, _dtype = x.device, x.dtype
-    if normalized_coordinates:
-        xs = torch.linspace(-1.0, 1.0, width, device=_device, dtype=_dtype)
-        ys = torch.linspace(-1.0, 1.0, height, device=_device, dtype=_dtype)
-    else:
-        xs = torch.linspace(0, width - 1, width, device=_device, dtype=_dtype)
-        ys = torch.linspace(0, height - 1, height, device=_device, dtype=_dtype)
-
-    return torch.meshgrid(ys, xs)  # pos_y, pos_x
-
-
-class SoftArgmax2D(nn.Module):
-    r"""Creates a module that computes the Spatial Soft-Argmax 2D
-    of a given input heatmap.
-    Returns the index of the maximum 2d coordinates of the give map.
-    The output order is x-coord and y-coord.
-    Arguments:
-        normalized_coordinates (Optional[bool]): wether to return the
-          coordinates normalized in the range of [-1, 1]. Otherwise,
-          it will return the coordinates in the range of the input shape.
-          Default is True.
-    Shape:
-        - Input: :math:`(B, N, H, W)`
-        - Output: :math:`(B, N, 2)`
-    Examples::
-        >>> input = torch.rand(1, 4, 2, 3)
-        >>> m = tgm.losses.SpatialSoftArgmax2d()
-        >>> coords = m(input)  # 1x4x2
-        >>> x_coord, y_coord = torch.chunk(coords, dim=-1, chunks=2)
-    """
-
-    def __init__(self, normalized_coordinates: Optional[bool] = True) -> None:
-        super(SoftArgmax2D, self).__init__()
-        self.normalized_coordinates: Optional[bool] = normalized_coordinates
-        self.eps: float = 1e-6
-
-    def forward(self, input: torch.Tensor) -> torch.Tensor:
-        if not torch.is_tensor(input):
-            raise TypeError("Input input type is not a torch.Tensor. Got {}"
-                            .format(type(input)))
-        if not len(input.shape) == 4:
-            raise ValueError("Invalid input shape, we expect BxCxHxW. Got: {}"
-                             .format(input.shape))
-        # unpack shapes and create view from input tensor
-        batch_size, channels, height, width = input.shape
-        x: torch.Tensor = input.view(batch_size, channels, -1)
-
-        # compute softmax with max substraction trick
-        exp_x = torch.exp(x - torch.max(x, dim=-1, keepdim=True)[0])
-        exp_x_sum = 1.0 / (exp_x.sum(dim=-1, keepdim=True) + self.eps)
-
-        # create coordinates grid
-        pos_y, pos_x = create_meshgrid(input, self.normalized_coordinates)
-        pos_x = pos_x.reshape(-1)
-        pos_y = pos_y.reshape(-1)
-
-        # compute the expected coordinates
-        expected_y: torch.Tensor = torch.sum(
-            (pos_y * exp_x) * exp_x_sum, dim=-1, keepdim=True)
-        expected_x: torch.Tensor = torch.sum(
-            (pos_x * exp_x) * exp_x_sum, dim=-1, keepdim=True)
-        output: torch.Tensor = torch.cat([expected_x, expected_y], dim=-1)
-
-        return output.view(batch_size, channels, 2)  # BxNx2
