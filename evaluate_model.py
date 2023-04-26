@@ -99,13 +99,13 @@ def evaluate(args, loader, generator, training_step):
         return ade_sum, fde_sum, total_traj
 
 
-def sceneplot(obsv_scene, pred_scene, gt_scene, figname='scene.png', lim=9.0):
+def sceneplot(obsv_scene, pred_scene, gt_scene, figname='scene.png', best_k=20, lim=9.0):
     """
     Plot a scene
     """
-    num_traj = pred_scene.shape[0]
+    num_traj = pred_scene[0].shape[0]
     obsv_frame = obsv_scene.shape[1]
-    pred_frame = pred_scene.shape[1]
+    pred_frame = pred_scene[0].shape[1]
     cm_subsection = np.linspace(0.0, 1.0, num_traj)
     colors = [matplotlib.cm.jet(x) for x in cm_subsection]
 
@@ -114,17 +114,17 @@ def sceneplot(obsv_scene, pred_scene, gt_scene, figname='scene.png', lim=9.0):
             plt.plot(obsv_scene[i, k - 1:k + 1, 0], obsv_scene[i, k - 1:k + 1, 1],
                      '-o', color=colors[i], alpha=1.0)
 
-        plt.plot([obsv_scene[i, -1, 0], pred_scene[i, 0, 0]], [obsv_scene[i, -1, 1], pred_scene[i, 0, 1]],
-                 '--', color=colors[i], alpha=1.0, linewidth=1.0)
-        for k in range(1, pred_frame):
-            alpha = 1.0 - k / pred_frame
-            width = (1.0 - alpha) * 24.0
-            plt.plot(pred_scene[i, k - 1:k + 1, 0], pred_scene[i, k - 1:k + 1, 1],
-                     '--', color=colors[i], alpha=alpha, linewidth=width)
+        for n in range(best_k):
+            plt.plot([obsv_scene[i, -1, 0], pred_scene[n][i, 0, 0]], [obsv_scene[i, -1, 1], pred_scene[n][i, 0, 1]],
+                     '--', color=colors[i], alpha=1.0, linewidth=1.0)
+            for k in range(1, pred_frame):
+                alpha = 1.0 - k / pred_frame
+                plt.plot(pred_scene[n][i, k - 1:k + 1, 0], pred_scene[n][i, k - 1:k + 1, 1],
+                         '--', color=colors[i], alpha=alpha)
 
         for k in range(1, pred_frame):
             plt.plot(gt_scene[i, k - 1:k + 1, 0], gt_scene[i, k - 1:k + 1, 1],
-                     '--', color=colors[i], alpha=1.0)
+                     '-*', color=colors[i], alpha=1.0)
 
     xc = obsv_scene[:, -1, 0].mean()
     yc = obsv_scene[:, -1, 1].mean()
@@ -138,7 +138,7 @@ def sceneplot(obsv_scene, pred_scene, gt_scene, figname='scene.png', lim=9.0):
     plt.close()
 
 
-def visualize(args, loader, generator, training_step):
+def visualize(args, loader, generator):
     """
     Viasualize some scenes
     """
@@ -146,9 +146,7 @@ def visualize(args, loader, generator, training_step):
     suffix = 'ds_' + args.domain_shifts + '_' + keywords[1] + '.png'
 
     # range of idx for visualization
-    lb_idx = 44
-    ub_idx = 44
-
+    idx = 10
     with torch.no_grad():
         for b, data in enumerate(loader):
             batch = [tensor.cuda() for tensor in data]
@@ -160,22 +158,24 @@ def visualize(args, loader, generator, training_step):
                 seq_start_end,
             ) = batch
 
-            for k in range(args.best_k):
-                pred_fut_traj_rel = generator(batch, training_step)
-                pred_fut_traj = relative_to_abs(pred_fut_traj_rel, obs_traj[-1, :, :2])
-                idx_sample = seq_start_end.shape[0]
-                for i in range(idx_sample):
-                    if i < lb_idx or i > ub_idx:
-                        continue  # key scenes
-                    idx_start, idx_end = seq_start_end[i][0], seq_start_end[i][1]
-                    obsv_scene = obs_traj[:, idx_start:idx_end, :]
-                    pred_scene = pred_fut_traj[:, idx_start:idx_end, :]
-                    gt_scene = fut_traj[:, idx_start:idx_end, :]
+            if idx > seq_start_end.shape[0]:
+                continue
 
-                    figname = './images/visualization/scene_{:02d}_{:02d}_sample_{:02d}_{}'.format(i, b, k, suffix)
-                    sceneplot(obsv_scene.permute(1, 0, 2).cpu().detach().numpy(),
-                              pred_scene.permute(1, 0, 2).cpu().detach().numpy(),
-                              gt_scene.permute(1, 0, 2).cpu().detach().numpy(), figname)
+            pred_scene = []
+            for k in range(args.best_k):
+                pred_fut_traj_rel = generator(batch)
+                pred_fut_traj = relative_to_abs(pred_fut_traj_rel, obs_traj[-1, :, :2])
+
+                idx_start, idx_end = seq_start_end[idx][0], seq_start_end[idx][1]
+                obsv_scene = obs_traj[:, idx_start:idx_end, :]
+                pred_scene += [pred_fut_traj[:, idx_start:idx_end, :].permute(1, 0, 2).cpu().detach().numpy()]
+                gt_scene = fut_traj[:, idx_start:idx_end, :]
+
+            figname = './images/visualization/scene_{:02d}_{:02d}_{}'.format(idx, b, suffix)
+            sceneplot(obsv_scene.permute(1, 0, 2).cpu().detach().numpy(),
+                      pred_scene,
+                      gt_scene.permute(1, 0, 2).cpu().detach().numpy(), figname,
+                      args.best_k)
 
 
 def compute_col(predicted_traj, predicted_trajs_all, thres=0.2, num_interp=4):
@@ -224,12 +224,12 @@ def main(args):
     # qualitative
     if args.metrics == 'qualitative':
         for loader in loaders:
-            visualize(args, loader, generator, training_step="P3")
+            visualize(args, loader, generator)
 
     # collisions [to be implemented]
     if args.metrics == 'collision':
         for loader in loaders:
-            visualize(args, loader, generator, training_step="P3")
+            visualize(args, loader, generator)
 
 
 if __name__ == "__main__":
