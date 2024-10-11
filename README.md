@@ -1,4 +1,4 @@
-# Generative Causal Representation Learning
+# [Generative Causal Representation Learning (ICML 2023 Paper)](https://proceedings.mlr.press/v202/shirahmad-gale-bagi23a.html)
 
 We propose Generative Causal Representation Learning (GCRL) to address the
 robustness and explainability of Deep learning models based on statistical inference
