@@ -144,4 +144,10 @@ GCRL significantly boosts the efficiency of motion forecasting models compared t
 in each domain in the prior of S. Furthermore, GCRL uses a generative approach which can tackle the
 multi-modality of trajectories. 
 
+### Acknowledgements
 
+Our code was developed on top of the public code of following papers:
+* [Human Trajectory Prediction via Counterfactual Analysis, ICCV'21](https://github.com/CHENGY12/CausalHTP)
+* [It Is Not the Journey but the Destination: Endpoint Conditioned Trajectory Prediction, ECCV'20](https://github.com/HarshayuGirase/Human-Path-Prediction)
+* [STGAT: Modeling Spatial-Temporal Interactions for Human Trajectory Prediction, ICCV'19](https://github.com/huang-xx/STGAT)
+* [Towards Robust and Adaptive Motion Forecasting: A Causal Representation Perspective , CVPR'2022](https://github.com/vita-epfl/causalmotion)
